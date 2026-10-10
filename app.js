@@ -293,7 +293,6 @@ function loadStoredData() {
   } else {
     STATE.meetings = [];
   }
-}
 
   const savedTemplates = localStorage.getItem('mvt_templates');
   if (savedTemplates) {
