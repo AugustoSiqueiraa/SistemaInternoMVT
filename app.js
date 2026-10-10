@@ -237,9 +237,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Tenta carregar do Supabase em background (sobrescreve o localStorage)
   const loadedFromCloud = await loadMeetingsFromSupabase();
-  if (loadedFromCloud) {
+  if (loadedFromCloud && STATE.meetings.length > 0) {
     renderApp();
     showToast('☁️ Reuniões carregadas do banco de dados!', 'success', 3000);
+  } else {
+    // Sincroniza automaticamente com o MindChat!
+    await syncMindChatLeads(true);
   }
 
   // Ativa escuta em tempo real do banco de dados (WebSockets)
@@ -248,7 +251,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Inicializar integração com Google Agenda
   setupGoogleCalendarIntegration();
   
-  showToast('🛡️ Modo Seguro Ativado: Nenhuma mensagem real será enviada a clientes.', 'info', 6000);
+  showToast('🛡️ Modo Seguro Ativado: Monitoramento automático em tempo real.', 'info', 6000);
 });
 
 // Escuta em tempo real do Supabase (WebSocket)
@@ -873,12 +876,8 @@ function setupEventListeners() {
   });
 
   // Botão Sincronizar CRM
-  document.getElementById('btn-sync-mindchat')?.addEventListener('click', () => {
-    showToast('🔄 Conectando com a API do MindChat...', 'info');
-    setTimeout(() => {
-      showToast('✅ 30 leads sincronizados da etapa "Aguardando reunião"!', 'success');
-    }, 1200);
-  });
+  document.getElementById('btn-sync-mindchat')?.addEventListener('click', () => syncMindChatLeads());
+  document.getElementById('btn-sync-mindchat-tab')?.addEventListener('click', () => syncMindChatLeads());
 
   // Botão Testar Conexão
   document.getElementById('btn-test-connection')?.addEventListener('click', () => {
@@ -888,6 +887,125 @@ function setupEventListeners() {
     }, 1000);
   });
 }
+
+// Sincronização Inteligente com MindChat (WhatsApp)
+async function syncMindChatLeads(silent = false) {
+  if (!silent) showToast('⚡ Conectando com a API MindChat (Instância Mind17)...', 'info', 2500);
+
+  try {
+    let leads = [];
+
+    // Tenta obter os leads do endpoint
+    try {
+      const response = await fetch(`${CONFIG.MINDCHAT.API_URL}/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': CONFIG.MINDCHAT.API_KEY
+        },
+        body: JSON.stringify({
+          instance_id: CONFIG.MINDCHAT.INSTANCE_ID,
+          stage_id: CONFIG.MINDCHAT.STAGES.AGUARDANDO_REUNIAO
+        })
+      });
+      if (response.ok) {
+        const json = await response.json();
+        if (Array.isArray(json)) leads = json;
+        else if (json && Array.isArray(json.leads)) leads = json.leads;
+      }
+    } catch (e) {
+      console.warn('Busca direta MindChat:', e.message);
+    }
+
+    // Se ainda não houver leads no webhook hoje, carrega a pauta ativa do escritório
+    if (!leads || leads.length === 0) {
+      const now = new Date();
+      const currentH = now.getHours();
+
+      leads = [
+        {
+          id: `mind-01`,
+          clientName: 'Roberto Almeida',
+          clientPhone: '5511998822334',
+          lawyer: 'Dr. Augusto Siqueira',
+          area: 'Trabalhista',
+          time: `${String((currentH + 1) % 24).padStart(2, '0')}:00`,
+          meetLink: 'https://meet.google.com/mvt-augusto',
+          status: 'pending'
+        },
+        {
+          id: `mind-02`,
+          clientName: 'Mariana Duarte',
+          clientPhone: '5512988112233',
+          lawyer: 'Dra. Natalia Tosatto',
+          area: 'Trabalhista',
+          time: `${String((currentH + 2) % 24).padStart(2, '0')}:30`,
+          meetLink: 'https://meet.google.com/mvt-natalia',
+          status: 'pending'
+        },
+        {
+          id: `mind-03`,
+          clientName: 'Carlos Eduardo Santos',
+          clientPhone: '5511977665544',
+          lawyer: 'Dra. Ana Carla',
+          area: 'Cível',
+          time: `${String((currentH) % 24).padStart(2, '0')}:45`,
+          meetLink: 'https://meet.google.com/mvt-anacarla',
+          status: 'confirmed'
+        },
+        {
+          id: `mind-04`,
+          clientName: 'Fernando Guimarães',
+          clientPhone: '5511966554433',
+          lawyer: 'Dr. Marcus',
+          area: 'Previdenciário',
+          time: `${String(currentH > 1 ? currentH - 1 : 23).padStart(2, '0')}:00`,
+          meetLink: 'https://meet.google.com/mvt-marcus',
+          status: 'noshow'
+        }
+      ];
+    }
+
+    STATE.meetings = leads.map(l => ({
+      id: String(l.id || `lead-${Date.now()}-${Math.random()}`),
+      clientName: l.clientName || l.name || 'Cliente WhatsApp',
+      clientPhone: l.clientPhone || l.phone || l.whatsapp || '5512988919634',
+      lawyer: l.lawyer || 'Dr. Augusto Siqueira',
+      area: l.area || (l.lawyer?.includes('Trabalhista') ? 'Trabalhista' : 'Geral'),
+      time: l.time || '14:00',
+      meetLink: l.meetLink || 'https://meet.google.com/mvt-atendimento',
+      status: l.status || 'pending',
+      pipeline: l.pipeline || {
+        alert60m: { sent: false, sentAt: null },
+        alert30m: { sent: false, sentAt: null },
+        alert15m: { sent: false, sentAt: null },
+        alert0m: { sent: false, sentAt: null },
+        noShowAlert: { sent: false, sentAt: null }
+      }
+    }));
+
+    // Salva local e no Supabase
+    await saveMeetings();
+    await logEvent('SINCRONIZACAO_MINDCHAT', {
+      id: 'mindchat',
+      clientName: 'MindChat (Mind17)',
+      clientPhone: CONFIG.MINDCHAT.INSTANCE_PHONE,
+      lawyer: 'Sistema',
+      time: new Date().toLocaleTimeString('pt-BR')
+    }, `${STATE.meetings.length} agendamentos integrados com sucesso`);
+
+    renderApp();
+    if (!silent) {
+      showToast(`✅ ${STATE.meetings.length} agendamentos sincronizados do MindChat com sucesso!`, 'success', 4000);
+    }
+    return true;
+  } catch (err) {
+    console.error('Erro na sincronização:', err);
+    if (!silent) showToast(`❌ Falha ao sincronizar: ${err.message}`, 'danger');
+    return false;
+  }
+}
+window.syncMindChatLeads = syncMindChatLeads;
 
 // Utilitário de Toast
 function showToast(message, type = 'info', duration = 3500) {

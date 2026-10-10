@@ -260,6 +260,27 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-sync-mindchat {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #10b981;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-sync-mindchat:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
 .theme-toggle-btn:hover {
   background: rgba(56, 189, 248, 0.15);
   border-color: var(--blue-light);

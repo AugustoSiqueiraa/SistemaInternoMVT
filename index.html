@@ -28,6 +28,7 @@
         </nav>
       </div>
       <div class="nav-actions">
+        <button class="btn-sync-mindchat" id="btn-sync-mindchat" onclick="syncMindChatLeads()" title="Sincronizar leads e reuniões do MindChat (WhatsApp)">⚡ Sincronizar MindChat</button>
         <button class="btn-sync-cloud" id="btn-sync-supabase" onclick="syncWithSupabase()" title="Sincronizar todas as reuniões e histórico com o Supabase">☁️ Sincronizar Nuvem</button>
         <div class="status-pill safe" title="Nenhuma mensagem real e enviada no WhatsApp">
           <span class="status-dot green"></span>
@@ -237,9 +238,12 @@
           <div class="panel-header">
             <div>
               <h2 class="panel-title">Parâmetros da Conexão MindChat</h2>
-              <p class="panel-subtitle">Configurações da API validadas na sua conta.</p>
+              <p class="panel-subtitle">Configurações da API validadas na sua conta (Mind17).</p>
             </div>
-            <button class="btn-primary" id="btn-test-connection">🔌 Testar Conexão</button>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button class="btn-secondary" id="btn-sync-mindchat-tab" onclick="syncMindChatLeads()">⚡ Sincronizar Leads Agora</button>
+              <button class="btn-primary" id="btn-test-connection">🔌 Testar Conexão</button>
+            </div>
           </div>
           <div class="config-grid">
             <div class="config-field"><label>URL Base da API</label><input type="text" id="config-api-url" class="clean-input" readonly></div>
