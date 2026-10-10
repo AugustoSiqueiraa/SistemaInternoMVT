@@ -241,12 +241,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderApp();
     showToast('☁️ Reuniões carregadas do banco de dados!', 'success', 3000);
   }
+
+  // Ativa escuta em tempo real do banco de dados (WebSockets)
+  setupSupabaseRealtime();
   
   // Inicializar integração com Google Agenda
   setupGoogleCalendarIntegration();
   
   showToast('🛡️ Modo Seguro Ativado: Nenhuma mensagem real será enviada a clientes.', 'info', 6000);
 });
+
+// Escuta em tempo real do Supabase (WebSocket)
+function setupSupabaseRealtime() {
+  const client = getSupabaseClient();
+  if (!client) return;
+  try {
+    client
+      .channel('reunioes-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reunioes' }, async (payload) => {
+        console.log('⚡ Atualização recebida do Supabase em tempo real:', payload);
+        await loadMeetingsFromSupabase();
+        renderApp();
+        showToast('⚡ Painel atualizado em tempo real!', 'info', 2500);
+      })
+      .subscribe();
+    console.log('⚡ Canal em tempo real do Supabase conectado!');
+  } catch (err) {
+    console.warn('Realtime subscription error:', err);
+  }
+}
 
 // Alternador de Modo Noturno (Lua 🌙) / Modo Dia (Sol ☀️)
 function setupThemeToggle() {
@@ -931,6 +954,9 @@ function setupGoogleCalendarIntegration() {
       showToast('⚠️ O link não parece ser um arquivo iCal válido. Verifique e tente novamente.', 'warning', 5000);
       return;
     }
+    if (url.includes('/public/basic.ics') || url.includes('/public/')) {
+      showToast('⚠️ ATENÇÃO: Você colou o endereço PÚBLICO (/public/), que fica bloqueado pelo Google em contas corporativas (@mvtadvogados.com.br). Copie o "Endereço secreto em formato iCal" logo abaixo na sua agenda Google!', 'warning', 10000);
+    }
     GCAL_STATE.icalUrl = url;
     localStorage.setItem('mvt_gcal_url', url);
     _showSyncPanel(url);
@@ -1063,7 +1089,9 @@ async function fetchAndParseIcal() {
     _setGcalStatus('connected');
 
     let friendlyMsg = err.message;
-    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+    if (url.includes('/public/')) {
+      friendlyMsg = 'Acesso bloqueado pelo Google (Erro 404): você colou o link Público, que não funciona em e-mails corporativos (@mvtadvogados.com.br). Por favor, copie o "Endereço secreto em formato iCal" nas configurações da sua agenda Google (o link contém "private-").';
+    } else if (err.message.includes('fetch') || err.message.includes('Failed')) {
       friendlyMsg = 'Não foi possível acessar o Google Agenda. Verifique sua conexão com a internet e se o link iCal está correto.';
     }
 
@@ -1071,7 +1099,7 @@ async function fetchAndParseIcal() {
       errorBox.style.display = 'flex';
       errorText.textContent = friendlyMsg;
     }
-    showToast(`❌ Erro ao sincronizar: ${friendlyMsg.substring(0, 80)}`, 'danger', 6000);
+    showToast(`❌ ${friendlyMsg.substring(0, 95)}`, 'danger', 8000);
   }
 }
 
