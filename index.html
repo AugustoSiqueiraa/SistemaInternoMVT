@@ -148,12 +148,18 @@
               <label class="gcal-label">Link iCal da agenda (termina em .ics)</label>
               <div class="gcal-input-row">
                 <input type="text" id="gcal-ical-input" class="clean-input gcal-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">
-                <button class="btn-secondary" id="btn-save-gcal">💾 Salvar</button>
-                <button class="btn-primary gcal-sync-btn" id="btn-gcal-sync">
+                <button type="button" class="btn-secondary" id="btn-save-gcal" onclick="handleSaveGcal()">💾 Salvar</button>
+                <button type="button" class="btn-primary gcal-sync-btn" id="btn-gcal-sync" onclick="handleSyncGcal()">
                   <span id="gcal-sync-icon">🔄</span> Sincronizar Agora
                 </button>
               </div>
-              <small id="gcal-sync-last-update" class="gcal-last-sync-label">⏱️ Nunca sincronizado — cole o link e clique em Salvar</small>
+              <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <label class="btn-xs" style="cursor: pointer; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.4); padding: 0.35rem 0.75rem; border-radius: 6px; color: var(--blue-light); display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600;">
+                  <span>📂</span> Importar Arquivo .ics direto
+                  <input type="file" id="gcal-file-input" accept=".ics" style="display: none;" onchange="handleIcalFileUpload(event)">
+                </label>
+                <small id="gcal-sync-last-update" class="gcal-last-sync-label">⏱️ Nunca sincronizado — cole o link e clique em Salvar</small>
+              </div>
             </div>
             <button class="btn-xs reset" id="btn-gcal-disconnect" style="display:none; align-self: flex-start; margin-top: 1.4rem;">X Desconectar</button>
           </div>

@@ -943,30 +943,70 @@ function setupGoogleCalendarIntegration() {
     _updateSyncTimestamp();
   }
 
-  // Salvar link
-  saveBtn.addEventListener('click', () => {
+// Salvar link da agenda
+window.handleSaveGcal = function() {
+  const inputEl = document.getElementById('gcal-ical-input');
+  if (!inputEl) return;
+  const url = inputEl.value.trim();
+  if (!url) {
+    showToast('⚠️ Cole o link iCal no campo antes de salvar.', 'warning');
+    return;
+  }
+  if (!url.includes('google.com') && !url.endsWith('.ics')) {
+    showToast('⚠️ O link não parece ser um arquivo iCal válido do Google. Verifique e tente novamente.', 'warning', 5000);
+    return;
+  }
+  if (url.includes('/public/basic.ics') || url.includes('/public/')) {
+    showToast('⚠️ ATENÇÃO: Você colou o endereço PÚBLICO (/public/), que fica bloqueado pelo Google em contas corporativas (@mvtadvogados.com.br). Copie o "Endereço secreto em formato iCal" logo abaixo na sua agenda Google!', 'warning', 10000);
+  }
+  GCAL_STATE.icalUrl = url;
+  localStorage.setItem('mvt_gcal_url', url);
+  _showSyncPanel(url);
+  showToast('✅ Link da agenda salvo com sucesso! Clique em "Sincronizar Agora" para puxar os eventos.', 'success', 4000);
+};
+
+// Sincronizar agenda
+window.handleSyncGcal = function() {
+  const inputEl = document.getElementById('gcal-ical-input');
+  if (inputEl && inputEl.value.trim()) {
     const url = inputEl.value.trim();
-    if (!url) {
-      showToast('⚠️ Cole o link iCal antes de salvar.', 'warning');
-      return;
-    }
-    if (!url.includes('google.com') && !url.endsWith('.ics')) {
-      showToast('⚠️ O link não parece ser um arquivo iCal válido. Verifique e tente novamente.', 'warning', 5000);
-      return;
-    }
-    if (url.includes('/public/basic.ics') || url.includes('/public/')) {
-      showToast('⚠️ ATENÇÃO: Você colou o endereço PÚBLICO (/public/), que fica bloqueado pelo Google em contas corporativas (@mvtadvogados.com.br). Copie o "Endereço secreto em formato iCal" logo abaixo na sua agenda Google!', 'warning', 10000);
-    }
     GCAL_STATE.icalUrl = url;
     localStorage.setItem('mvt_gcal_url', url);
     _showSyncPanel(url);
-    showToast('✅ Link da agenda salvo! Clique em "Sincronizar Agora" para importar os eventos de hoje.', 'success', 4000);
-  });
-
-  // Sincronizar
-  if (syncBtn) {
-    syncBtn.addEventListener('click', () => fetchAndParseIcal());
   }
+  fetchAndParseIcal();
+};
+
+// Importar arquivo .ics diretamente pelo computador
+window.handleIcalFileUpload = function(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  showToast('📂 Lendo arquivo da agenda...', 'info', 2000);
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const text = evt.target.result;
+    if (!text || !text.includes('BEGIN:VCALENDAR')) {
+      showToast('❌ O arquivo selecionado não é um arquivo iCal (.ics) válido.', 'danger');
+      return;
+    }
+    const todaysEvents = parseIcalForToday(text);
+    GCAL_STATE.pendingEvents = todaysEvents;
+    GCAL_STATE.lastSync = new Date().toISOString();
+    localStorage.setItem('mvt_gcal_last_sync', GCAL_STATE.lastSync);
+    _updateSyncTimestamp();
+    _setGcalStatus('connected');
+    renderGcalEventsList(todaysEvents);
+    if (todaysEvents.length === 0) {
+      showToast('📅 Nenhum evento encontrado para hoje neste arquivo .ics.', 'info', 4000);
+    } else {
+      showToast(`✅ ${todaysEvents.length} evento(s) de hoje carregado(s)! Clique em "Importar Todos" para adicionar ao painel.`, 'success', 5000);
+    }
+  };
+  reader.readAsText(file);
+};
+
+  if (saveBtn) saveBtn.addEventListener('click', window.handleSaveGcal);
+  if (syncBtn) syncBtn.addEventListener('click', window.handleSyncGcal);
 
   // Desconectar
   if (discBtn) {
@@ -1004,7 +1044,7 @@ function _updateSyncTimestamp() {
   if (GCAL_STATE.lastSync) {
     el.textContent = `Última sincronização: ${new Date(GCAL_STATE.lastSync).toLocaleTimeString('pt-BR')}`;
   } else {
-    el.textContent = 'Nunca sincronizado — clique em "Sincronizar Agora"';
+    el.textContent = 'Link configurado — clique em "Sincronizar Agora"';
   }
 }
 
@@ -1033,11 +1073,40 @@ function _setGcalStatus(state) {
   }
 }
 
-// Buscar e parsear o arquivo iCal via proxy CORS
+// Buscar conteúdo iCal com fallbacks de proxy e timeout rápido
+async function fetchIcalContent(url) {
+  const proxyEndpoints = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    url
+  ];
+
+  for (const endpoint of proxyEndpoints) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(endpoint, { signal: controller.signal, cache: 'no-cache' });
+      clearTimeout(timer);
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.includes('BEGIN:VCALENDAR')) {
+          return text;
+        }
+      }
+    } catch (e) {
+      console.warn('Proxy tentado sem sucesso:', endpoint, e.message);
+    }
+  }
+  throw new Error('Não foi possível obter os eventos através da conexão de rede. Verifique se o link secreto do Google Agenda está correto ou use o botão "Importar Arquivo .ics direto".');
+}
+
+// Buscar e parsear o arquivo iCal
 async function fetchAndParseIcal() {
-  const url = GCAL_STATE.icalUrl;
+  const inputEl = document.getElementById('gcal-ical-input');
+  const url = (GCAL_STATE.icalUrl || inputEl?.value.trim() || '').trim();
+
   if (!url) {
-    showToast('⚠️ Nenhum link iCal salvo. Cole o link e salve primeiro.', 'warning');
+    showToast('⚠️ Cole o link iCal no campo antes de sincronizar.', 'warning');
     return;
   }
 
@@ -1046,27 +1115,26 @@ async function fetchAndParseIcal() {
   const errorText = document.getElementById('gcal-error-text');
   const resultsBox = document.getElementById('gcal-import-results');
 
+  // Validação imediata de link público (que o Google bloqueia para contas corporativas)
+  if (url.includes('/public/basic.ics') || url.includes('/public/')) {
+    const warningMsg = 'Acesso negado pelo Google (Erro 404): você colou o link Público, que não funciona em e-mails corporativos (@mvtadvogados.com.br). Por favor, copie o "Endereço secreto em formato iCal" nas configurações da sua agenda Google (o link contém "private-").';
+    if (errorBox) {
+      errorBox.style.display = 'flex';
+      errorText.textContent = warningMsg;
+    }
+    showToast(`❌ ${warningMsg.substring(0, 95)}`, 'danger', 9000);
+    return;
+  }
+
   // Estado de carregamento
   if (syncIcon) syncIcon.innerHTML = '<span class="syncing-anim">🔄</span>';
   if (errorBox) errorBox.style.display = 'none';
   if (resultsBox) resultsBox.style.display = 'none';
   _setGcalStatus('syncing');
-  showToast('🔄 Buscando eventos do Google Agenda...', 'info', 3000);
-
-  // CORS Proxy — usamos allorigins.win (gratuito, sem autenticação necessária)
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  showToast('🔄 Conectando com a sua Google Agenda...', 'info', 3000);
 
   try {
-    const response = await fetch(proxyUrl, { cache: 'no-cache' });
-    if (!response.ok) {
-      throw new Error(`Servidor retornou status ${response.status}`);
-    }
-    const icalText = await response.text();
-
-    if (!icalText.includes('BEGIN:VCALENDAR')) {
-      throw new Error('O conteúdo retornado não parece ser um arquivo iCal válido. Verifique se o link está correto.');
-    }
-
+    const icalText = await fetchIcalContent(url);
     const todaysEvents = parseIcalForToday(icalText);
 
     GCAL_STATE.pendingEvents = todaysEvents;
@@ -1089,12 +1157,6 @@ async function fetchAndParseIcal() {
     _setGcalStatus('connected');
 
     let friendlyMsg = err.message;
-    if (url.includes('/public/')) {
-      friendlyMsg = 'Acesso bloqueado pelo Google (Erro 404): você colou o link Público, que não funciona em e-mails corporativos (@mvtadvogados.com.br). Por favor, copie o "Endereço secreto em formato iCal" nas configurações da sua agenda Google (o link contém "private-").';
-    } else if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      friendlyMsg = 'Não foi possível acessar o Google Agenda. Verifique sua conexão com a internet e se o link iCal está correto.';
-    }
-
     if (errorBox) {
       errorBox.style.display = 'flex';
       errorText.textContent = friendlyMsg;
