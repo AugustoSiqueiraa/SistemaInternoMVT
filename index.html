@@ -265,6 +265,10 @@
             <div class="form-group"><label class="form-label">Horario da Reuniao</label><input type="time" id="new-time" class="clean-input" required></div>
           </div>
           <div class="form-group"><label class="form-label">Link do Google Meet</label><input type="url" id="new-meet-link" class="clean-input" placeholder="https://meet.google.com/..."></div>
+          <div class="form-group" style="margin-top: 0.35rem; display: flex; align-items: center; gap: 0.55rem;">
+            <input type="checkbox" id="new-open-gcal" checked style="accent-color: var(--blue-light); width: 16px; height: 16px; cursor: pointer;">
+            <label for="new-open-gcal" style="font-size: 0.82rem; color: var(--text-muted); cursor: pointer; user-select: none;">Adicionar direto no Google Agenda ao salvar 🗓️</label>
+          </div>
           <div class="modal-footer">
             <button type="button" class="btn-secondary" id="btn-cancel-meeting">Cancelar</button>
             <button type="submit" class="btn-primary">Criar Agendamento</button>

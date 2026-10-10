@@ -38,77 +38,8 @@ const STATE = {
   filterStatus: 'all'
 };
 
-// Dados de Exemplo Seguros para Demonstração Inicial do Sistema
-const INITIAL_DEMO_MEETINGS = [
-  {
-    id: 'demo-1',
-    clientName: 'Roberto Almeida',
-    clientPhone: '5511998822334',
-    lawyer: 'Dr. Augusto Siqueira',
-    area: 'Trabalhista',
-    time: getRelativeTime(45), // Reunião daqui a 45 minutos (testa aviso de 30m e 15m)
-    meetLink: 'https://meet.google.com/abc-defg-hij',
-    status: 'pending', // pending, confirmed, in_progress, noshow
-    pipeline: {
-      alert60m: { sent: true, sentAt: '13:00' },
-      alert30m: { sent: false, sentAt: null },
-      alert15m: { sent: false, sentAt: null },
-      alert0m: { sent: false, sentAt: null },
-      noShowAlert: { sent: false, sentAt: null }
-    }
-  },
-  {
-    id: 'demo-2',
-    clientName: 'Mariana Duarte',
-    clientPhone: '5512988112233',
-    lawyer: 'Dra. Natalia Tosatto',
-    area: 'Trabalhista',
-    time: getRelativeTime(110), // Reunião daqui a quase 2 horas (testa aviso de 1h)
-    meetLink: 'https://meet.google.com/xyz-uvwx-rst',
-    status: 'pending',
-    pipeline: {
-      alert60m: { sent: false, sentAt: null },
-      alert30m: { sent: false, sentAt: null },
-      alert15m: { sent: false, sentAt: null },
-      alert0m: { sent: false, sentAt: null },
-      noShowAlert: { sent: false, sentAt: null }
-    }
-  },
-  {
-    id: 'demo-3',
-    clientName: 'Carlos Eduardo Santos',
-    clientPhone: '5511977665544',
-    lawyer: 'Dra. Ana Carla',
-    area: 'Cível',
-    time: getRelativeTime(15), // Reunião daqui a 15 min (já confirmou!)
-    meetLink: 'https://meet.google.com/mno-pqrs-tuv',
-    status: 'confirmed', // CLIENTE JÁ CONFIRMOU (avisos intermediários foram pulados)
-    pipeline: {
-      alert60m: { sent: true, sentAt: '12:45' },
-      alert30m: { sent: false, sentAt: null, skipped: true },
-      alert15m: { sent: false, sentAt: null, skipped: true },
-      alert0m: { sent: false, sentAt: null },
-      noShowAlert: { sent: false, sentAt: null }
-    }
-  },
-  {
-    id: 'demo-4',
-    clientName: 'Fernando Guimarães',
-    clientPhone: '5511966554433',
-    lawyer: 'Dr. Marcus',
-    area: 'Previdenciário',
-    time: getRelativeTime(-75), // Reunião foi há 1h15 atrás (No-Show detectado)
-    meetLink: 'https://meet.google.com/qwe-rtyu-iop',
-    status: 'noshow',
-    pipeline: {
-      alert60m: { sent: true, sentAt: '11:00' },
-      alert30m: { sent: true, sentAt: '11:30' },
-      alert15m: { sent: true, sentAt: '11:45' },
-      alert0m: { sent: true, sentAt: '12:00' },
-      noShowAlert: { sent: true, sentAt: '13:00' }
-    }
-  }
-];
+// Dados Iniciais (Vazio para receber apenas dados reais)
+const INITIAL_DEMO_MEETINGS = [];
 
 // Utilitário para gerar horários relativos seguros hoje
 function getRelativeTime(offsetMinutes) {
@@ -259,8 +190,9 @@ async function loadMeetingsFromSupabase() {
 
     if (error) throw error;
     if (!data || data.length === 0) {
-      console.log('☁️ Banco Supabase vazio. Salvando registros iniciais...');
-      await saveMeetings();
+      console.log('☁️ Banco Supabase conectado e pronto para receber dados reais.');
+      STATE.meetings = (STATE.meetings || []).filter(m => !String(m.id).startsWith('demo-'));
+      localStorage.setItem('mvt_meetings', JSON.stringify(STATE.meetings));
       return true;
     }
 
@@ -348,19 +280,20 @@ function setupThemeToggle() {
   }
 }
 
-// Carrega dados salvos ou dados de demonstração
+// Carrega dados salvos locais
 function loadStoredData() {
   const savedMeetings = localStorage.getItem('mvt_meetings');
   if (savedMeetings) {
     try {
-      STATE.meetings = JSON.parse(savedMeetings);
+      const parsed = JSON.parse(savedMeetings);
+      STATE.meetings = Array.isArray(parsed) ? parsed.filter(m => !String(m.id).startsWith('demo-')) : [];
     } catch {
-      STATE.meetings = INITIAL_DEMO_MEETINGS;
+      STATE.meetings = [];
     }
   } else {
-    STATE.meetings = INITIAL_DEMO_MEETINGS;
-    saveMeetings();
+    STATE.meetings = [];
   }
+}
 
   const savedTemplates = localStorage.getItem('mvt_templates');
   if (savedTemplates) {
@@ -864,6 +797,34 @@ function setupEventListeners() {
     saveSingleMeeting(newMeeting);
     logEvent('AGENDADO', newMeeting, `Novo agendamento criado: ${name} (${phone}) com ${lawyer} às ${time}`);
     modalNew.classList.remove('active');
+
+    // Integração direta com Google Agenda
+    const openGcal = document.getElementById('new-open-gcal')?.checked !== false;
+    if (openGcal) {
+      try {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const [hStr, mStr] = time.split(':');
+        const startH = String(hStr).padStart(2, '0');
+        const startM = String(mStr || '00').padStart(2, '0');
+        const endH = String((parseInt(startH, 10) + 1) % 24).padStart(2, '0');
+
+        const startIso = `${yyyy}${mm}${dd}T${startH}${startM}00`;
+        const endIso = `${yyyy}${mm}${dd}T${endH}${startM}00`;
+
+        const title = encodeURIComponent(`Reunião: ${name} — ${lawyer}`);
+        const details = encodeURIComponent(`Atendimento MVT Advogados\nCliente: ${name}\nWhatsApp: ${phone}\nAdvogado: ${lawyer}\nLink Meet: ${meetLink || 'A definir'}`);
+        const location = encodeURIComponent(meetLink || 'Google Meet');
+
+        const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startIso}/${endIso}&details=${details}&location=${location}`;
+        window.open(gcalUrl, '_blank');
+      } catch (gcalErr) {
+        console.warn('Erro ao abrir Google Agenda:', gcalErr);
+      }
+    }
+
     e.target.reset();
     renderApp();
     showToast(`✅ Agendamento para ${name} criado e salvo no banco de dados!`, 'success');
