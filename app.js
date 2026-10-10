@@ -227,7 +227,7 @@ function renderMetrics() {
   document.getElementById('meetings-count-badge').textContent = `${total} agendamento${total !== 1 ? 's' : ''}`;
 }
 
-// Renderiza a Lista de Cards de Reunião
+// Renderiza a Lista de Reuniões em Linhas Executivas
 function renderMeetingsList() {
   const container = document.getElementById('meetings-list-container');
   container.innerHTML = '';
@@ -246,8 +246,7 @@ function renderMeetingsList() {
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">📭</div>
-        <p class="empty-text">Nenhuma reunião encontrada com os filtros selecionados.</p>
+        <p>Nenhuma reunião encontrada para os filtros selecionados.</p>
       </div>
     `;
     return;
@@ -257,9 +256,9 @@ function renderMeetingsList() {
   filtered.sort((a, b) => a.time.localeCompare(b.time));
 
   filtered.forEach(meeting => {
-    const card = document.createElement('div');
-    card.className = `meeting-card status-${meeting.status}`;
-    card.id = `meeting-${meeting.id}`;
+    const row = document.createElement('div');
+    row.className = `meeting-row status-${meeting.status}`;
+    row.id = `meeting-${meeting.id}`;
 
     // Cálculo da contagem regressiva
     const [mHours, mMinutes] = meeting.time.split(':').map(Number);
@@ -267,114 +266,81 @@ function renderMeetingsList() {
     meetingDate.setHours(mHours, mMinutes, 0, 0);
 
     const diffMinutes = Math.round((meetingDate - now) / 60000);
-    let countdownBadgeHtml = '';
+    let countdownPillHtml = '';
 
     if (meeting.status === 'noshow') {
-      countdownBadgeHtml = `<span class="time-countdown done">🚫 Declarado No-Show</span>`;
+      countdownPillHtml = `<span class="countdown-pill" style="color: var(--rose);">🚫 No-Show</span>`;
     } else if (diffMinutes > 60) {
-      countdownBadgeHtml = `<span class="time-countdown">⏳ Faltam ${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m</span>`;
+      countdownPillHtml = `<span class="countdown-pill">Faltam ${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m</span>`;
     } else if (diffMinutes > 15) {
-      countdownBadgeHtml = `<span class="time-countdown due-soon">⚡ Faltam ${diffMinutes} min</span>`;
+      countdownPillHtml = `<span class="countdown-pill due-soon">⚡ Faltam ${diffMinutes}m</span>`;
     } else if (diffMinutes > 0) {
-      countdownBadgeHtml = `<span class="time-countdown urgent">🔥 Faltam ${diffMinutes} min</span>`;
+      countdownPillHtml = `<span class="countdown-pill urgent">🔥 Faltam ${diffMinutes}m</span>`;
     } else if (diffMinutes > -30) {
-      countdownBadgeHtml = `<span class="time-countdown now">🟢 Horário da Reunião</span>`;
+      countdownPillHtml = `<span class="countdown-pill now">🟢 No Horário</span>`;
     } else {
-      countdownBadgeHtml = `<span class="time-countdown done">Reunião Encerrada</span>`;
+      countdownPillHtml = `<span class="countdown-pill">Encerrada</span>`;
     }
 
-    // Status dos 4 passos da esteira Anti No-Show
     const p = meeting.pipeline;
     const isConfirmed = meeting.status === 'confirmed';
 
-    card.innerHTML = `
-      <!-- Coluna 1: Cliente e Advogado -->
-      <div class="client-block">
-        <div class="client-name">
-          👤 ${escapeHtml(meeting.clientName)}
-        </div>
-        <div class="client-phone">
-          📱 ${escapeHtml(meeting.clientPhone)}
-        </div>
-        <div class="lawyer-badge">
-          ⚖️ ${escapeHtml(meeting.lawyer)}
-        </div>
+    row.innerHTML = `
+      <!-- Coluna 1: Horário -->
+      <div class="time-cell">
+        <span class="time-main">${meeting.time}</span>
+        ${countdownPillHtml}
       </div>
 
-      <!-- Coluna 2: Horário & Relógio -->
-      <div class="time-block">
-        <div class="time-display">
-          🕒 ${meeting.time}
-        </div>
-        <div>${countdownBadgeHtml}</div>
+      <!-- Coluna 2: Cliente -->
+      <div class="client-cell">
+        <span class="client-cell-name">👤 ${escapeHtml(meeting.clientName)}</span>
+        <span class="client-cell-phone">📱 ${escapeHtml(meeting.clientPhone)}</span>
       </div>
 
-      <!-- Coluna 3: A Régua de 4 Passos -->
-      <div class="pipeline-block">
-        <div class="pipeline-steps">
-          <!-- Passo 1h -->
-          <div class="pipeline-step ${p.alert60m.sent ? 'step-sent' : ''}">
-            <span class="step-label">1 Hora</span>
-            <span class="step-status">${p.alert60m.sent ? '✓ Enviado' : 'Pendente'}</span>
-          </div>
-
-          <!-- Passo 30m -->
-          <div class="pipeline-step ${isConfirmed ? 'step-skipped' : (p.alert30m.sent ? 'step-sent' : '')}">
-            <span class="step-label">30 Min</span>
-            <span class="step-status">${isConfirmed ? 'Pulpado' : (p.alert30m.sent ? '✓ Enviado' : 'Reforço')}</span>
-          </div>
-
-          <!-- Passo 15m -->
-          <div class="pipeline-step ${isConfirmed ? 'step-skipped' : (p.alert15m.sent ? 'step-sent' : '')}">
-            <span class="step-label">15 Min</span>
-            <span class="step-status">${isConfirmed ? 'Pulpado' : (p.alert15m.sent ? '✓ Enviado' : 'Chamada')}</span>
-          </div>
-
-          <!-- Passo No Horário (Meet) -->
-          <div class="pipeline-step ${p.alert0m.sent ? 'step-confirmed' : ''}">
-            <span class="step-label">No Horário</span>
-            <span class="step-status">${p.alert0m.sent ? '✓ Meet Enviado' : 'Link Meet'}</span>
-          </div>
-        </div>
-
-        <div style="font-size: 0.72rem; color: var(--text-dim); display: flex; justify-content: space-between;">
-          <span>${isConfirmed ? '✅ Presença confirmada pelo cliente' : '⏳ Aguardando confirmação'}</span>
-          <span>${meeting.area}</span>
-        </div>
+      <!-- Coluna 3: Advogado -->
+      <div class="lawyer-cell">
+        <span class="lawyer-cell-name">⚖️ ${escapeHtml(meeting.lawyer)}</span>
+        <span class="lawyer-cell-area">${escapeHtml(meeting.area)}</span>
       </div>
 
-      <!-- Coluna 4: Ações Rápidas do Comercial -->
-      <div class="actions-block">
+      <!-- Coluna 4: Régua Anti No-Show (Mini Passos) -->
+      <div class="pipeline-cell">
+        <div class="pipe-step ${p.alert60m.sent ? 'sent' : ''}" title="Alerta 1h">1h</div>
+        <div class="pipe-step ${isConfirmed ? 'skipped' : (p.alert30m.sent ? 'sent' : '')}" title="Alerta 30m">30m</div>
+        <div class="pipe-step ${isConfirmed ? 'skipped' : (p.alert15m.sent ? 'sent' : '')}" title="Alerta 15m">15m</div>
+        <div class="pipe-step ${p.alert0m.sent ? 'confirmed' : ''}" title="Google Meet">Meet</div>
+      </div>
+
+      <!-- Coluna 5: Ações Rápidas -->
+      <div class="actions-cell">
         ${meeting.status !== 'confirmed' && meeting.status !== 'noshow' ? `
-          <button class="btn-action btn-confirm" data-action="confirm" data-id="${meeting.id}">
-            ✅ Confirmar Presença
+          <button class="btn-tbl confirm" data-action="confirm" data-id="${meeting.id}" title="Confirmar Presença">
+            ✓ Confirmar
           </button>
         ` : ''}
 
-        <a href="${escapeHtml(meeting.meetLink)}" target="_blank" class="btn-action btn-meet">
-          🔗 Acessar Google Meet
+        <a href="${escapeHtml(meeting.meetLink)}" target="_blank" class="btn-tbl meet" title="Abrir Link do Google Meet">
+          🔗 Meet
         </a>
 
         ${meeting.status !== 'noshow' ? `
-          <button class="btn-action btn-send-now" data-action="preview" data-id="${meeting.id}">
-            💬 Pré-visualizar Mensagem
+          <button class="btn-tbl more" data-action="preview" data-id="${meeting.id}" title="Ver Mensagem">
+            💬
           </button>
-
-          <button class="btn-action btn-noshow" data-action="noshow" data-id="${meeting.id}">
-            🚫 Declarar No-Show
+          <button class="btn-tbl more" data-action="noshow" data-id="${meeting.id}" title="Declarar No-Show" style="color: var(--rose);">
+            🚫
           </button>
         ` : `
-          <div style="text-align: center; font-size: 0.75rem; color: var(--rose); font-weight: 700;">
-            Movido para NO SHOW no CRM
-          </div>
+          <span class="noshow-tag">NO-SHOW</span>
         `}
       </div>
     `;
 
-    container.appendChild(card);
+    container.appendChild(row);
   });
 
-  // Vincular eventos aos botões dentro dos cards
+  // Vincular eventos aos botões dentro das linhas
   container.querySelectorAll('button[data-action]').forEach(btn => {
     btn.addEventListener('click', handleCardAction);
   });
@@ -533,9 +499,9 @@ function checkAutomatedTriggers(now) {
 // Configuração de Eventos da Interface
 function setupEventListeners() {
   // Navegação de Abas
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  document.querySelectorAll('.nav-tab-btn, .tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.nav-tab-btn, .tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
 
       btn.classList.add('active');
@@ -545,46 +511,50 @@ function setupEventListeners() {
   });
 
   // Filtros
-  document.getElementById('filter-search').addEventListener('input', e => {
+  document.getElementById('filter-search')?.addEventListener('input', e => {
     STATE.filterSearch = e.target.value;
     renderMeetingsList();
   });
 
-  document.getElementById('filter-lawyer').addEventListener('change', e => {
+  document.getElementById('filter-lawyer')?.addEventListener('change', e => {
     STATE.filterLawyer = e.target.value;
     renderMeetingsList();
   });
 
-  document.getElementById('filter-status').addEventListener('change', e => {
+  document.getElementById('filter-status')?.addEventListener('change', e => {
     STATE.filterStatus = e.target.value;
     renderMeetingsList();
   });
 
   // Controles de Simulação de Tempo
-  document.getElementById('btn-advance-15m').addEventListener('click', () => {
+  document.getElementById('btn-advance-15m')?.addEventListener('click', () => {
     STATE.simulatedTimeOffsetMs += 15 * 60 * 1000;
-    document.getElementById('sim-status-label').textContent = 'Simulação Ativa (+)';
+    const label = document.getElementById('sim-status-label');
+    if (label) label.textContent = 'Simulação Ativa (+)';
     checkAutomatedTriggers(getCurrentTime());
     renderApp();
   });
 
-  document.getElementById('btn-advance-30m').addEventListener('click', () => {
+  document.getElementById('btn-advance-30m')?.addEventListener('click', () => {
     STATE.simulatedTimeOffsetMs += 30 * 60 * 1000;
-    document.getElementById('sim-status-label').textContent = 'Simulação Ativa (+)';
+    const label = document.getElementById('sim-status-label');
+    if (label) label.textContent = 'Simulação Ativa (+)';
     checkAutomatedTriggers(getCurrentTime());
     renderApp();
   });
 
-  document.getElementById('btn-advance-1h').addEventListener('click', () => {
+  document.getElementById('btn-advance-1h')?.addEventListener('click', () => {
     STATE.simulatedTimeOffsetMs += 60 * 60 * 1000;
-    document.getElementById('sim-status-label').textContent = 'Simulação Ativa (+)';
+    const label = document.getElementById('sim-status-label');
+    if (label) label.textContent = 'Simulação Ativa (+)';
     checkAutomatedTriggers(getCurrentTime());
     renderApp();
   });
 
-  document.getElementById('btn-reset-time').addEventListener('click', () => {
+  document.getElementById('btn-reset-time')?.addEventListener('click', () => {
     STATE.simulatedTimeOffsetMs = 0;
-    document.getElementById('sim-status-label').textContent = 'Modo Tempo Real';
+    const label = document.getElementById('sim-status-label');
+    if (label) label.textContent = 'Modo Tempo Real';
     renderApp();
     showToast('Relógio sincronizado com a hora real.', 'info');
   });
