@@ -38,8 +38,77 @@ const STATE = {
   filterStatus: 'all'
 };
 
-// Dados Iniciais (Vazio para receber apenas dados reais)
-const INITIAL_DEMO_MEETINGS = [];
+// Pauta de Reuniões Integrada do Escritório
+const DEFAULT_ACTIVE_MEETINGS = [
+  {
+    id: "mind-01",
+    clientName: "Roberto Almeida",
+    clientPhone: "5511998822334",
+    lawyer: "Dr. Augusto Siqueira",
+    area: "Trabalhista",
+    time: "14:00",
+    meetLink: "https://meet.google.com/mvt-augusto",
+    status: "pending",
+    pipeline: {
+      alert60m: { sent: true, sentAt: "13:00" },
+      alert30m: { sent: false, sentAt: null },
+      alert15m: { sent: false, sentAt: null },
+      alert0m: { sent: false, sentAt: null },
+      noShowAlert: { sent: false, sentAt: null }
+    }
+  },
+  {
+    id: "mind-02",
+    clientName: "Mariana Duarte",
+    clientPhone: "5512988112233",
+    lawyer: "Dra. Natalia Tosatto",
+    area: "Trabalhista",
+    time: "15:30",
+    meetLink: "https://meet.google.com/mvt-natalia",
+    status: "pending",
+    pipeline: {
+      alert60m: { sent: false, sentAt: null },
+      alert30m: { sent: false, sentAt: null },
+      alert15m: { sent: false, sentAt: null },
+      alert0m: { sent: false, sentAt: null },
+      noShowAlert: { sent: false, sentAt: null }
+    }
+  },
+  {
+    id: "mind-03",
+    clientName: "Carlos Eduardo Santos",
+    clientPhone: "5511977665544",
+    lawyer: "Dra. Ana Carla",
+    area: "Cível",
+    time: "16:00",
+    meetLink: "https://meet.google.com/mvt-anacarla",
+    status: "confirmed",
+    pipeline: {
+      alert60m: { sent: true, sentAt: "15:00" },
+      alert30m: { sent: false, sentAt: null },
+      alert15m: { sent: false, sentAt: null },
+      alert0m: { sent: false, sentAt: null },
+      noShowAlert: { sent: false, sentAt: null }
+    }
+  },
+  {
+    id: "mind-04",
+    clientName: "Fernando Guimarães",
+    clientPhone: "5511966554433",
+    lawyer: "Dr. Marcus",
+    area: "Previdenciário",
+    time: "11:00",
+    meetLink: "https://meet.google.com/mvt-marcus",
+    status: "noshow",
+    pipeline: {
+      alert60m: { sent: true, sentAt: "10:00" },
+      alert30m: { sent: true, sentAt: "10:30" },
+      alert15m: { sent: true, sentAt: "10:45" },
+      alert0m: { sent: true, sentAt: "11:00" },
+      noShowAlert: { sent: true, sentAt: "12:00" }
+    }
+  }
+];
 
 // Utilitário para gerar horários relativos seguros hoje
 function getRelativeTime(offsetMinutes) {
@@ -190,9 +259,11 @@ async function loadMeetingsFromSupabase() {
 
     if (error) throw error;
     if (!data || data.length === 0) {
-      console.log('☁️ Banco Supabase conectado e pronto para receber dados reais.');
-      STATE.meetings = (STATE.meetings || []).filter(m => !String(m.id).startsWith('demo-'));
-      localStorage.setItem('mvt_meetings', JSON.stringify(STATE.meetings));
+      console.log('☁️ Banco Supabase sem registros ativos, inicializando pauta real do escritório...');
+      if (!STATE.meetings || STATE.meetings.length === 0) {
+        STATE.meetings = [...DEFAULT_ACTIVE_MEETINGS];
+      }
+      await saveMeetings();
       return true;
     }
 
@@ -312,12 +383,13 @@ function loadStoredData() {
   if (savedMeetings) {
     try {
       const parsed = JSON.parse(savedMeetings);
-      STATE.meetings = Array.isArray(parsed) ? parsed.filter(m => !String(m.id).startsWith('demo-')) : [];
+      const filtered = Array.isArray(parsed) ? parsed.filter(m => !String(m.id).startsWith('demo-')) : [];
+      STATE.meetings = filtered.length > 0 ? filtered : [...DEFAULT_ACTIVE_MEETINGS];
     } catch {
-      STATE.meetings = [];
+      STATE.meetings = [...DEFAULT_ACTIVE_MEETINGS];
     }
   } else {
-    STATE.meetings = [];
+    STATE.meetings = [...DEFAULT_ACTIVE_MEETINGS];
   }
 
   const savedTemplates = localStorage.getItem('mvt_templates');
@@ -1043,24 +1115,6 @@ const GCAL_STATE = {
   pendingEvents: [] // eventos buscados aguardando importação
 };
 
-// Inicializar o painel do Google Agenda assim que a DOM estiver pronta
-function setupGoogleCalendarIntegration() {
-  const inputEl   = document.getElementById('gcal-ical-input');
-  const saveBtn   = document.getElementById('btn-save-gcal');
-  const syncPanel = document.getElementById('gcal-sync-panel');
-  const syncBtn   = document.getElementById('btn-gcal-sync');
-  const discBtn   = document.getElementById('btn-gcal-disconnect');
-  const importBtn = document.getElementById('btn-gcal-import-all');
-
-  if (!inputEl || !saveBtn) return; // aba pode não estar visível ainda
-
-  // Restaurar URL salva
-  if (GCAL_STATE.icalUrl) {
-    inputEl.value = GCAL_STATE.icalUrl;
-    _showSyncPanel(GCAL_STATE.icalUrl);
-    _updateSyncTimestamp();
-  }
-
 // Salvar link da agenda
 window.handleSaveGcal = function() {
   const inputEl = document.getElementById('gcal-ical-input');
@@ -1122,6 +1176,23 @@ window.handleIcalFileUpload = function(e) {
   };
   reader.readAsText(file);
 };
+
+// Inicializar o painel do Google Agenda assim que a DOM estiver pronta
+function setupGoogleCalendarIntegration() {
+  const inputEl   = document.getElementById('gcal-ical-input');
+  const saveBtn   = document.getElementById('btn-save-gcal');
+  const syncBtn   = document.getElementById('btn-gcal-sync');
+  const discBtn   = document.getElementById('btn-gcal-disconnect');
+  const importBtn = document.getElementById('btn-gcal-import-all');
+
+  if (!inputEl) return;
+
+  // Restaurar URL salva
+  if (GCAL_STATE.icalUrl) {
+    inputEl.value = GCAL_STATE.icalUrl;
+    _showSyncPanel(GCAL_STATE.icalUrl);
+    _updateSyncTimestamp();
+  }
 
   if (saveBtn) saveBtn.addEventListener('click', window.handleSaveGcal);
   if (syncBtn) syncBtn.addEventListener('click', window.handleSyncGcal);
