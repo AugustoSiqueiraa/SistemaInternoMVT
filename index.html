@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MVT Advogados | Gestão de Reuniões & Automação Anti No-Show</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar Superior -->
+    <header class="navbar">
+      <div class="brand-wrapper">
+        <!-- Logo Oficial MVT Advogados (Sem fundo, conforme imagem) -->
+        <div class="mvt-official-logo">
+          <div class="mvt-letters">MVT</div>
+          <div class="mvt-subtitle">
+            <span class="mvt-line"></span>
+            <span class="mvt-text">ADVOGADOS</span>
+            <span class="mvt-line"></span>
+          </div>
+        </div>
+
+        <div class="brand-divider"></div>
+        <div class="brand-tag">Central de Reuniões & Anti No-Show</div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Alternador Modo Noturno / Modo Dia (Lua e Sol) -->
+        <button class="theme-toggle-btn" id="btn-theme-toggle" title="Alternar Modo Noturno / Modo Dia">
+          <span class="theme-icon-indicator" id="theme-icon">🌙</span>
+          <span class="theme-text-indicator" id="theme-text">Noturno</span>
+        </button>
+
+        <div class="status-pill" id="mindchat-status-pill">
+          <span class="status-dot"></span>
+          <span>MindChat: <strong>Conectado (Mind17)</strong></span>
+        </div>
+        
+        <button class="btn-secondary" id="btn-sync-mindchat" title="Sincronizar com CRM">
+          🔄 Sincronizar CRM
+        </button>
+
+        <button class="btn-primary" id="btn-open-new-meeting">
+          ➕ Novo Agendamento
+        </button>
+      </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+      <!-- Navegação de Abas -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-dashboard" id="tab-btn-dashboard">
+          📊 Painel de Reuniões
+        </button>
+        <button class="tab-btn" data-tab="tab-templates" id="tab-btn-templates">
+          💬 Régua de Mensagens
+        </button>
+        <button class="tab-btn" data-tab="tab-integration" id="tab-btn-integration">
+          ⚙️ Conexão & API
+        </button>
+      </nav>
+
+      <!-- ABA 1: DASHBOARD DE REUNIÕES -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <!-- Cards de Métricas -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue">📅</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total">0</span>
+              <span class="stat-label">Reuniões Hoje</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon emerald">✅</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-confirmed">0</span>
+              <span class="stat-label">Confirmadas</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon amber">⏳</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-pending">0</span>
+              <span class="stat-label">Aguardando Confirmação</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon rose">🚫</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-noshow">0</span>
+              <span class="stat-label">No-Shows Identificados</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon gold">⚖️</div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-rate">100%</span>
+              <span class="stat-label">Taxa de Presença</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Simulação / Relógio Inteligente -->
+        <div class="simulation-banner">
+          <div class="sim-info">
+            <span>⏱️ <strong>Relógio do Sistema:</strong></span>
+            <span class="sim-clock" id="live-clock">14:00:00</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);" id="sim-status-label">Modo Tempo Real</span>
+          </div>
+
+          <div class="sim-controls">
+            <button class="btn-secondary" id="btn-advance-15m" title="Avançar 15 minutos para testar a régua">
+              ⏩ +15 Min
+            </button>
+            <button class="btn-secondary" id="btn-advance-30m" title="Avançar 30 minutos">
+              ⏩ +30 Min
+            </button>
+            <button class="btn-secondary" id="btn-advance-1h" title="Avançar 1 hora">
+              ⏩ +1 Hora
+            </button>
+            <button class="btn-secondary" id="btn-reset-time" title="Resetar para hora atual">
+              🔄 Hora Atual
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Ações & Filtros -->
+        <div class="section-bar">
+          <div class="section-title-wrapper">
+            <h2 class="section-title">Pauta de Atendimentos</h2>
+            <span class="section-count" id="meetings-count-badge">0 reuniões</span>
+          </div>
+
+          <div class="filters-wrapper">
+            <input type="text" id="filter-search" class="search-input" placeholder="Buscar por cliente ou telefone...">
+            
+            <select id="filter-lawyer" class="select-filter">
+              <option value="all">Todos os Advogados</option>
+              <option value="Dr. Augusto Siqueira">Dr. Augusto Siqueira</option>
+              <option value="Dra. Natalia Tosatto">Dra. Natalia Tosatto</option>
+              <option value="Dra. Ana Carla">Dra. Ana Carla</option>
+              <option value="Dr. Marcus">Dr. Marcus</option>
+            </select>
+
+            <select id="filter-status" class="select-filter">
+              <option value="all">Todos os Status</option>
+              <option value="pending">Aguardando Confirmação</option>
+              <option value="confirmed">Confirmado</option>
+              <option value="in_progress">Em Andamento</option>
+              <option value="noshow">No-Show</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Lista de Reuniões -->
+        <div class="meetings-list" id="meetings-list-container">
+          <!-- Gerado via JavaScript -->
+        </div>
+      </section>
+
+      <!-- ABA 2: RÉGUA DE MENSAGENS -->
+      <section id="tab-templates" class="tab-pane" style="display: none;">
+        <div class="section-bar">
+          <div>
+            <h2 class="section-title">Régua de Mensagens Anti No-Show</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Configure o conteúdo de cada alerta enviado no WhatsApp do cliente via MindChat.
+            </p>
+          </div>
+          <button class="btn-primary" id="btn-save-templates">💾 Salvar Alterações</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+          <!-- 1 Hora Antes -->
+          <div class="stat-card" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <strong style="color: var(--amber);">🟡 Alerta 1: Faltando 1 Hora</strong>
+              <span class="brand-tag">Confirmação Ativa</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Disparado exatamente 60 min antes. Se o cliente responder confirmando, a automação pula os alertas de 30m e 15m.
+            </p>
+            <textarea id="template-alert-60m" class="form-control" rows="4"></textarea>
+          </div>
+
+          <!-- 30 Minutos Antes -->
+          <div class="stat-card" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <strong style="color: var(--amber);">🟠 Alerta 2: Faltando 30 Minutos</strong>
+              <span class="brand-tag">Reforço</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Só dispara se o cliente AINDA NÃO tiver confirmado no alerta anterior.
+            </p>
+            <textarea id="template-alert-30m" class="form-control" rows="4"></textarea>
+          </div>
+
+          <!-- 15 Minutos Antes -->
+          <div class="stat-card" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <strong style="color: var(--rose);">🔴 Alerta 3: Faltando 15 Minutos</strong>
+              <span class="brand-tag">Última Chamada</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Reforço final para clientes que ainda não responderam.
+            </p>
+            <textarea id="template-alert-15m" class="form-control" rows="4"></textarea>
+          </div>
+
+          <!-- No Horário (Meet) -->
+          <div class="stat-card" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <strong style="color: var(--emerald);">🚀 Alerta 4: No Horário (0 Min)</strong>
+              <span class="brand-tag">Link do Google Meet</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Enviado para TODOS (confirmados ou não), com o link direto da sala do Google Meet.
+            </p>
+            <textarea id="template-alert-0m" class="form-control" rows="4"></textarea>
+          </div>
+
+          <!-- Pós-reunião (1h depois - No-Show) -->
+          <div class="stat-card" style="grid-column: 1 / -1; flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <strong style="color: var(--rose);">⚠️ Alerta Pós-Reunião: 1h Após Falta (NO-SHOW)</strong>
+              <span class="brand-tag">Ação Comercial</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Disparado 1h após a reunião se o cliente não compareceu. Move automaticamente o lead para a coluna NO SHOW no CRM do MindChat.
+            </p>
+            <textarea id="template-noshow-1h" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 3: INTEGRAÇÃO & API -->
+      <section id="tab-integration" class="tab-pane" style="display: none;">
+        <div class="section-bar">
+          <div>
+            <h2 class="section-title">Parâmetros da Conexão MindChat (MindIA)</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Credenciais e identificadores validados diretamente na sua conta.
+            </p>
+          </div>
+          <button class="btn-primary" id="btn-test-connection">🔌 Testar Conexão Novamente</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+          <div class="stat-card" style="flex-direction: column; align-items: stretch;">
+            <h3 style="font-size: 1rem; color: var(--gold-primary); margin-bottom: 1rem;">Credenciais da API</h3>
+            
+            <div class="form-group">
+              <label class="form-label">URL Base da API</label>
+              <input type="text" id="config-api-url" class="form-control" readonly>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Chave de API (X-Api-Key)</label>
+              <input type="password" id="config-api-key" class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ID da Instância WhatsApp</label>
+              <input type="text" id="config-instance-id" class="form-control" readonly>
+            </div>
+          </div>
+
+          <div class="stat-card" style="flex-direction: column; align-items: stretch;">
+            <h3 style="font-size: 1rem; color: var(--gold-primary); margin-bottom: 1rem;">Mapeamento no CRM</h3>
+            
+            <div class="form-group">
+              <label class="form-label">ID da Etapa "Aguardando reunião"</label>
+              <input type="text" id="config-stage-waiting" class="form-control" readonly>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ID da Etapa "NO SHOW" (Destino)</label>
+              <input type="text" id="config-stage-noshow" class="form-control" placeholder="Cole o UUID da coluna NO SHOW do seu CRM">
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 8px; margin-top: auto;">
+              <small style="color: var(--text-muted); display: block; line-height: 1.4;">
+                💡 <strong>Como funciona o disparo:</strong> As mensagens são enviadas via endpoint oficial <code>POST /webhook/v1/messages/text</code> da sua conexão <strong>Mind17</strong> sem custo de templates Meta!
+              </small>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal Novo Agendamento -->
+    <div class="modal-overlay" id="modal-new-meeting">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Novo Agendamento</h3>
+          <button class="modal-close" id="btn-close-modal">&times;</button>
+        </div>
+
+        <form id="form-new-meeting">
+          <div class="form-group">
+            <label class="form-label">Nome Completo do Cliente</label>
+            <input type="text" id="new-client-name" class="form-control" placeholder="Ex: João da Silva" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">WhatsApp (com DDD)</label>
+            <input type="text" id="new-client-phone" class="form-control" placeholder="Ex: 5512999999999" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Advogado(a)</label>
+              <select id="new-lawyer" class="form-control">
+                <option value="Dr. Augusto Siqueira">Dr. Augusto Siqueira (Trabalhista)</option>
+                <option value="Dra. Natalia Tosatto">Dra. Natalia Tosatto (Trabalhista)</option>
+                <option value="Dra. Ana Carla">Dra. Ana Carla (Cível)</option>
+                <option value="Dr. Marcus">Dr. Marcus (Previdenciário)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Horário da Reunião</label>
+              <input type="time" id="new-time" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Link do Google Meet</label>
+            <input type="url" id="new-meet-link" class="form-control" placeholder="https://meet.google.com/..." required>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btn-cancel-meeting">Cancelar</button>
+            <button type="submit" class="btn-primary">Criar & Programar Régua</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de Envio Manual / Detalhes de Mensagem -->
+    <div class="modal-overlay" id="modal-preview-message">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Disparo Manual de WhatsApp</h3>
+          <button class="modal-close" id="btn-close-preview">&times;</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Destinatário</label>
+          <input type="text" id="preview-recipient" class="form-control" readonly>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Texto da Mensagem</label>
+          <textarea id="preview-text" class="form-control" rows="5"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-cancel-preview">Fechar</button>
+          <button type="button" class="btn-primary" id="btn-confirm-send-preview">🚀 Enviar no WhatsApp Agora</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Container de Toasts -->
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
