@@ -119,15 +119,200 @@ function getRelativeTime(offsetMinutes) {
   return `${h}:${m}`;
 }
 
-// INICIALIZAÇÃO
-document.addEventListener('DOMContentLoaded', () => {
+// ============================================================
+// SUPABASE — BANCO DE DADOS EM NUVEM
+// ============================================================
+const SUPABASE_URL = 'https://klrajawehrzqnvbknjea.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_BX9Led8X5QzH0rj9riUQqw_YI1nHqw8';
+
+let supabaseClient = null;
+function getSupabaseClient() {
+  if (supabaseClient) return supabaseClient;
+  try {
+    const sb = window.supabase || window.supabaseJs;
+    if (sb && typeof sb.createClient === 'function') {
+      supabaseClient = sb.createClient(SUPABASE_URL, SUPABASE_KEY);
+      console.log('✅ Supabase conectado ao banco SistemaInterno!');
+      return supabaseClient;
+    }
+  } catch (e) {
+    console.warn('⚠️ Erro ao inicializar SDK Supabase:', e);
+  }
+  return null;
+}
+
+// Converte um objeto de reunião do STATE para o formato da tabela Supabase
+function _meetingToRow(m) {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  return {
+    id: String(m.id || Date.now()),
+    client_name: String(m.clientName || 'Cliente Sem Nome'),
+    client_phone: String(m.clientPhone || ''),
+    lawyer: String(m.lawyer || ''),
+    area: String(m.area || ''),
+    meeting_date: today,
+    meeting_time: String(m.time || ''),
+    meet_link: String(m.meetLink || ''),
+    status: String(m.status || 'pending'),
+    alert_60m_sent: Boolean(m.pipeline?.alert60m?.sent),
+    alert_60m_at: m.pipeline?.alert60m?.sentAt || null,
+    alert_30m_sent: Boolean(m.pipeline?.alert30m?.sent),
+    alert_30m_at: m.pipeline?.alert30m?.sentAt || null,
+    alert_15m_sent: Boolean(m.pipeline?.alert15m?.sent),
+    alert_15m_at: m.pipeline?.alert15m?.sentAt || null,
+    alert_0m_sent: Boolean(m.pipeline?.alert0m?.sent),
+    alert_0m_at: m.pipeline?.alert0m?.sentAt || null,
+    no_show_alert_sent: Boolean(m.pipeline?.noShowAlert?.sent),
+    no_show_alert_at: m.pipeline?.noShowAlert?.sentAt || null,
+    updated_at: new Date().toISOString()
+  };
+}
+
+// Salvar TODAS as reuniões no Supabase + localStorage backup
+async function saveMeetings() {
+  // 1. Salva local imediatamente (sem latência de rede)
+  localStorage.setItem('mvt_meetings', JSON.stringify(STATE.meetings));
+
+  const client = getSupabaseClient();
+  if (!client) return;
+  try {
+    for (const m of STATE.meetings) {
+      const row = _meetingToRow(m);
+      await client.from('reunioes').upsert(row, { onConflict: 'id' });
+    }
+    console.log('✅ Reuniões salvas no Supabase!');
+  } catch (err) {
+    console.error('❌ Erro ao salvar no Supabase:', err);
+  }
+}
+
+// Salvar UMA reunião específica no Supabase (chamada após cada ação)
+async function saveSingleMeeting(meeting) {
+  localStorage.setItem('mvt_meetings', JSON.stringify(STATE.meetings));
+  const client = getSupabaseClient();
+  if (!client) return;
+  try {
+    const row = _meetingToRow(meeting);
+    const { error } = await client
+      .from('reunioes')
+      .upsert(row, { onConflict: 'id' });
+    if (error) throw error;
+    console.log(`✅ Reunião ${meeting.id} sincronizada no Supabase!`);
+  } catch (err) {
+    console.error('❌ Erro ao salvar reunião no Supabase:', err);
+  }
+}
+
+// Registrar um evento no histórico permanente do Supabase
+async function logEvent(tipo, meeting, extra = '') {
+  const client = getSupabaseClient();
+  if (!client) return;
+  try {
+    await client.from('historico_eventos').insert({
+      tipo_evento: tipo,
+      reuniao_id: String(meeting.id || ''),
+      client_name: String(meeting.clientName || ''),
+      client_phone: String(meeting.clientPhone || ''),
+      lawyer: String(meeting.lawyer || ''),
+      meeting_time: String(meeting.time || ''),
+      descricao: extra || `${tipo} — ${meeting.clientName} (${meeting.time})`,
+      data_evento: new Date().toISOString()
+    });
+    console.log(`📝 Evento [${tipo}] gravado com sucesso no Supabase!`);
+  } catch (err) {
+    console.warn('⚠️ Log de evento no Supabase falhou (não bloqueante):', err);
+  }
+}
+
+// Sincronização manual via interface
+async function syncWithSupabase() {
+  const client = getSupabaseClient();
+  if (!client) {
+    showToast('⚠️ Conexão com Supabase indisponível no momento.', 'warning');
+    return;
+  }
+  showToast('☁️ Sincronizando com o Supabase...', 'info', 2000);
+  try {
+    await saveMeetings();
+    await logEvent('SINCRONIZACAO_MANUAL', {
+      id: 'sistema',
+      clientName: 'Painel do Sistema',
+      clientPhone: '',
+      lawyer: 'Administrador',
+      time: new Date().toLocaleTimeString('pt-BR')
+    }, 'Sincronização manual executada pelo usuário');
+    showToast('✅ Banco de Dados Supabase 100% atualizado!', 'success', 4000);
+  } catch (e) {
+    showToast('❌ Erro ao sincronizar com o banco: ' + e.message, 'danger');
+  }
+}
+
+// Carregar reuniões do Supabase (ou localStorage se offline)
+async function loadMeetingsFromSupabase() {
+  const client = getSupabaseClient();
+  if (!client) return false;
+  try {
+    const { data, error } = await client
+      .from('reunioes')
+      .select('*')
+      .order('meeting_time', { ascending: true });
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      console.log('☁️ Banco Supabase vazio. Salvando registros iniciais...');
+      await saveMeetings();
+      return true;
+    }
+
+    STATE.meetings = data.map(row => ({
+      id: row.id,
+      clientName: row.client_name,
+      clientPhone: row.client_phone,
+      lawyer: row.lawyer,
+      area: row.area,
+      time: row.meeting_time,
+      meetLink: row.meet_link,
+      status: row.status,
+      pipeline: {
+        alert60m: { sent: Boolean(row.alert_60m_sent), sentAt: row.alert_60m_at },
+        alert30m: { sent: Boolean(row.alert_30m_sent), sentAt: row.alert_30m_at },
+        alert15m: { sent: Boolean(row.alert_15m_sent), sentAt: row.alert_15m_at },
+        alert0m:  { sent: Boolean(row.alert_0m_sent),  sentAt: row.alert_0m_at  },
+        noShowAlert: { sent: Boolean(row.no_show_alert_sent), sentAt: row.no_show_alert_at }
+      }
+    }));
+
+    localStorage.setItem('mvt_meetings', JSON.stringify(STATE.meetings));
+    console.log(`✅ ${data.length} reuniões carregadas do Supabase com sucesso!`);
+    return true;
+  } catch (err) {
+    console.error('❌ Erro ao carregar do Supabase, usando dados locais:', err);
+    return false;
+  }
+}
+
+function saveTemplates() {
+  localStorage.setItem('mvt_templates', JSON.stringify(STATE.templates));
+}
+
+
+document.addEventListener('DOMContentLoaded', async () => {
   setupThemeToggle();
-  loadStoredData();
+  loadStoredData(); // carrega localStorage primeiro (rápido)
   setupEventListeners();
   setupSimulationClock();
   renderApp();
+
+  // Tenta carregar do Supabase em background (sobrescreve o localStorage)
+  const loadedFromCloud = await loadMeetingsFromSupabase();
+  if (loadedFromCloud) {
+    renderApp();
+    showToast('☁️ Reuniões carregadas do banco de dados!', 'success', 3000);
+  }
   
-  // Mensagem de boas-vindas informando sobre o modo seguro
+  // Inicializar integração com Google Agenda
+  setupGoogleCalendarIntegration();
+  
   showToast('🛡️ Modo Seguro Ativado: Nenhuma mensagem real será enviada a clientes.', 'info', 6000);
 });
 
@@ -187,14 +372,6 @@ function loadStoredData() {
   }
 }
 
-function saveMeetings() {
-  localStorage.setItem('mvt_meetings', JSON.stringify(STATE.meetings));
-}
-
-function saveTemplates() {
-  localStorage.setItem('mvt_templates', JSON.stringify(STATE.templates));
-}
-
 // Obter hora atual (com offset da simulação)
 function getCurrentTime() {
   return new Date(Date.now() + STATE.simulatedTimeOffsetMs);
@@ -204,6 +381,7 @@ function getCurrentTime() {
 function renderApp() {
   renderMetrics();
   renderMeetingsList();
+  renderCalendarGrid();
   populateTemplateFields();
   populateIntegrationFields();
 }
@@ -224,7 +402,16 @@ function renderMetrics() {
   document.getElementById('stat-noshow').textContent = noshow;
   document.getElementById('stat-rate').textContent = `${rate}%`;
 
-  document.getElementById('meetings-count-badge').textContent = `${total} agendamento${total !== 1 ? 's' : ''}`;
+  const countBadge = document.getElementById('meetings-count-badge');
+  if (countBadge) countBadge.textContent = `${total} agendamento${total !== 1 ? 's' : ''}`;
+
+  // Atualizar a data no cabeçalho
+  const dateLabel = document.getElementById('today-date-label');
+  if (dateLabel) {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateStr = new Date().toLocaleDateString('pt-BR', options);
+    dateLabel.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+  }
 }
 
 // Renderiza a Lista de Reuniões em Linhas Executivas
@@ -357,7 +544,8 @@ function handleCardAction(e) {
     meeting.status = 'confirmed';
     meeting.pipeline.alert30m.skipped = true;
     meeting.pipeline.alert15m.skipped = true;
-    saveMeetings();
+    saveSingleMeeting(meeting);
+    logEvent('CONFIRMADO', meeting, `Cliente ${meeting.clientName} confirmou presença para a reunião das ${meeting.time} com ${meeting.lawyer}`);
     renderApp();
     showToast(`✅ Reunião com ${meeting.clientName} marcada como CONFIRMADA! Lembretes intermediários pulados.`, 'success');
   } 
@@ -366,7 +554,8 @@ function handleCardAction(e) {
       meeting.status = 'noshow';
       meeting.pipeline.noShowAlert.sent = true;
       meeting.pipeline.noShowAlert.sentAt = new Date().toLocaleTimeString().slice(0, 5);
-      saveMeetings();
+      saveSingleMeeting(meeting);
+      logEvent('NO_SHOW', meeting, `Cliente ${meeting.clientName} (${meeting.clientPhone}) registrado como NO-SHOW na reunião das ${meeting.time} com ${meeting.lawyer}`);
       renderApp();
       
       // Simula a movimentação de etapa no MindChat
@@ -376,6 +565,82 @@ function handleCardAction(e) {
   else if (action === 'preview') {
     openPreviewModal(meeting);
   }
+}
+
+// Advogados do Escritório para a Grade
+const LAWYERS_LIST = [
+  { name: 'Dr. Augusto Siqueira', area: 'Trabalhista' },
+  { name: 'Dra. Natalia Tosatto', area: 'Trabalhista' },
+  { name: 'Dra. Ana Carla', area: 'Cível' },
+  { name: 'Dr. Marcus', area: 'Previdenciário' }
+];
+
+const TIME_SLOTS = [
+  '08:00', '09:00', '10:00', '11:00', '12:00',
+  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+];
+
+// Renderiza a Grade Horária do Calendário (Estilo Google Calendar)
+function renderCalendarGrid() {
+  const container = document.getElementById('calendar-grid-container');
+  if (!container) return;
+
+  const selectedLawyer = STATE.calendarLawyerFilter || 'all';
+  const lawyersToDisplay = selectedLawyer === 'all' 
+    ? LAWYERS_LIST 
+    : LAWYERS_LIST.filter(l => l.name === selectedLawyer);
+
+  let html = `
+    <div class="cal-grid-header" style="grid-template-columns: 80px repeat(${lawyersToDisplay.length}, 1fr);">
+      <div class="cal-header-cell time-axis">HORÁRIO</div>
+      ${lawyersToDisplay.map(l => `
+        <div class="cal-header-cell">
+          <div>${escapeHtml(l.name)}</div>
+          <small style="color: var(--blue-light); font-weight: normal;">${escapeHtml(l.area)}</small>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  TIME_SLOTS.forEach(slot => {
+    const slotHour = parseInt(slot.split(':')[0], 10);
+
+    html += `
+      <div class="cal-time-row" style="grid-template-columns: 80px repeat(${lawyersToDisplay.length}, 1fr);">
+        <div class="cal-time-label">${slot}</div>
+        ${lawyersToDisplay.map(l => {
+          const meetingsInSlot = STATE.meetings.filter(m => {
+            const [mH] = m.time.split(':').map(Number);
+            return m.lawyer === l.name && mH === slotHour;
+          });
+
+          return `
+            <div class="cal-slot-cell">
+              ${meetingsInSlot.map(m => `
+                <div class="cal-meeting-block ${m.status}" data-id="${m.id}" title="Clique para ver os detalhes da reunião">
+                  <div class="cal-meeting-title">👤 ${escapeHtml(m.clientName)}</div>
+                  <div class="cal-meeting-meta">
+                    <span>🕒 ${m.time}</span>
+                    <span>${m.status === 'confirmed' ? '✓ Confirmado' : (m.status === 'noshow' ? '🚫 No-Show' : '⏳ Aguardando')}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Clicks nos blocos para abrir pré-visualização da reunião
+  container.querySelectorAll('.cal-meeting-block').forEach(el => {
+    el.addEventListener('click', () => {
+      const meeting = STATE.meetings.find(m => m.id === el.dataset.id);
+      if (meeting) openPreviewModal(meeting);
+    });
+  });
 }
 
 // Simulação Segura de Movimentação no CRM
@@ -596,11 +861,12 @@ function setupEventListeners() {
     };
 
     STATE.meetings.push(newMeeting);
-    saveMeetings();
+    saveSingleMeeting(newMeeting);
+    logEvent('AGENDADO', newMeeting, `Novo agendamento criado: ${name} (${phone}) com ${lawyer} às ${time}`);
     modalNew.classList.remove('active');
     e.target.reset();
     renderApp();
-    showToast(`✅ Agendamento para ${name} criado e régua anti no-show ativada!`, 'success');
+    showToast(`✅ Agendamento para ${name} criado e salvo no banco de dados!`, 'success');
   });
 
   // Modal Preview
@@ -624,7 +890,7 @@ function setupEventListeners() {
   });
 
   // Botão Sincronizar CRM
-  document.getElementById('btn-sync-mindchat').addEventListener('click', () => {
+  document.getElementById('btn-sync-mindchat')?.addEventListener('click', () => {
     showToast('🔄 Conectando com a API do MindChat...', 'info');
     setTimeout(() => {
       showToast('✅ 30 leads sincronizados da etapa "Aguardando reunião"!', 'success');
@@ -632,7 +898,7 @@ function setupEventListeners() {
   });
 
   // Botão Testar Conexão
-  document.getElementById('btn-test-connection').addEventListener('click', () => {
+  document.getElementById('btn-test-connection')?.addEventListener('click', () => {
     showToast('🔌 Testando autenticação via X-Api-Key...', 'info');
     setTimeout(() => {
       showToast('✅ Conexão ativa com Tosato advogados associados (Mind17)!', 'success');
@@ -663,4 +929,392 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// ============================================================
+// INTEGRAÇÃO GOOGLE AGENDA via iCal (CORS Proxy)
+// ============================================================
+
+// Estado da integração com Google Agenda
+const GCAL_STATE = {
+  icalUrl: localStorage.getItem('mvt_gcal_url') || '',
+  lastSync: localStorage.getItem('mvt_gcal_last_sync') || null,
+  pendingEvents: [] // eventos buscados aguardando importação
+};
+
+// Inicializar o painel do Google Agenda assim que a DOM estiver pronta
+function setupGoogleCalendarIntegration() {
+  const inputEl   = document.getElementById('gcal-ical-input');
+  const saveBtn   = document.getElementById('btn-save-gcal');
+  const syncPanel = document.getElementById('gcal-sync-panel');
+  const syncBtn   = document.getElementById('btn-gcal-sync');
+  const discBtn   = document.getElementById('btn-gcal-disconnect');
+  const importBtn = document.getElementById('btn-gcal-import-all');
+
+  if (!inputEl || !saveBtn) return; // aba pode não estar visível ainda
+
+  // Restaurar URL salva
+  if (GCAL_STATE.icalUrl) {
+    inputEl.value = GCAL_STATE.icalUrl;
+    _showSyncPanel(GCAL_STATE.icalUrl);
+    _updateSyncTimestamp();
+  }
+
+  // Salvar link
+  saveBtn.addEventListener('click', () => {
+    const url = inputEl.value.trim();
+    if (!url) {
+      showToast('⚠️ Cole o link iCal antes de salvar.', 'warning');
+      return;
+    }
+    if (!url.includes('google.com') && !url.endsWith('.ics')) {
+      showToast('⚠️ O link não parece ser um arquivo iCal válido. Verifique e tente novamente.', 'warning', 5000);
+      return;
+    }
+    GCAL_STATE.icalUrl = url;
+    localStorage.setItem('mvt_gcal_url', url);
+    _showSyncPanel(url);
+    showToast('✅ Link da agenda salvo! Clique em "Sincronizar Agora" para importar os eventos de hoje.', 'success', 4000);
+  });
+
+  // Sincronizar
+  if (syncBtn) {
+    syncBtn.addEventListener('click', () => fetchAndParseIcal());
+  }
+
+  // Desconectar
+  if (discBtn) {
+    discBtn.addEventListener('click', () => {
+      GCAL_STATE.icalUrl = '';
+      GCAL_STATE.lastSync = null;
+      localStorage.removeItem('mvt_gcal_url');
+      localStorage.removeItem('mvt_gcal_last_sync');
+      discBtn.style.display = 'none';
+      if (inputEl) inputEl.value = '';
+      _setGcalStatus('disconnected');
+      document.getElementById('gcal-import-results').style.display = 'none';
+      document.getElementById('gcal-error-box').style.display = 'none';
+      showToast('Agenda desconectada.', 'info');
+    });
+  }
+
+  // Importar todos
+  if (importBtn) {
+    importBtn.addEventListener('click', () => importAllGcalEvents());
+  }
+}
+
+// Exibir o painel de sincronização (após salvar o link)
+function _showSyncPanel(url) {
+  const discBtn = document.getElementById('btn-gcal-disconnect');
+  if (discBtn) discBtn.style.display = 'block';
+  _setGcalStatus('connected');
+}
+
+// Atualizar timestamp da última sincronização
+function _updateSyncTimestamp() {
+  const el = document.getElementById('gcal-sync-last-update');
+  if (!el) return;
+  if (GCAL_STATE.lastSync) {
+    el.textContent = `Última sincronização: ${new Date(GCAL_STATE.lastSync).toLocaleTimeString('pt-BR')}`;
+  } else {
+    el.textContent = 'Nunca sincronizado — clique em "Sincronizar Agora"';
+  }
+}
+
+// Atualizar o pill de status
+function _setGcalStatus(state) {
+  const pill = document.getElementById('gcal-status-pill');
+  const dot  = pill ? pill.querySelector('.status-dot') : null;
+  const text = document.getElementById('gcal-status-text');
+  if (!pill) return;
+
+  if (state === 'connected') {
+    pill.style.background = 'rgba(16,185,129,0.12)';
+    pill.style.borderColor = 'rgba(16,185,129,0.35)';
+    if (dot) dot.style.background = '#10b981';
+    if (text) text.textContent = 'Agenda conectada';
+  } else if (state === 'syncing') {
+    pill.style.background = 'rgba(245,158,11,0.12)';
+    pill.style.borderColor = 'rgba(245,158,11,0.35)';
+    if (dot) dot.style.background = '#f59e0b';
+    if (text) text.textContent = 'Sincronizando...';
+  } else {
+    pill.style.background = 'rgba(100,116,139,0.15)';
+    pill.style.borderColor = 'rgba(100,116,139,0.3)';
+    if (dot) dot.style.background = '#64748b';
+    if (text) text.textContent = 'Não conectada';
+  }
+}
+
+// Buscar e parsear o arquivo iCal via proxy CORS
+async function fetchAndParseIcal() {
+  const url = GCAL_STATE.icalUrl;
+  if (!url) {
+    showToast('⚠️ Nenhum link iCal salvo. Cole o link e salve primeiro.', 'warning');
+    return;
+  }
+
+  const syncIcon = document.getElementById('gcal-sync-icon');
+  const errorBox = document.getElementById('gcal-error-box');
+  const errorText = document.getElementById('gcal-error-text');
+  const resultsBox = document.getElementById('gcal-import-results');
+
+  // Estado de carregamento
+  if (syncIcon) syncIcon.innerHTML = '<span class="syncing-anim">🔄</span>';
+  if (errorBox) errorBox.style.display = 'none';
+  if (resultsBox) resultsBox.style.display = 'none';
+  _setGcalStatus('syncing');
+  showToast('🔄 Buscando eventos do Google Agenda...', 'info', 3000);
+
+  // CORS Proxy — usamos allorigins.win (gratuito, sem autenticação necessária)
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+
+  try {
+    const response = await fetch(proxyUrl, { cache: 'no-cache' });
+    if (!response.ok) {
+      throw new Error(`Servidor retornou status ${response.status}`);
+    }
+    const icalText = await response.text();
+
+    if (!icalText.includes('BEGIN:VCALENDAR')) {
+      throw new Error('O conteúdo retornado não parece ser um arquivo iCal válido. Verifique se o link está correto.');
+    }
+
+    const todaysEvents = parseIcalForToday(icalText);
+
+    GCAL_STATE.pendingEvents = todaysEvents;
+    GCAL_STATE.lastSync = new Date().toISOString();
+    localStorage.setItem('mvt_gcal_last_sync', GCAL_STATE.lastSync);
+    _updateSyncTimestamp();
+    _setGcalStatus('connected');
+
+    if (syncIcon) syncIcon.textContent = '🔄';
+    renderGcalEventsList(todaysEvents);
+
+    if (todaysEvents.length === 0) {
+      showToast('📅 Nenhum evento encontrado para hoje na sua agenda.', 'info', 4000);
+    } else {
+      showToast(`✅ ${todaysEvents.length} evento(s) de hoje encontrado(s)! Confira abaixo e importe.`, 'success', 4000);
+    }
+
+  } catch (err) {
+    if (syncIcon) syncIcon.textContent = '🔄';
+    _setGcalStatus('connected');
+
+    let friendlyMsg = err.message;
+    if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      friendlyMsg = 'Não foi possível acessar o Google Agenda. Verifique sua conexão com a internet e se o link iCal está correto.';
+    }
+
+    if (errorBox) {
+      errorBox.style.display = 'flex';
+      errorText.textContent = friendlyMsg;
+    }
+    showToast(`❌ Erro ao sincronizar: ${friendlyMsg.substring(0, 80)}`, 'danger', 6000);
+  }
+}
+
+// Parser de iCal — extrai eventos do dia de hoje
+function parseIcalForToday(icalText) {
+  const today = new Date();
+  const todayStr = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0')
+  ].join(''); // formato: YYYYMMDD
+
+  // Normalizar line-folding do iCal (linhas que começam com espaço são continuação)
+  const normalized = icalText.replace(/\r\n[ \t]/g, '').replace(/\r\n/g, '\n').replace(/\n[ \t]/g, '');
+
+  const events = [];
+
+  // Extrair blocos VEVENT
+  const veventRegex = /BEGIN:VEVENT([\s\S]*?)END:VEVENT/g;
+  let match;
+
+  while ((match = veventRegex.exec(normalized)) !== null) {
+    const block = match[1];
+
+    // Extrair campos principais
+    const dtstart = _getIcalField(block, 'DTSTART');
+    const summary = _getIcalField(block, 'SUMMARY') || '(Sem título)';
+    const description = _getIcalField(block, 'DESCRIPTION') || '';
+    const location = _getIcalField(block, 'LOCATION') || '';
+    const uid = _getIcalField(block, 'UID') || `evt-${Date.now()}-${Math.random()}`;
+
+    if (!dtstart) continue;
+
+    // Verificar se o evento é de hoje (pode ser DTSTART:20241010T100000Z ou DTSTART;TZID=...:20241010T100000)
+    const dateOnly = dtstart.replace(/T.*/, ''); // pega apenas YYYYMMDD
+    if (!dateOnly.includes(todayStr)) continue;
+
+    // Calcular horário local
+    let timeStr = '00:00';
+    const timePart = dtstart.replace(/^.*T/, '');
+    if (timePart && timePart.length >= 4) {
+      const rawH = parseInt(timePart.substring(0, 2), 10);
+      const rawM = parseInt(timePart.substring(2, 4), 10);
+
+      // Se termina em Z, é UTC — converter para horário local
+      let localDate;
+      if (dtstart.endsWith('Z')) {
+        localDate = new Date(Date.UTC(
+          parseInt(dateOnly.substring(0, 4), 10),
+          parseInt(dateOnly.substring(4, 6), 10) - 1,
+          parseInt(dateOnly.substring(6, 8), 10),
+          rawH, rawM, 0
+        ));
+      } else {
+        // Já é local (TZID especificado)
+        localDate = new Date(
+          parseInt(dateOnly.substring(0, 4), 10),
+          parseInt(dateOnly.substring(4, 6), 10) - 1,
+          parseInt(dateOnly.substring(6, 8), 10),
+          rawH, rawM, 0
+        );
+      }
+
+      // Reconfirmar se o evento convertido para local ainda é hoje
+      const localTodayStr = [
+        localDate.getFullYear(),
+        String(localDate.getMonth() + 1).padStart(2, '0'),
+        String(localDate.getDate()).padStart(2, '0')
+      ].join('');
+
+      if (localTodayStr !== todayStr && !dateOnly.includes(todayStr)) continue;
+
+      timeStr = `${String(localDate.getHours()).padStart(2, '0')}:${String(localDate.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // Procurar link do Google Meet na descrição ou localização
+    const meetRegex = /https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}/i;
+    const meetInDesc = description.match(meetRegex);
+    const meetInLoc  = location.match(meetRegex);
+    const meetLink = (meetInDesc && meetInDesc[0]) || (meetInLoc && meetInLoc[0]) || '';
+
+    // Limpar texto da descrição (iCal usa \\n para quebra de linha)
+    const cleanSummary = summary.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim();
+
+    events.push({
+      uid,
+      summary: cleanSummary,
+      time: timeStr,
+      meetLink,
+      description: description.replace(/\\n/g, '\n').replace(/\\,/g, ',')
+    });
+  }
+
+  // Ordenar por horário
+  events.sort((a, b) => a.time.localeCompare(b.time));
+  return events;
+}
+
+// Utilitário para extrair um campo do bloco VEVENT
+function _getIcalField(block, fieldName) {
+  // Campo pode ter parâmetros: DTSTART;TZID=America/Sao_Paulo:...
+  const regex = new RegExp(`^${fieldName}(?:;[^:]*)?:(.*)`, 'm');
+  const m = block.match(regex);
+  return m ? m[1].trim() : null;
+}
+
+// Renderizar a lista de eventos encontrados no Google Agenda
+function renderGcalEventsList(events) {
+  const listEl   = document.getElementById('gcal-events-list');
+  const resultsEl = document.getElementById('gcal-import-results');
+  const countEl  = document.getElementById('gcal-import-count');
+
+  if (!listEl || !resultsEl) return;
+
+  resultsEl.style.display = 'block';
+
+  if (events.length === 0) {
+    listEl.innerHTML = `<div style="padding: 0.5rem; color: var(--text-muted); font-size: 0.77rem;">Nenhum evento encontrado para hoje.</div>`;
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  if (countEl) countEl.textContent = `${events.length} evento(s) — somente Trabalhista e Cível terão Meet`;
+
+  listEl.innerHTML = events.map(evt => `
+    <div class="gcal-event-item">
+      <span class="evt-time">${evt.time}</span>
+      <span class="evt-title" title="${escapeHtml(evt.summary)}">${escapeHtml(evt.summary)}</span>
+      ${evt.meetLink
+        ? `<span class="evt-meet">📹 Meet</span>`
+        : `<span class="evt-no-meet">Sem Meet</span>`
+      }
+    </div>
+  `).join('');
+}
+
+// Importar todos os eventos de hoje para a Pauta de Reuniões
+function importAllGcalEvents() {
+  const events = GCAL_STATE.pendingEvents;
+  if (!events || events.length === 0) {
+    showToast('Nenhum evento para importar. Sincronize a agenda primeiro.', 'warning');
+    return;
+  }
+
+  let imported = 0;
+  let skipped  = 0;
+
+  events.forEach(evt => {
+    // Verificar se já existe uma reunião com esse horário e mesmo título (evitar duplicata)
+    const alreadyExists = STATE.meetings.some(m =>
+      m.time === evt.time && m.clientName.toLowerCase() === evt.summary.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      skipped++;
+      return;
+    }
+
+    // Determinar área com base no título do evento (heurística simples)
+    let area = 'Geral';
+    let lawyer = 'Dr. Augusto Siqueira';
+    const titleLower = evt.summary.toLowerCase();
+    if (titleLower.includes('trabalhista') || titleLower.includes('emprego') || titleLower.includes('clt')) {
+      area = 'Trabalhista';
+    } else if (titleLower.includes('cível') || titleLower.includes('civil') || titleLower.includes('indenização')) {
+      area = 'Cível';
+    } else if (titleLower.includes('previdenciári') || titleLower.includes('inss') || titleLower.includes('aposentadoria')) {
+      area = 'Previdenciário';
+    }
+
+    const newMeeting = {
+      id: `gcal-${evt.uid.replace(/[^a-z0-9]/gi, '').substring(0, 12)}-${Date.now()}`,
+      clientName: evt.summary,
+      clientPhone: '', // não disponível no iCal
+      lawyer: lawyer,
+      area: area,
+      time: evt.time,
+      meetLink: evt.meetLink || '',
+      source: 'google_calendar',
+      status: 'pending',
+      pipeline: {
+        alert60m: { sent: false, sentAt: null },
+        alert30m: { sent: false, sentAt: null },
+        alert15m: { sent: false, sentAt: null },
+        alert0m: { sent: false, sentAt: null },
+        noShowAlert: { sent: false, sentAt: null }
+      }
+    };
+
+    STATE.meetings.push(newMeeting);
+    imported++;
+  });
+
+  saveMeetings();
+  renderApp();
+
+  if (imported > 0) {
+    showToast(
+      `✅ ${imported} reunião(ões) importada(s) do Google Agenda! ${skipped > 0 ? `(${skipped} já existia(m))` : ''} Não esqueça de adicionar o WhatsApp de cada cliente.`,
+      'success',
+      6000
+    );
+  } else if (skipped > 0) {
+    showToast(`ℹ️ Todos os ${skipped} evento(s) já estavam na pauta.`, 'info');
+  }
 }

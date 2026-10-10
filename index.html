@@ -3,16 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MVT Advogados | Gestão de Reuniões & Anti No-Show</title>
+  <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
+  <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
 </head>
 <body>
   <div class="app-container">
-    <!-- Navbar Superior Compacta e Elegante -->
     <header class="navbar">
       <div class="brand-wrapper">
-        <!-- Logo Oficial MVT Advogados -->
         <div class="mvt-official-logo">
           <div class="mvt-letters">MVT</div>
           <div class="mvt-subtitle">
@@ -21,47 +19,29 @@
             <span class="mvt-line"></span>
           </div>
         </div>
-
         <div class="brand-divider"></div>
-
-        <!-- Abas Integradas no Topo para Economizar Espaço -->
         <nav class="nav-tabs-inline">
-          <button class="nav-tab-btn active" data-tab="tab-dashboard" id="tab-btn-dashboard">
-            Pauta de Reuniões
-          </button>
-          <button class="nav-tab-btn" data-tab="tab-templates" id="tab-btn-templates">
-            Régua de Mensagens
-          </button>
-          <button class="nav-tab-btn" data-tab="tab-integration" id="tab-btn-integration">
-            Conexão & API
-          </button>
+          <button class="nav-tab-btn active" data-tab="tab-dashboard" id="tab-btn-dashboard">📋 Pauta de Reuniões</button>
+          <button class="nav-tab-btn" data-tab="tab-calendar" id="tab-btn-calendar">🗓️ Google Agenda</button>
+          <button class="nav-tab-btn" data-tab="tab-templates" id="tab-btn-templates">💬 Régua de Mensagens</button>
+          <button class="nav-tab-btn" data-tab="tab-integration" id="tab-btn-integration">🔌 Conexão & API</button>
         </nav>
       </div>
-
       <div class="nav-actions">
-        <!-- Modo Seguro Discreto -->
-        <div class="status-pill safe" title="Nenhuma mensagem real é enviada no WhatsApp">
+        <button class="btn-sync-cloud" id="btn-sync-supabase" onclick="syncWithSupabase()" title="Sincronizar todas as reuniões e histórico com o Supabase">☁️ Sincronizar Nuvem</button>
+        <div class="status-pill safe" title="Nenhuma mensagem real e enviada no WhatsApp">
           <span class="status-dot green"></span>
-          <span>Modo Seguro Ativo</span>
+          <span>Modo Seguro</span>
         </div>
-
-        <!-- Alternador Modo Noturno / Dia (Lua e Sol) -->
         <button class="theme-toggle-btn" id="btn-theme-toggle" title="Alternar Modo Noturno / Modo Dia">
           <span id="theme-icon">🌙</span>
           <span id="theme-text">Noturno</span>
         </button>
-
-        <button class="btn-primary" id="btn-open-new-meeting">
-          ➕ Novo Agendamento
-        </button>
+        <button class="btn-primary" id="btn-open-new-meeting">➕ Novo Agendamento</button>
       </div>
     </header>
-
-    <!-- Conteúdo Principal -->
     <main class="main-content">
-      <!-- ABA 1: PAUTA DE REUNIÕES -->
       <section id="tab-dashboard" class="tab-pane active">
-        
         <!-- Barra Compacta de Indicadores (KPIs) e Relógio -->
         <div class="kpi-banner">
           <div class="kpi-group">
@@ -90,29 +70,24 @@
               <span class="kpi-lbl">Comparecimento</span>
             </div>
           </div>
-
-          <!-- Controle de Simulação Minimalista -->
           <div class="sim-compact">
             <div class="sim-clock-badge">
               <span>🕒</span>
-              <span id="live-clock">14:00:00</span>
+              <span id="live-clock">00:00:00</span>
             </div>
             <div class="sim-quick-btns">
-              <button class="btn-xs" id="btn-advance-15m" title="Avançar 15 minutos para testar a régua">+15m</button>
-              <button class="btn-xs" id="btn-advance-30m" title="Avançar 30 minutos">+30m</button>
-              <button class="btn-xs" id="btn-advance-1h" title="Avançar 1 hora">+1h</button>
-              <button class="btn-xs reset" id="btn-reset-time" title="Resetar para a hora real">Agora</button>
+              <button class="btn-xs" id="btn-advance-15m">+15m</button>
+              <button class="btn-xs" id="btn-advance-30m">+30m</button>
+              <button class="btn-xs" id="btn-advance-1h">+1h</button>
+              <button class="btn-xs reset" id="btn-reset-time">Agora</button>
             </div>
           </div>
         </div>
-
-        <!-- Barra de Filtros e Busca Rápida -->
         <div class="filter-strip">
           <div class="filter-search-box">
             <span>🔍</span>
             <input type="text" id="filter-search" placeholder="Filtrar por cliente ou telefone...">
           </div>
-
           <div class="filter-dropdowns">
             <select id="filter-lawyer" class="select-clean">
               <option value="all">Todos os Advogados</option>
@@ -121,17 +96,14 @@
               <option value="Dra. Ana Carla">Dra. Ana Carla</option>
               <option value="Dr. Marcus">Dr. Marcus</option>
             </select>
-
             <select id="filter-status" class="select-clean">
               <option value="all">Todos os Status</option>
-              <option value="pending">Aguardando Confirmação</option>
+              <option value="pending">Aguardando Confirmacao</option>
               <option value="confirmed">Confirmadas</option>
               <option value="noshow">No-Show</option>
             </select>
           </div>
         </div>
-
-        <!-- Cabeçalho da Tabela Executiva -->
         <div class="table-header-row">
           <div class="col-time">HORÁRIO</div>
           <div class="col-client">CLIENTE & CONTATO</div>
@@ -139,69 +111,121 @@
           <div class="col-pipeline">RÉGUA ANTI NO-SHOW</div>
           <div class="col-actions">AÇÕES RÁPIDAS</div>
         </div>
-
-        <!-- Lista de Reuniões em Linhas Limpas -->
-        <div class="meetings-list" id="meetings-list-container">
-          <!-- Gerado dinamicamente via JavaScript -->
+        <div class="meetings-list" id="meetings-list-container"></div>
+      </section>
+      <section id="tab-calendar" class="tab-pane" style="display: none;">
+        <div class="calendar-toolbar">
+          <div class="calendar-toolbar-left">
+            <span class="calendar-date-display" id="calendar-view-title">📅 Pauta Geral de Hoje</span>
+            <div class="calendar-lawyer-filters" id="calendar-lawyer-tabs">
+              <button class="cal-filter-btn active" data-cal-lawyer="all">Todos</button>
+              <button class="cal-filter-btn" data-cal-lawyer="Dr. Augusto Siqueira">Dr. Augusto</button>
+              <button class="cal-filter-btn" data-cal-lawyer="Dra. Natalia Tosatto">Dra. Natalia</button>
+              <button class="cal-filter-btn" data-cal-lawyer="Dra. Ana Carla">Dra. Ana Carla</button>
+              <button class="cal-filter-btn" data-cal-lawyer="Dr. Marcus">Dr. Marcus</button>
+            </div>
+          </div>
+          <div class="calendar-toolbar-right">
+            <button class="btn-primary" id="btn-open-training-booking">➕ Adicionar Reunião</button>
+          </div>
+        </div>
+        <div class="calendar-grid-card">
+          <div class="calendar-grid-wrapper" id="calendar-grid-container"></div>
+        </div>
+        <div class="calendar-integration-box">
+          <div class="cal-int-header">
+            <div>
+              <h3>🔗 Sincronizar Google Agenda</h3>
+              <p>Cole o link iCal privado da sua agenda para importar os eventos de <strong>hoje</strong> automaticamente.</p>
+            </div>
+            <div id="gcal-status-pill" class="status-pill" style="background: rgba(100,116,139,0.15); border-color: rgba(100,116,139,0.3);">
+              <span class="status-dot" style="background: #64748b;"></span>
+              <span id="gcal-status-text">Não conectada</span>
+            </div>
+          </div>
+          <div class="gcal-main-row">
+            <div class="gcal-input-group">
+              <label class="gcal-label">Link iCal da agenda (termina em .ics)</label>
+              <div class="gcal-input-row">
+                <input type="text" id="gcal-ical-input" class="clean-input gcal-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">
+                <button class="btn-secondary" id="btn-save-gcal">💾 Salvar</button>
+                <button class="btn-primary gcal-sync-btn" id="btn-gcal-sync">
+                  <span id="gcal-sync-icon">🔄</span> Sincronizar Agora
+                </button>
+              </div>
+              <small id="gcal-sync-last-update" class="gcal-last-sync-label">⏱️ Nunca sincronizado — cole o link e clique em Salvar</small>
+            </div>
+            <button class="btn-xs reset" id="btn-gcal-disconnect" style="display:none; align-self: flex-start; margin-top: 1.4rem;">X Desconectar</button>
+          </div>
+          <div class="cal-int-steps" style="margin-top: 0.85rem;">
+            <div class="cal-step-card">
+              <div class="step-num">1</div>
+              <div>
+                <strong>Abra o Google Agenda</strong>
+                <p>Acesse <a href="https://calendar.google.com/calendar/u/0/r" target="_blank" style="color: var(--blue-light);">calendar.google.com</a> e clique nos 3 pontinhos ao lado da sua agenda, depois em Configuracoes e Compartilhamento.</p>
+              </div>
+            </div>
+            <div class="cal-step-card">
+              <div class="step-num">2</div>
+              <div>
+                <strong>Endereco secreto iCal</strong>
+                <p>Role ate a secao Integrar agenda e copie o Endereco secreto em formato iCal (link terminando em .ics).</p>
+              </div>
+            </div>
+            <div class="cal-step-card">
+              <div class="step-num">3</div>
+              <div>
+                <strong>Cole acima e clique em Sincronizar</strong>
+                <p>Cole o link no campo acima, clique em Salvar e depois em Sincronizar Agora para ver os eventos de hoje.</p>
+              </div>
+            </div>
+          </div>
+          <div id="gcal-import-results" style="display: none; margin-top: 0.85rem;">
+            <div class="gcal-result-title">📥 Eventos encontrados para hoje:</div>
+            <div id="gcal-events-list" class="gcal-events-list"></div>
+            <div style="margin-top: 0.65rem; display: flex; align-items: center; gap: 0.75rem;">
+              <button class="btn-primary" id="btn-gcal-import-all">✅ Importar Todos para a Pauta</button>
+              <span id="gcal-import-count" style="color: var(--text-muted); font-size: 0.82rem;"></span>
+            </div>
+          </div>
+          <div id="gcal-error-box" style="display: none;" class="gcal-error-msg">
+            <span>⚠️</span> <span id="gcal-error-text"></span>
+          </div>
         </div>
       </section>
-
-      <!-- ABA 2: RÉGUA DE MENSAGENS -->
       <section id="tab-templates" class="tab-pane" style="display: none;">
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h2 class="panel-title">Régua de Mensagens Anti No-Show</h2>
+              <h2 class="panel-title">Regua de Mensagens Anti No-Show</h2>
               <p class="panel-subtitle">Personalize as mensagens disparadas pelo WhatsApp para os clientes.</p>
             </div>
-            <button class="btn-primary" id="btn-save-templates">💾 Salvar Mensagens</button>
+            <button class="btn-primary" id="btn-save-templates">Salvar Mensagens</button>
           </div>
-
           <div class="templates-grid">
             <div class="template-box">
-              <div class="template-header">
-                <span class="step-badge amber">1</span>
-                <strong>Faltando 1 Hora (Confirmação Ativa)</strong>
-              </div>
+              <div class="template-header"><span class="step-badge amber">1</span><strong>Faltando 1 Hora (Confirmação Ativa)</strong></div>
               <textarea id="template-alert-60m" class="clean-textarea" rows="3"></textarea>
             </div>
-
             <div class="template-box">
-              <div class="template-header">
-                <span class="step-badge amber">2</span>
-                <strong>Faltando 30 Minutos (Reforço se não respondeu)</strong>
-              </div>
+              <div class="template-header"><span class="step-badge amber">2</span><strong>Faltando 30 Minutos (Reforço)</strong></div>
               <textarea id="template-alert-30m" class="clean-textarea" rows="3"></textarea>
             </div>
-
             <div class="template-box">
-              <div class="template-header">
-                <span class="step-badge rose">3</span>
-                <strong>Faltando 15 Minutos (Última Chamada)</strong>
-              </div>
+              <div class="template-header"><span class="step-badge rose">3</span><strong>Faltando 15 Minutos (Última Chamada)</strong></div>
               <textarea id="template-alert-15m" class="clean-textarea" rows="3"></textarea>
             </div>
-
             <div class="template-box">
-              <div class="template-header">
-                <span class="step-badge emerald">4</span>
-                <strong>No Horário (Link do Google Meet)</strong>
-              </div>
+              <div class="template-header"><span class="step-badge emerald">4</span><strong>No Horário — Link do Google Meet</strong></div>
               <textarea id="template-alert-0m" class="clean-textarea" rows="3"></textarea>
             </div>
-
             <div class="template-box full-width">
-              <div class="template-header">
-                <span class="step-badge rose">⚠️</span>
-                <strong>Pós-Reunião: 1h Após Falta (NO-SHOW)</strong>
-              </div>
+              <div class="template-header"><span class="step-badge rose">⚠️</span><strong>Pós-Reunião: 1h Após Falta (NO-SHOW)</strong></div>
               <textarea id="template-noshow-1h" class="clean-textarea" rows="2"></textarea>
             </div>
           </div>
         </div>
       </section>
-
-      <!-- ABA 3: CONEXÃO & API -->
       <section id="tab-integration" class="tab-pane" style="display: none;">
         <div class="panel-card">
           <div class="panel-header">
@@ -211,54 +235,26 @@
             </div>
             <button class="btn-primary" id="btn-test-connection">🔌 Testar Conexão</button>
           </div>
-
           <div class="config-grid">
-            <div class="config-field">
-              <label>URL Base da API</label>
-              <input type="text" id="config-api-url" class="clean-input" readonly>
-            </div>
-
-            <div class="config-field">
-              <label>Chave de API (X-Api-Key)</label>
-              <input type="password" id="config-api-key" class="clean-input" readonly>
-            </div>
-
-            <div class="config-field">
-              <label>Instância Conectada</label>
-              <input type="text" id="config-instance-id" class="clean-input" readonly>
-            </div>
-
-            <div class="config-field">
-              <label>Coluna CRM "Aguardando reunião"</label>
-              <input type="text" id="config-stage-waiting" class="clean-input" readonly>
-            </div>
+            <div class="config-field"><label>URL Base da API</label><input type="text" id="config-api-url" class="clean-input" readonly></div>
+            <div class="config-field"><label>Chave de API (X-Api-Key)</label><input type="password" id="config-api-key" class="clean-input" readonly></div>
+            <div class="config-field"><label>Instância Conectada</label><input type="text" id="config-instance-id" class="clean-input" readonly></div>
+            <div class="config-field"><label>Coluna CRM "Aguardando reunião"</label><input type="text" id="config-stage-waiting" class="clean-input" readonly></div>
           </div>
         </div>
       </section>
     </main>
-
-    <!-- Modal Novo Agendamento -->
     <div class="modal-overlay" id="modal-new-meeting">
       <div class="modal-card">
         <div class="modal-header">
           <h3 class="modal-title">Novo Agendamento</h3>
           <button class="modal-close" id="btn-close-modal">&times;</button>
         </div>
-
         <form id="form-new-meeting">
-          <div class="form-group">
-            <label class="form-label">Nome do Cliente</label>
-            <input type="text" id="new-client-name" class="clean-input" placeholder="Ex: Roberto Almeida" required>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">WhatsApp com DDD</label>
-            <input type="text" id="new-client-phone" class="clean-input" placeholder="Ex: 5512999999999" required>
-          </div>
-
+          <div class="form-group"><label class="form-label">Nome do Cliente</label><input type="text" id="new-client-name" class="clean-input" placeholder="Ex: Roberto Almeida" required></div>
+          <div class="form-group"><label class="form-label">WhatsApp com DDD</label><input type="text" id="new-client-phone" class="clean-input" placeholder="Ex: 5512999999999" required></div>
           <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Advogado Responsável</label>
+            <div class="form-group"><label class="form-label">Advogado Responsável</label>
               <select id="new-lawyer" class="clean-input">
                 <option value="Dr. Augusto Siqueira">Dr. Augusto Siqueira (Trabalhista)</option>
                 <option value="Dra. Natalia Tosatto">Dra. Natalia Tosatto (Trabalhista)</option>
@@ -266,18 +262,9 @@
                 <option value="Dr. Marcus">Dr. Marcus (Previdenciário)</option>
               </select>
             </div>
-
-            <div class="form-group">
-              <label class="form-label">Horário da Reunião</label>
-              <input type="time" id="new-time" class="clean-input" required>
-            </div>
+            <div class="form-group"><label class="form-label">Horario da Reuniao</label><input type="time" id="new-time" class="clean-input" required></div>
           </div>
-
-          <div class="form-group">
-            <label class="form-label">Link do Google Meet</label>
-            <input type="url" id="new-meet-link" class="clean-input" placeholder="https://meet.google.com/..." required>
-          </div>
-
+          <div class="form-group"><label class="form-label">Link do Google Meet</label><input type="url" id="new-meet-link" class="clean-input" placeholder="https://meet.google.com/..."></div>
           <div class="modal-footer">
             <button type="button" class="btn-secondary" id="btn-cancel-meeting">Cancelar</button>
             <button type="submit" class="btn-primary">Criar Agendamento</button>
@@ -285,36 +272,25 @@
         </form>
       </div>
     </div>
-
-    <!-- Modal de Pré-visualização de Mensagem -->
     <div class="modal-overlay" id="modal-preview-message">
       <div class="modal-card">
         <div class="modal-header">
           <h3 class="modal-title">Pré-visualizar Mensagem</h3>
           <button class="modal-close" id="btn-close-preview">&times;</button>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Destinatário</label>
-          <input type="text" id="preview-recipient" class="clean-input" readonly>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Mensagem Formatada</label>
-          <textarea id="preview-text" class="clean-textarea" rows="4"></textarea>
-        </div>
-
+        <div class="form-group"><label class="form-label">Destinatário</label><input type="text" id="preview-recipient" class="clean-input" readonly></div>
+        <div class="form-group"><label class="form-label">Mensagem Formatada</label><textarea id="preview-text" class="clean-textarea" rows="4"></textarea></div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary" id="btn-cancel-preview">Fechar</button>
           <button type="button" class="btn-primary" id="btn-confirm-send-preview">Simular Envio Seguro</button>
         </div>
       </div>
     </div>
-
-    <!-- Container de Notificações Toast -->
     <div class="toast-container" id="toast-container"></div>
   </div>
-
+  <!-- Supabase SDK (versão mais recente, suporta chaves sb_publishable_) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

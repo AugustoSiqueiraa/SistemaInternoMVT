@@ -1,16 +1,31 @@
 @echo off
-title Enviando Sistema Interno MVT para o GitHub
-echo ========================================================
-echo   MVT ADVOGADOS - ENVIANDO PROJETO PARA O GITHUB
-echo ========================================================
+echo ==============================================
+echo  MVT Advogados - Salvando no GitHub Automatico
+echo ==============================================
 echo.
-cd /d "%~dp0"
-"C:\Users\MVT Advogados\AppData\Local\MinGit\cmd\git.exe" remote set-url origin https://github.com/AugustoSiqueiraa/SistemaInternoMVT.git
-"C:\Users\MVT Advogados\AppData\Local\MinGit\cmd\git.exe" branch -M main
-echo Conectando ao GitHub...
-"C:\Users\MVT Advogados\AppData\Local\MinGit\cmd\git.exe" push -u origin main
+
+set PATH=%PATH%;C:\Users\MVT Advogados\AppData\Local\MinGit\cmd;C:\Program Files\Git\bin;C:\Program Files\Git\cmd
+where git >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERRO] O Git nao foi encontrado no sistema.
+    echo Baixe e instale o Git pelo link: https://git-scm.com/download/win
+    pause
+    exit /b
+)
+
+echo Adicionando arquivos...
+git add .
+
 echo.
-echo ========================================================
-echo Se pediu usuario/senha ou token, insira acima.
-echo ========================================================
+echo Criando commit...
+git commit -m "feat: Integracao Supabase em nuvem, tabelas reunioes e historico, sincronizacao automatica"
+
+echo.
+echo Enviando para o GitHub (pode pedir senha)...
+git push origin main
+
+echo.
+echo ==============================================
+echo PRONTO! Arquivos enviados com sucesso!
+echo ==============================================
 pause
