@@ -13,7 +13,7 @@ window.CONFIG = {
     INSTANCE_PHONE: "5512988919634",
     STAGES: {
       AGUARDANDO_REUNIAO: "9be8049d-3e55-4261-aa63-448a0b20949a", // ID real da etapa Aguardando Reunião
-      NO_SHOW: "no-show-stage-id", // Será atualizado com a etapa No-Show do CRM
+      NO_SHOW: "84f5ed7e-eb5f-49b8-b5da-611aa963ba59", // ID real da etapa NoShow no CRM MindChat
       CONTRATO_FECHADO: "2b0baf19-e8db-49f4-9da1-7bc6145457d8"
     }
   },
@@ -31,7 +31,6 @@ window.CONFIG = {
   LAWYERS: [
     { id: "augusto", name: "Dr. Augusto Siqueira", area: "Trabalhista" },
     { id: "natalia", name: "Dra. Natalia Tosatto", area: "Trabalhista" },
-    { id: "ana_carla", name: "Dra. Ana Carla", area: "Cível / Geral" },
-    { id: "marcus", name: "Dr. Marcus", area: "Previdenciário" }
+    { id: "ana_carla", name: "Dra. Ana Carla", area: "Cível / Geral" }
   ]
 };

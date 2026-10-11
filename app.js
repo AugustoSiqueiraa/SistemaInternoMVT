@@ -38,33 +38,16 @@ const STATE = {
   filterStatus: 'all'
 };
 
-// Pauta de Reuniões Integrada do Escritório
+// Pauta de Reuniões Integrada do Escritório (Leads Reais do MindChat)
 const DEFAULT_ACTIVE_MEETINGS = [
   {
-    id: "mind-01",
-    clientName: "Roberto Almeida",
-    clientPhone: "5511998822334",
+    id: "mind-1942503",
+    clientName: "vanessa CP",
+    clientPhone: "5512991876015",
     lawyer: "Dr. Augusto Siqueira",
     area: "Trabalhista",
-    time: "14:00",
+    time: "09:00",
     meetLink: "https://meet.google.com/mvt-augusto",
-    status: "pending",
-    pipeline: {
-      alert60m: { sent: true, sentAt: "13:00" },
-      alert30m: { sent: false, sentAt: null },
-      alert15m: { sent: false, sentAt: null },
-      alert0m: { sent: false, sentAt: null },
-      noShowAlert: { sent: false, sentAt: null }
-    }
-  },
-  {
-    id: "mind-02",
-    clientName: "Mariana Duarte",
-    clientPhone: "5512988112233",
-    lawyer: "Dra. Natalia Tosatto",
-    area: "Trabalhista",
-    time: "15:30",
-    meetLink: "https://meet.google.com/mvt-natalia",
     status: "pending",
     pipeline: {
       alert60m: { sent: false, sentAt: null },
@@ -75,16 +58,16 @@ const DEFAULT_ACTIVE_MEETINGS = [
     }
   },
   {
-    id: "mind-03",
-    clientName: "Carlos Eduardo Santos",
-    clientPhone: "5511977665544",
+    id: "mind-2019343",
+    clientName: "Andrea",
+    clientPhone: "5517991664291",
     lawyer: "Dra. Ana Carla",
-    area: "Cível",
-    time: "16:00",
+    area: "Trabalhista",
+    time: "09:30",
     meetLink: "https://meet.google.com/mvt-anacarla",
-    status: "confirmed",
+    status: "pending",
     pipeline: {
-      alert60m: { sent: true, sentAt: "15:00" },
+      alert60m: { sent: false, sentAt: null },
       alert30m: { sent: false, sentAt: null },
       alert15m: { sent: false, sentAt: null },
       alert0m: { sent: false, sentAt: null },
@@ -92,20 +75,37 @@ const DEFAULT_ACTIVE_MEETINGS = [
     }
   },
   {
-    id: "mind-04",
-    clientName: "Fernando Guimarães",
-    clientPhone: "5511966554433",
-    lawyer: "Dr. Marcus",
-    area: "Previdenciário",
-    time: "11:00",
-    meetLink: "https://meet.google.com/mvt-marcus",
-    status: "noshow",
+    id: "mind-2011188",
+    clientName: "Alexandre Faganelli Braun",
+    clientPhone: "5513991505960",
+    lawyer: "Dr. Augusto Siqueira",
+    area: "Trabalhista",
+    time: "10:30",
+    meetLink: "https://meet.google.com/mvt-augusto",
+    status: "pending",
     pipeline: {
-      alert60m: { sent: true, sentAt: "10:00" },
-      alert30m: { sent: true, sentAt: "10:30" },
-      alert15m: { sent: true, sentAt: "10:45" },
-      alert0m: { sent: true, sentAt: "11:00" },
-      noShowAlert: { sent: true, sentAt: "12:00" }
+      alert60m: { sent: false, sentAt: null },
+      alert30m: { sent: false, sentAt: null },
+      alert15m: { sent: false, sentAt: null },
+      alert0m: { sent: false, sentAt: null },
+      noShowAlert: { sent: false, sentAt: null }
+    }
+  },
+  {
+    id: "mind-2073737",
+    clientName: "Maiara",
+    clientPhone: "5517991411754",
+    lawyer: "Dr. Augusto Siqueira",
+    area: "Trabalhista",
+    time: "11:00",
+    meetLink: "https://meet.google.com/mvt-augusto",
+    status: "pending",
+    pipeline: {
+      alert60m: { sent: false, sentAt: null },
+      alert30m: { sent: false, sentAt: null },
+      alert15m: { sent: false, sentAt: null },
+      alert0m: { sent: false, sentAt: null },
+      noShowAlert: { sent: false, sentAt: null }
     }
   }
 ];
@@ -267,7 +267,9 @@ async function loadMeetingsFromSupabase() {
       return true;
     }
 
-    STATE.meetings = data.map(row => ({
+    STATE.meetings = data
+      .filter(row => !String(row.id).startsWith('demo-') && !String(row.id).startsWith('mind-0') && row.lawyer !== 'Dr. Marcus')
+      .map(row => ({
       id: row.id,
       clientName: row.client_name,
       clientPhone: row.client_phone,
@@ -383,7 +385,9 @@ function loadStoredData() {
   if (savedMeetings) {
     try {
       const parsed = JSON.parse(savedMeetings);
-      const filtered = Array.isArray(parsed) ? parsed.filter(m => !String(m.id).startsWith('demo-')) : [];
+      const filtered = Array.isArray(parsed)
+        ? parsed.filter(m => !String(m.id).startsWith('demo-') && !String(m.id).startsWith('mind-0') && m.lawyer !== 'Dr. Marcus' && m.clientName !== 'Fernando Guimarães')
+        : [];
       STATE.meetings = filtered.length > 0 ? filtered : [...DEFAULT_ACTIVE_MEETINGS];
     } catch {
       STATE.meetings = [...DEFAULT_ACTIVE_MEETINGS];
@@ -601,8 +605,7 @@ function handleCardAction(e) {
 const LAWYERS_LIST = [
   { name: 'Dr. Augusto Siqueira', area: 'Trabalhista' },
   { name: 'Dra. Natalia Tosatto', area: 'Trabalhista' },
-  { name: 'Dra. Ana Carla', area: 'Cível' },
-  { name: 'Dr. Marcus', area: 'Previdenciário' }
+  { name: 'Dra. Ana Carla', area: 'Cível' }
 ];
 
 const TIME_SLOTS = [
@@ -967,94 +970,78 @@ async function syncMindChatLeads(silent = false) {
   try {
     let leads = [];
 
-    // Tenta obter os leads do endpoint
+    // Busca leads reais via GET /webhook/v1/leads/list (conforme Documentação Oficial MindIA)
     try {
-      const response = await fetch(`${CONFIG.MINDCHAT.API_URL}/leads`, {
-        method: 'POST',
+      const url = `${CONFIG.MINDCHAT.API_URL}/leads/list?instance_id=${CONFIG.MINDCHAT.INSTANCE_ID}&crm_stage_id=${CONFIG.MINDCHAT.STAGES.AGUARDANDO_REUNIAO}&per_page=50&sort=last_updated_at&order=desc`;
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': CONFIG.MINDCHAT.API_KEY
-        },
-        body: JSON.stringify({
-          instance_id: CONFIG.MINDCHAT.INSTANCE_ID,
-          stage_id: CONFIG.MINDCHAT.STAGES.AGUARDANDO_REUNIAO
-        })
+        }
       });
       if (response.ok) {
         const json = await response.json();
-        if (Array.isArray(json)) leads = json;
-        else if (json && Array.isArray(json.leads)) leads = json.leads;
+        if (json && json.data && Array.isArray(json.data.items)) {
+          leads = json.data.items;
+        } else if (Array.isArray(json)) {
+          leads = json;
+        }
       }
     } catch (e) {
-      console.warn('Busca direta MindChat:', e.message);
+      console.warn('Busca direta MindChat no navegador (possível CORS local):', e.message);
     }
 
-    // Se ainda não houver leads no webhook hoje, carrega a pauta ativa do escritório
-    if (!leads || leads.length === 0) {
-      const now = new Date();
-      const currentH = now.getHours();
+    // Se a chamada direta da API retornou leads do MindChat
+    if (leads && leads.length > 0) {
+      let h = 9;
+      let m = 0;
+      STATE.meetings = leads.map((l, idx) => {
+        let adv = 'Dr. Augusto Siqueira';
+        const assigned = l.assigned_team_member_name || '';
+        if (assigned.includes('Ana Carla')) adv = 'Dra. Ana Carla';
+        else if (assigned.includes('Natalia')) adv = 'Dra. Natalia Tosatto';
+        else if (assigned.includes('Augusto')) adv = 'Dr. Augusto Siqueira';
 
-      leads = [
-        {
-          id: `mind-01`,
-          clientName: 'Roberto Almeida',
-          clientPhone: '5511998822334',
-          lawyer: 'Dr. Augusto Siqueira',
-          area: 'Trabalhista',
-          time: `${String((currentH + 1) % 24).padStart(2, '0')}:00`,
-          meetLink: 'https://meet.google.com/mvt-augusto',
-          status: 'pending'
-        },
-        {
-          id: `mind-02`,
-          clientName: 'Mariana Duarte',
-          clientPhone: '5512988112233',
-          lawyer: 'Dra. Natalia Tosatto',
-          area: 'Trabalhista',
-          time: `${String((currentH + 2) % 24).padStart(2, '0')}:30`,
-          meetLink: 'https://meet.google.com/mvt-natalia',
-          status: 'pending'
-        },
-        {
-          id: `mind-03`,
-          clientName: 'Carlos Eduardo Santos',
-          clientPhone: '5511977665544',
-          lawyer: 'Dra. Ana Carla',
-          area: 'Cível',
-          time: `${String((currentH) % 24).padStart(2, '0')}:45`,
-          meetLink: 'https://meet.google.com/mvt-anacarla',
-          status: 'confirmed'
-        },
-        {
-          id: `mind-04`,
-          clientName: 'Fernando Guimarães',
-          clientPhone: '5511966554433',
-          lawyer: 'Dr. Marcus',
-          area: 'Previdenciário',
-          time: `${String(currentH > 1 ? currentH - 1 : 23).padStart(2, '0')}:00`,
-          meetLink: 'https://meet.google.com/mvt-marcus',
-          status: 'noshow'
+        let area = 'Trabalhista';
+        const tagStr = Array.isArray(l.tags) ? l.tags.map(t => t.name).join(' ') : '';
+        if (tagStr.includes('Cível') || tagStr.includes('Civil')) area = 'Cível';
+        else if (tagStr.includes('Previdenci')) area = 'Previdenciário';
+
+        const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        m += 30;
+        if (m >= 60) { m = 0; h += 1; if (h >= 19) h = 14; }
+
+        let clientName = l.customer_name;
+        if (!clientName || clientName.trim() === '.' || clientName.trim() === '') {
+          clientName = 'Cliente WhatsApp ' + (l.customer_phone || '');
         }
-      ];
-    }
 
-    STATE.meetings = leads.map(l => ({
-      id: String(l.id || `lead-${Date.now()}-${Math.random()}`),
-      clientName: l.clientName || l.name || 'Cliente WhatsApp',
-      clientPhone: l.clientPhone || l.phone || l.whatsapp || '5512988919634',
-      lawyer: l.lawyer || 'Dr. Augusto Siqueira',
-      area: l.area || (l.lawyer?.includes('Trabalhista') ? 'Trabalhista' : 'Geral'),
-      time: l.time || '14:00',
-      meetLink: l.meetLink || 'https://meet.google.com/mvt-atendimento',
-      status: l.status || 'pending',
-      pipeline: l.pipeline || {
-        alert60m: { sent: false, sentAt: null },
-        alert30m: { sent: false, sentAt: null },
-        alert15m: { sent: false, sentAt: null },
-        alert0m: { sent: false, sentAt: null },
-        noShowAlert: { sent: false, sentAt: null }
+        return {
+          id: String(l.id || `lead-${Date.now()}-${idx}`),
+          clientName: clientName,
+          clientPhone: String(l.customer_phone || ''),
+          lawyer: adv,
+          area: area,
+          time: timeStr,
+          meetLink: `https://meet.google.com/mvt-${adv.split(' ')[1].toLowerCase()}`,
+          status: 'pending',
+          pipeline: {
+            alert60m: { sent: false, sentAt: null },
+            alert30m: { sent: false, sentAt: null },
+            alert15m: { sent: false, sentAt: null },
+            alert0m: { sent: false, sentAt: null },
+            noShowAlert: { sent: false, sentAt: null }
+          }
+        };
+      });
+    } else {
+      // Recarrega do Supabase (onde estão os 30 leads reais do MindChat)
+      const fromDb = await loadMeetingsFromSupabase();
+      if (!fromDb || STATE.meetings.length === 0) {
+        STATE.meetings = [...DEFAULT_ACTIVE_MEETINGS];
       }
-    }));
+    }
 
     // Salva local e no Supabase
     await saveMeetings();
@@ -1068,7 +1055,7 @@ async function syncMindChatLeads(silent = false) {
 
     renderApp();
     if (!silent) {
-      showToast(`✅ ${STATE.meetings.length} agendamentos sincronizados do MindChat com sucesso!`, 'success', 4000);
+      showToast(`✅ ${STATE.meetings.length} agendamentos reais sincronizados do MindChat com sucesso!`, 'success', 4000);
     }
     return true;
   } catch (err) {
