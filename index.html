@@ -85,27 +85,14 @@
           </div>
         </div>
         <div class="filter-strip">
-          <div class="filter-search-box">
-            <span>🔍</span>
-            <input type="text" id="filter-search" placeholder="Filtrar por cliente ou telefone...">
-          </div>
-          <div class="filter-dropdowns">
-            <select id="filter-lawyer" class="select-clean">
-              <option value="all">Todos os Responsáveis</option>
-              <option value="Augusto">Augusto (Comercial)</option>
-              <option value="Ana Carla">Ana Carla (Comercial)</option>
-              <option value="Julia">Julia (Comercial)</option>
-              <option value="João">João (Comercial)</option>
-              <option value="Dra. Natalia">Dra. Natalia (Advogada)</option>
-              <option value="Dra. Ludmila">Dra. Ludmila (Advogada)</option>
-            </select>
-            <select id="filter-status" class="select-clean">
-              <option value="all">Todos os Status</option>
-              <option value="pending">Aguardando Confirmação</option>
-              <option value="confirmed">Confirmadas</option>
-              <option value="noshow">No-Show</option>
-            </select>
-          </div>
+          <button class="btn-filter-trigger" id="btn-open-filter-modal" type="button" title="Filtrar reuniões">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filtros</span>
+            <span class="filter-counter-badge" id="filter-counter-badge" style="display: none;">0</span>
+          </button>
+          <div class="active-filter-chips" id="active-filter-chips"></div>
         </div>
         <div class="table-header-row">
           <div class="col-time">HORÁRIO</div>
@@ -398,6 +385,75 @@
           <button type="button" class="btn-secondary" id="btn-cancel-preview">Fechar</button>
           <button type="button" class="btn-primary" id="btn-confirm-send-preview">Simular Envio Seguro</button>
         </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="modal-filters">
+      <div class="modal-card modal-card-filters">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <h3 class="modal-title">Filtrar Reuniões</h3>
+          </div>
+          <button class="modal-close" id="btn-close-filter-modal">&times;</button>
+        </div>
+        <form id="form-filters" onsubmit="event.preventDefault();">
+          <div class="form-group">
+            <label class="form-label">Cliente ou Telefone</label>
+            <input type="text" id="modal-filter-client" class="clean-input" placeholder="Digite o nome ou telefone do cliente...">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Atendente / Responsável</label>
+              <select id="modal-filter-lawyer" class="clean-input">
+                <option value="all">Todos os Atendentes</option>
+                <option value="Augusto">Augusto</option>
+                <option value="Ana Carla">Ana Carla</option>
+                <option value="Julia">Julia</option>
+                <option value="João">João</option>
+                <option value="Dra. Natalia">Dra. Natalia</option>
+                <option value="Dra. Ludmila">Dra. Ludmila</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Área</label>
+              <select id="modal-filter-area" class="clean-input">
+                <option value="all">Todas as Áreas</option>
+                <option value="Trabalhista">Trabalhista</option>
+                <option value="Cível">Cível</option>
+                <option value="Previdenciário">Previdenciário</option>
+                <option value="Comercial">Comercial</option>
+                <option value="Geral">Geral</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Horário</label>
+            <input type="time" id="modal-filter-time" class="clean-input">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Status da Reunião</label>
+            <div class="modal-filter-status-grid">
+              <button type="button" class="status-chip active" data-status="all">Todos</button>
+              <button type="button" class="status-chip" data-status="today">Reuniões Hoje</button>
+              <button type="button" class="status-chip" data-status="confirmed">Reuniões Confirmadas</button>
+              <button type="button" class="status-chip" data-status="pending">Reuniões Aguardando</button>
+              <button type="button" class="status-chip" data-status="noshow">No-Shows</button>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="justify-content: space-between; margin-top: 1.25rem;">
+            <button type="button" class="btn-secondary" id="btn-clear-filters">Limpar Filtros</button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button type="button" class="btn-secondary" id="btn-cancel-filters">Cancelar</button>
+              <button type="button" class="btn-primary" id="btn-apply-filters">Aplicar Filtros</button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
     <div class="toast-container" id="toast-container"></div>

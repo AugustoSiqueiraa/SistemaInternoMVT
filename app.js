@@ -34,7 +34,10 @@ const STATE = {
   
   // Filtros ativos
   filterSearch: '',
+  filterClient: '',
   filterLawyer: 'all',
+  filterArea: 'all',
+  filterTime: '',
   filterStatus: 'all',
 
   // Google Agenda: Visão, Data atual e Filtro do Comercial
@@ -476,13 +479,42 @@ function renderMeetingsList() {
 
   const now = getCurrentTime();
 
-  // Filtragem
+  // Filtragem Multicritério com Popup Centralizado
   const filtered = STATE.meetings.filter(m => {
-    const matchSearch = m.clientName.toLowerCase().includes(STATE.filterSearch.toLowerCase()) ||
-                        m.clientPhone.includes(STATE.filterSearch);
-    const matchLawyer = STATE.filterLawyer === 'all' || m.lawyer === STATE.filterLawyer;
-    const matchStatus = STATE.filterStatus === 'all' || m.status === STATE.filterStatus;
-    return matchSearch && matchLawyer && matchStatus;
+    // 1. Cliente / Telefone
+    const clientTerm = (STATE.filterClient || STATE.filterSearch || '').toLowerCase().trim();
+    const matchClient = !clientTerm || 
+                        (m.clientName && m.clientName.toLowerCase().includes(clientTerm)) ||
+                        (m.clientPhone && String(m.clientPhone).includes(clientTerm));
+
+    // 2. Atendente / Responsável Comercial
+    const lawyerTerm = STATE.filterLawyer || 'all';
+    const matchLawyer = lawyerTerm === 'all' || 
+                        (m.lawyer && m.lawyer.toLowerCase().includes(lawyerTerm.toLowerCase()));
+
+    // 3. Área
+    const areaTerm = STATE.filterArea || 'all';
+    const matchArea = areaTerm === 'all' || 
+                      (m.area && m.area.toLowerCase().includes(areaTerm.toLowerCase()));
+
+    // 4. Horário
+    const timeTerm = (STATE.filterTime || '').trim();
+    const matchTime = !timeTerm || (m.time && m.time.startsWith(timeTerm));
+
+    // 5. Categoria / Status
+    let matchStatus = true;
+    if (STATE.filterStatus === 'confirmed') {
+      matchStatus = m.status === 'confirmed';
+    } else if (STATE.filterStatus === 'pending') {
+      matchStatus = m.status === 'pending';
+    } else if (STATE.filterStatus === 'noshow') {
+      matchStatus = m.status === 'noshow';
+    } else if (STATE.filterStatus === 'today') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      matchStatus = !m.date || m.date === todayStr;
+    } // 'all' matches all
+
+    return matchClient && matchLawyer && matchArea && matchTime && matchStatus;
   });
 
   if (filtered.length === 0) {
@@ -1116,6 +1148,163 @@ function checkAutomatedTriggers(now) {
   });
 }
 
+// ========================================================
+// CONTROLE DO MODAL DE FILTROS & BADGE MINIMALISTA
+// ========================================================
+function getActiveFilterCount() {
+  let count = 0;
+  if (STATE.filterClient && STATE.filterClient.trim() !== '') count++;
+  if (STATE.filterLawyer && STATE.filterLawyer !== 'all') count++;
+  if (STATE.filterArea && STATE.filterArea !== 'all') count++;
+  if (STATE.filterTime && STATE.filterTime.trim() !== '') count++;
+  if (STATE.filterStatus && STATE.filterStatus !== 'all') count++;
+  return count;
+}
+
+function updateFilterBadge() {
+  const badge = document.getElementById('filter-counter-badge');
+  const count = getActiveFilterCount();
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  renderActiveFilterChips();
+}
+
+function renderActiveFilterChips() {
+  const container = document.getElementById('active-filter-chips');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const chips = [];
+  if (STATE.filterClient && STATE.filterClient.trim() !== '') {
+    chips.push({ key: 'client', label: `Cliente: "${STATE.filterClient}"` });
+  }
+  if (STATE.filterLawyer && STATE.filterLawyer !== 'all') {
+    chips.push({ key: 'lawyer', label: `Atendente: ${STATE.filterLawyer}` });
+  }
+  if (STATE.filterArea && STATE.filterArea !== 'all') {
+    chips.push({ key: 'area', label: `Área: ${STATE.filterArea}` });
+  }
+  if (STATE.filterTime && STATE.filterTime.trim() !== '') {
+    chips.push({ key: 'time', label: `Horário: ${STATE.filterTime}` });
+  }
+  if (STATE.filterStatus && STATE.filterStatus !== 'all') {
+    const statusMap = {
+      today: 'Reuniões Hoje',
+      confirmed: 'Confirmadas',
+      pending: 'Aguardando',
+      noshow: 'No-Shows'
+    };
+    chips.push({ key: 'status', label: statusMap[STATE.filterStatus] || STATE.filterStatus });
+  }
+
+  chips.forEach(c => {
+    const tag = document.createElement('div');
+    tag.className = 'active-filter-tag';
+    tag.innerHTML = `<span>${escapeHtml(c.label)}</span><button type="button" class="tag-remove-btn" title="Remover filtro">&times;</button>`;
+    tag.querySelector('.tag-remove-btn').addEventListener('click', () => {
+      if (c.key === 'client') STATE.filterClient = '';
+      if (c.key === 'lawyer') STATE.filterLawyer = 'all';
+      if (c.key === 'area') STATE.filterArea = 'all';
+      if (c.key === 'time') STATE.filterTime = '';
+      if (c.key === 'status') STATE.filterStatus = 'all';
+      updateFilterBadge();
+      renderMeetingsList();
+    });
+    container.appendChild(tag);
+  });
+}
+
+function setupFilterModal() {
+  const modal = document.getElementById('modal-filters');
+  const btnOpen = document.getElementById('btn-open-filter-modal');
+  const btnClose = document.getElementById('btn-close-filter-modal');
+  const btnCancel = document.getElementById('btn-cancel-filters');
+  const btnApply = document.getElementById('btn-apply-filters');
+  const btnClear = document.getElementById('btn-clear-filters');
+
+  const inputClient = document.getElementById('modal-filter-client');
+  const selectLawyer = document.getElementById('modal-filter-lawyer');
+  const selectArea = document.getElementById('modal-filter-area');
+  const inputTime = document.getElementById('modal-filter-time');
+  const statusChips = document.querySelectorAll('.modal-filter-status-grid .status-chip');
+
+  const closeModal = () => modal?.classList.remove('active');
+
+  // Abre o modal populando os campos com os valores atuais
+  btnOpen?.addEventListener('click', () => {
+    if (inputClient) inputClient.value = STATE.filterClient || '';
+    if (selectLawyer) selectLawyer.value = STATE.filterLawyer || 'all';
+    if (selectArea) selectArea.value = STATE.filterArea || 'all';
+    if (inputTime) inputTime.value = STATE.filterTime || '';
+    statusChips.forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.status === (STATE.filterStatus || 'all'));
+    });
+    modal?.classList.add('active');
+  });
+
+  btnClose?.addEventListener('click', closeModal);
+  btnCancel?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Seleção dos Chips de Status
+  statusChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      statusChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  // Aplicar Filtros
+  btnApply?.addEventListener('click', () => {
+    STATE.filterClient = inputClient ? inputClient.value.trim() : '';
+    STATE.filterLawyer = selectLawyer ? selectLawyer.value : 'all';
+    STATE.filterArea = selectArea ? selectArea.value : 'all';
+    STATE.filterTime = inputTime ? inputTime.value.trim() : '';
+
+    const activeChip = document.querySelector('.modal-filter-status-grid .status-chip.active');
+    STATE.filterStatus = activeChip ? activeChip.dataset.status : 'all';
+
+    updateFilterBadge();
+    renderMeetingsList();
+    closeModal();
+
+    const count = getActiveFilterCount();
+    if (count > 0) {
+      showToast(`🔍 ${count} filtro(s) ativo(s)!`, 'info', 1800);
+    }
+  });
+
+  // Limpar Filtros
+  btnClear?.addEventListener('click', () => {
+    if (inputClient) inputClient.value = '';
+    if (selectLawyer) selectLawyer.value = 'all';
+    if (selectArea) selectArea.value = 'all';
+    if (inputTime) inputTime.value = '';
+    statusChips.forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.status === 'all');
+    });
+
+    STATE.filterClient = '';
+    STATE.filterLawyer = 'all';
+    STATE.filterArea = 'all';
+    STATE.filterTime = '';
+    STATE.filterStatus = 'all';
+
+    updateFilterBadge();
+    renderMeetingsList();
+    closeModal();
+    showToast('Filtros redefinidos.', 'info', 1500);
+  });
+}
+
 // Configuração de Eventos da Interface
 function setupEventListeners() {
   // Navegação de Abas
@@ -1130,21 +1319,9 @@ function setupEventListeners() {
     });
   });
 
-  // Filtros
-  document.getElementById('filter-search')?.addEventListener('input', e => {
-    STATE.filterSearch = e.target.value;
-    renderMeetingsList();
-  });
-
-  document.getElementById('filter-lawyer')?.addEventListener('change', e => {
-    STATE.filterLawyer = e.target.value;
-    renderMeetingsList();
-  });
-
-  document.getElementById('filter-status')?.addEventListener('change', e => {
-    STATE.filterStatus = e.target.value;
-    renderMeetingsList();
-  });
+  // Inicialização do Modal Popup de Filtros & Contador
+  setupFilterModal();
+  updateFilterBadge();
 
   // Controles de Simulação de Tempo
   document.getElementById('btn-advance-15m')?.addEventListener('click', () => {
