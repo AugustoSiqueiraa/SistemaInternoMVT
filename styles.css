@@ -223,9 +223,9 @@ body.light-theme .brand-divider {
 }
 
 .brand-system-sub {
-  font-size: 0.62rem;
+  font-size: 0.61rem;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.13em;
   color: var(--text-muted);
   text-transform: uppercase;
   line-height: 1.2;
