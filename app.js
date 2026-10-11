@@ -1459,13 +1459,20 @@ function setupEventListeners() {
 
   // Modal Novo Agendamento
   const modalNew = document.getElementById('modal-new-meeting');
-  document.getElementById('btn-open-new-meeting').addEventListener('click', () => {
-    modalNew.classList.add('active');
-    document.getElementById('new-time').value = getRelativeTime(60);
+  document.getElementById('btn-open-new-meeting')?.addEventListener('click', () => {
+    if (modalNew) {
+      modalNew.classList.add('active');
+      document.getElementById('new-time').value = getRelativeTime(60);
+    }
   });
 
-  document.getElementById('btn-close-modal').addEventListener('click', () => modalNew.classList.remove('active'));
-  document.getElementById('btn-cancel-meeting').addEventListener('click', () => modalNew.classList.remove('active'));
+  // Clique no Perfil do Usuário leva para Configurações
+  document.getElementById('user-profile-badge')?.addEventListener('click', () => {
+    switchTab('tab-settings');
+  });
+
+  document.getElementById('btn-close-modal')?.addEventListener('click', () => modalNew?.classList.remove('active'));
+  document.getElementById('btn-cancel-meeting')?.addEventListener('click', () => modalNew?.classList.remove('active'));
 
   document.getElementById('form-new-meeting').addEventListener('submit', e => {
     e.preventDefault();
