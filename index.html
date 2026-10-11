@@ -230,10 +230,25 @@
       </section>
       <section id="tab-calendar" class="tab-pane" style="display: none;">
         <!-- Título da Página: Agenda -->
-        <div class="page-top-header">
+        <div class="page-top-header cal-top-header">
           <div class="page-title-box">
             <h1 class="page-main-heading">Agenda</h1>
-            <p class="page-sub-heading">Grade de horários integrada com o Google Agenda</p>
+            <p class="page-sub-heading" id="cal-header-subtitle">
+              Grade de horários <span class="cal-subtitle-divider">•</span> <span id="cal-user-connection-desc">Integrado com a agenda de <strong id="cal-header-user-name">Augusto</strong> (<span id="cal-header-user-email">augusto@mvtadvogados.com.br</span>)</span>
+            </p>
+          </div>
+          <div class="page-top-actions">
+            <!-- Indicador Executivo de Conexão com Google Agenda -->
+            <div class="cal-status-connection-badge connected" id="cal-status-connection-badge" onclick="scrollToGcalSettings()" title="Clique para gerenciar a integração com o Google Agenda">
+              <div class="cal-badge-signal">
+                <span class="cal-status-dot"></span>
+                <span class="cal-status-dot-pulse"></span>
+              </div>
+              <div class="cal-badge-info">
+                <span class="cal-badge-status-title" id="cal-badge-status-title">Conectado</span>
+                <span class="cal-badge-user-sub" id="cal-badge-user-sub">Augusto (Comercial)</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -290,6 +305,17 @@
           </div>
           <div class="gcal-main-row">
             <div class="gcal-input-group">
+              <div class="gcal-user-config-row" style="margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+                <label class="gcal-label" style="margin: 0; min-width: 130px; font-weight: 600;">👤 Usuário da Agenda:</label>
+                <select id="gcal-user-select" class="select-clean" style="max-width: 340px; font-size: 0.82rem; padding: 0.4rem 0.65rem;" onchange="handleGcalUserChange(this.value)">
+                  <option value="Augusto">Augusto (augusto@mvtadvogados.com.br)</option>
+                  <option value="Ana Carla">Ana Carla (anacarla@mvtadvogados.com.br)</option>
+                  <option value="Julia">Julia (Comercial MVT)</option>
+                  <option value="João">João (Comercial MVT)</option>
+                  <option value="Dra. Natalia">Dra. Natalia (Advogada)</option>
+                  <option value="Dra. Ludmila">Dra. Ludmila (Advogada)</option>
+                </select>
+              </div>
               <label class="gcal-label">Link iCal da agenda (termina em .ics)</label>
               <div class="gcal-input-row">
                 <input type="text" id="gcal-ical-input" class="clean-input gcal-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">

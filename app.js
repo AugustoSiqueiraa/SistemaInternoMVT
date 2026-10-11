@@ -1836,21 +1836,53 @@ window.handleIcalFileUpload = function(e) {
   reader.readAsText(file);
 };
 
+// Alterar usuário associado à Google Agenda
+window.handleGcalUserChange = function(newUser) {
+  if (!newUser) return;
+  localStorage.setItem('mvt_gcal_user', newUser);
+  const currentStatus = GCAL_STATE.icalUrl ? 'connected' : 'disconnected';
+  _setGcalStatus(currentStatus);
+  showToast(`👤 Usuário da agenda definido para: ${newUser}`, 'info', 3000);
+};
+
+// Rolar suavemente até as configurações da Google Agenda
+window.scrollToGcalSettings = function() {
+  const box = document.querySelector('.calendar-integration-box');
+  if (box) {
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const input = document.getElementById('gcal-ical-input');
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+        input.classList.add('gcal-input-highlight');
+        setTimeout(() => input.classList.remove('gcal-input-highlight'), 2200);
+      }, 350);
+    }
+  }
+};
+
 // Inicializar o painel do Google Agenda assim que a DOM estiver pronta
 function setupGoogleCalendarIntegration() {
-  const inputEl   = document.getElementById('gcal-ical-input');
-  const saveBtn   = document.getElementById('btn-save-gcal');
-  const syncBtn   = document.getElementById('btn-gcal-sync');
-  const discBtn   = document.getElementById('btn-gcal-disconnect');
-  const importBtn = document.getElementById('btn-gcal-import-all');
+  const inputEl    = document.getElementById('gcal-ical-input');
+  const userSelect = document.getElementById('gcal-user-select');
+  const saveBtn    = document.getElementById('btn-save-gcal');
+  const syncBtn    = document.getElementById('btn-gcal-sync');
+  const discBtn    = document.getElementById('btn-gcal-disconnect');
+  const importBtn  = document.getElementById('btn-gcal-import-all');
 
-  if (!inputEl) return;
+  const savedUser = localStorage.getItem('mvt_gcal_user') || 'Augusto';
+  if (userSelect) {
+    userSelect.value = savedUser;
+  }
 
   // Restaurar URL salva
   if (GCAL_STATE.icalUrl) {
-    inputEl.value = GCAL_STATE.icalUrl;
+    if (inputEl) inputEl.value = GCAL_STATE.icalUrl;
     _showSyncPanel(GCAL_STATE.icalUrl);
     _updateSyncTimestamp();
+    _setGcalStatus('connected');
+  } else {
+    _setGcalStatus('disconnected');
   }
 
   if (saveBtn) saveBtn.addEventListener('click', window.handleSaveGcal);
@@ -1868,7 +1900,7 @@ function setupGoogleCalendarIntegration() {
       _setGcalStatus('disconnected');
       document.getElementById('gcal-import-results').style.display = 'none';
       document.getElementById('gcal-error-box').style.display = 'none';
-      showToast('Agenda desconectada.', 'info');
+      showToast('Agenda desconectada com sucesso.', 'info');
     });
   }
 
@@ -1896,28 +1928,84 @@ function _updateSyncTimestamp() {
   }
 }
 
-// Atualizar o pill de status
+// Atualizar o status da integração no painel e no cabeçalho executivo
 function _setGcalStatus(state) {
   const pill = document.getElementById('gcal-status-pill');
   const dot  = pill ? pill.querySelector('.status-dot') : null;
   const text = document.getElementById('gcal-status-text');
-  if (!pill) return;
+
+  // Elementos do novo cabeçalho executivo na página de Agenda
+  const headerBadge = document.getElementById('cal-status-connection-badge');
+  const badgeTitle  = document.getElementById('cal-badge-status-title');
+  const badgeUserSub = document.getElementById('cal-badge-user-sub');
+  const userDesc    = document.getElementById('cal-user-connection-desc');
+
+  const savedUser = localStorage.getItem('mvt_gcal_user') || 'Augusto';
+  const userEmailMap = {
+    'Augusto': 'augusto@mvtadvogados.com.br',
+    'Ana Carla': 'anacarla@mvtadvogados.com.br',
+    'Julia': 'julia@mvtadvogados.com.br',
+    'João': 'joao@mvtadvogados.com.br',
+    'Dra. Natalia': 'natalia@mvtadvogados.com.br',
+    'Dra. Ludmila': 'ludmila@mvtadvogados.com.br'
+  };
+  const userEmail = userEmailMap[savedUser] || `${savedUser.toLowerCase().replace(/[^a-z]/g, '')}@mvtadvogados.com.br`;
+  const roleLabel = savedUser.includes('Dra.') ? 'Advogada' : 'Comercial';
 
   if (state === 'connected') {
-    pill.style.background = 'rgba(16,185,129,0.12)';
-    pill.style.borderColor = 'rgba(16,185,129,0.35)';
-    if (dot) dot.style.background = '#10b981';
-    if (text) text.textContent = 'Agenda conectada';
+    // Painel secundário
+    if (pill) {
+      pill.style.background = 'rgba(16,185,129,0.12)';
+      pill.style.borderColor = 'rgba(16,185,129,0.35)';
+      if (dot) dot.style.background = '#10b981';
+      if (text) text.textContent = 'Agenda conectada';
+    }
+    // Cabeçalho executivo da página
+    if (headerBadge) {
+      headerBadge.classList.remove('disconnected', 'syncing');
+      headerBadge.classList.add('connected');
+      headerBadge.title = `Sincronização ativa com a agenda de ${savedUser}. Clique para gerenciar.`;
+    }
+    if (badgeTitle) badgeTitle.textContent = 'Conectado';
+    if (badgeUserSub) badgeUserSub.textContent = `${savedUser} (${roleLabel})`;
+    if (userDesc) {
+      userDesc.innerHTML = `Integrado com a agenda de <strong id="cal-header-user-name" class="cal-highlight-user">${savedUser}</strong> (<span id="cal-header-user-email">${userEmail}</span>)`;
+    }
   } else if (state === 'syncing') {
-    pill.style.background = 'rgba(245,158,11,0.12)';
-    pill.style.borderColor = 'rgba(245,158,11,0.35)';
-    if (dot) dot.style.background = '#f59e0b';
-    if (text) text.textContent = 'Sincronizando...';
+    // Painel secundário
+    if (pill) {
+      pill.style.background = 'rgba(245,158,11,0.12)';
+      pill.style.borderColor = 'rgba(245,158,11,0.35)';
+      if (dot) dot.style.background = '#f59e0b';
+      if (text) text.textContent = 'Sincronizando...';
+    }
+    // Cabeçalho executivo da página
+    if (headerBadge) {
+      headerBadge.classList.remove('connected', 'disconnected');
+      headerBadge.classList.add('syncing');
+      headerBadge.title = `Sincronizando eventos com a agenda de ${savedUser}...`;
+    }
+    if (badgeTitle) badgeTitle.textContent = 'Sincronizando...';
+    if (badgeUserSub) badgeUserSub.textContent = `Atualizando ${savedUser}...`;
   } else {
-    pill.style.background = 'rgba(100,116,139,0.15)';
-    pill.style.borderColor = 'rgba(100,116,139,0.3)';
-    if (dot) dot.style.background = '#64748b';
-    if (text) text.textContent = 'Não conectada';
+    // Desconectado
+    if (pill) {
+      pill.style.background = 'rgba(239,68,68,0.12)';
+      pill.style.borderColor = 'rgba(239,68,68,0.35)';
+      if (dot) dot.style.background = '#ef4444';
+      if (text) text.textContent = 'Desconectado';
+    }
+    // Cabeçalho executivo da página
+    if (headerBadge) {
+      headerBadge.classList.remove('connected', 'syncing');
+      headerBadge.classList.add('disconnected');
+      headerBadge.title = 'Nenhuma agenda conectada. Clique para vincular o Google Agenda.';
+    }
+    if (badgeTitle) badgeTitle.textContent = 'Desconectado';
+    if (badgeUserSub) badgeUserSub.textContent = 'Nenhuma agenda vinculada';
+    if (userDesc) {
+      userDesc.innerHTML = `<span class="cal-desc-disconnected">Desconectado — Nenhuma agenda integrada</span>`;
+    }
   }
 }
 
