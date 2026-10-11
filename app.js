@@ -1305,7 +1305,7 @@ function setupFilterModal() {
   });
 }
 
-// Navegação Unificada de Abas (Navbar e Menu Lateral Direito)
+// Navegação Unificada de Abas (Menu Lateral Esquerdo)
 function switchTab(tabId) {
   if (!tabId) return;
 
@@ -1331,95 +1331,94 @@ function switchTab(tabId) {
 }
 window.switchTab = switchTab;
 
-// Menu Lateral Direito Minimalista
-function setupRightSidebar() {
-  const sidebar = document.getElementById('sidebar-right');
-  const backdrop = document.getElementById('sidebar-backdrop');
-  const btnOpen = document.getElementById('btn-open-sidebar');
-  const btnFloating = document.getElementById('floating-sidebar-trigger');
-  const btnClose = document.getElementById('btn-close-sidebar');
-  const btnPin = document.getElementById('btn-pin-sidebar');
+// Menu Lateral Esquerdo Minimalista (Recuável estilo Activity Bar / Hover / Fixo)
+function setupLeftSidebar() {
+  const pinBtn = document.getElementById('btn-toggle-sidebar-pin');
+  const footerModeLabel = document.getElementById('sidebar-footer-mode-label');
+  const radioCompact = document.getElementById('radio-mode-compact');
+  const radioFixed = document.getElementById('radio-mode-fixed');
+  const cardCompact = document.getElementById('card-mode-compact');
+  const cardFixed = document.getElementById('card-mode-fixed');
 
-  if (!sidebar) return;
+  function applySidebarMode(mode, showNotification = false) {
+    const isFixed = mode === 'fixed';
+    
+    // Atualiza classe no body
+    document.body.classList.toggle('sidebar-left-fixed', isFixed);
 
-  function openSidebar() {
-    sidebar.classList.add('open');
-    if (!document.body.classList.contains('sidebar-pinned')) {
-      backdrop?.classList.add('open');
+    // Atualiza botão de pin no topo da sidebar
+    if (pinBtn) {
+      pinBtn.classList.toggle('pinned', isFixed);
+      pinBtn.title = isFixed ? 'Desafixar menu (permitir recuo automático)' : 'Fixar menu aberto permanentemente';
+    }
+
+    // Atualiza rótulo no rodapé da sidebar
+    if (footerModeLabel) {
+      footerModeLabel.textContent = isFixed ? 'Fixo (Aberto)' : 'Recuado (Hover)';
+    }
+
+    // Atualiza rádios e cards da aba de configurações
+    if (radioCompact) radioCompact.checked = !isFixed;
+    if (radioFixed) radioFixed.checked = isFixed;
+    if (cardCompact) cardCompact.classList.toggle('active', !isFixed);
+    if (cardFixed) cardFixed.classList.toggle('active', isFixed);
+
+    // Salva preferência
+    localStorage.setItem('mvt_sidebar_left_mode', isFixed ? 'fixed' : 'compact');
+
+    if (showNotification) {
+      showToast(
+        isFixed 
+          ? '📌 Menu lateral fixado aberto.' 
+          : '⚡ Menu lateral recuado (expandir ao passar o cursor).',
+        'info',
+        2200
+      );
     }
   }
 
-  function closeSidebar() {
-    sidebar.classList.remove('open');
-    backdrop?.classList.remove('open');
-  }
+  // Recupera modo salvo (padrão é 'compact')
+  const savedMode = localStorage.getItem('mvt_sidebar_left_mode') || 'compact';
+  applySidebarMode(savedMode, false);
 
-  function toggleSidebar() {
-    if (sidebar.classList.contains('open')) {
-      closeSidebar();
-    } else {
-      openSidebar();
-    }
-  }
+  // Botão de pino no topo da sidebar
+  pinBtn?.addEventListener('click', () => {
+    const currentIsFixed = document.body.classList.contains('sidebar-left-fixed');
+    applySidebarMode(currentIsFixed ? 'compact' : 'fixed', true);
+  });
 
-  // Restaurar estado de fixação salvo
-  const savedPin = localStorage.getItem('mvt_sidebar_pinned');
-  if (savedPin === 'true') {
-    document.body.classList.add('sidebar-pinned');
-    sidebar.classList.add('open');
-    btnPin?.classList.add('pinned');
-  }
-
-  btnOpen?.addEventListener('click', toggleSidebar);
-  btnFloating?.addEventListener('click', toggleSidebar);
-  btnClose?.addEventListener('click', closeSidebar);
-  backdrop?.addEventListener('click', closeSidebar);
-
-  // Fixar / Desfixar na tela
-  btnPin?.addEventListener('click', () => {
-    const isPinned = document.body.classList.toggle('sidebar-pinned');
-    btnPin.classList.toggle('pinned', isPinned);
-    localStorage.setItem('mvt_sidebar_pinned', isPinned ? 'true' : 'false');
-
-    if (isPinned) {
-      sidebar.classList.add('open');
-      backdrop?.classList.remove('open');
-      showToast('📌 Menu lateral fixado na tela.', 'info', 1800);
-    } else {
-      showToast('Menu lateral liberado.', 'info', 1800);
+  // Rádios e cards na aba de Configurações
+  radioCompact?.addEventListener('change', () => {
+    if (radioCompact.checked) applySidebarMode('compact', true);
+  });
+  cardCompact?.addEventListener('click', (e) => {
+    if (e.target !== radioCompact) {
+      applySidebarMode('compact', true);
     }
   });
 
-  // Fechar com tecla ESC se não estiver fixado
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sidebar.classList.contains('open') && !document.body.classList.contains('sidebar-pinned')) {
-      closeSidebar();
+  radioFixed?.addEventListener('change', () => {
+    if (radioFixed.checked) applySidebarMode('fixed', true);
+  });
+  cardFixed?.addEventListener('click', (e) => {
+    if (e.target !== radioFixed) {
+      applySidebarMode('fixed', true);
     }
   });
-
-  return { openSidebar, closeSidebar, toggleSidebar };
 }
 
 // Configuração de Eventos da Interface
 function setupEventListeners() {
-  // Navegação de Abas (Navbar e Sidebar)
+  // Navegação de Abas (Sidebar Esquerda)
   document.querySelectorAll('[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
       const tabId = btn.dataset.tab;
       switchTab(tabId);
-
-      // Se a tela for pequena ou o menu não estiver fixado, fecha a gaveta lateral ao navegar
-      if (window.innerWidth < 1024 || !document.body.classList.contains('sidebar-pinned')) {
-        const sidebar = document.getElementById('sidebar-right');
-        const backdrop = document.getElementById('sidebar-backdrop');
-        sidebar?.classList.remove('open');
-        backdrop?.classList.remove('open');
-      }
     });
   });
 
-  // Inicializa o menu lateral direito
-  setupRightSidebar();
+  // Inicializa o menu lateral esquerdo
+  setupLeftSidebar();
 
   // Inicialização do Modal Popup de Filtros & Contador
   setupFilterModal();

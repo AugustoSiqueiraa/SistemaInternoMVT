@@ -9,47 +9,138 @@
 </head>
 <body>
   <div class="app-container">
-    <header class="navbar">
-      <div class="brand-wrapper">
-        <div class="mvt-official-logo">
-          <div class="mvt-letters">MVT</div>
-          <div class="mvt-subtitle">
-            <span class="mvt-line"></span>
-            <span class="mvt-text">ADVOGADOS</span>
-            <span class="mvt-line"></span>
-          </div>
-        </div>
-        <div class="brand-divider"></div>
-        <nav class="nav-tabs-inline">
-          <button class="nav-tab-btn active" data-tab="tab-dashboard" id="tab-btn-dashboard">📋 Reuniões</button>
-          <button class="nav-tab-btn" data-tab="tab-calendar" id="tab-btn-calendar">🗓️ Agenda</button>
-          <button class="nav-tab-btn" data-tab="tab-templates" id="tab-btn-templates">💬 Mensagens</button>
-          <button class="nav-tab-btn" data-tab="tab-settings" id="tab-btn-settings">⚙️ Configurações</button>
-        </nav>
-      </div>
-      <div class="nav-actions">
-        <div class="theme-toggle-wrapper" title="Alternar entre modo escuro e claro">
-          <label class="theme-switch" for="theme-toggle-checkbox">
-            <input type="checkbox" id="theme-toggle-checkbox" aria-label="Alternar tema">
-            <span class="theme-switch-slider">
-              <span class="theme-switch-thumb" id="theme-switch-thumb">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-              </span>
-            </span>
-          </label>
-        </div>
-        <button class="btn-primary" id="btn-open-new-meeting">➕ Novo Agendamento</button>
-        <button class="btn-sidebar-toggle" id="btn-open-sidebar" type="button" title="Abrir menu lateral de navegação">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
+    <!-- Menu Lateral Esquerdo Minimalista (Recuável estilo Activity Bar / Expansível no Hover ou Fixo) -->
+    <aside class="sidebar-left" id="sidebar-left" aria-label="Menu Lateral">
+      <div class="sidebar-left-header">
+        <div class="sidebar-logo-icon" title="MVT Advogados">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
           </svg>
-          <span>Menu</span>
+        </div>
+        <div class="sidebar-header-info">
+          <span class="sidebar-brand-name">MVT ADVOGADOS</span>
+          <span class="sidebar-brand-sub">SISTEMA INTERNO</span>
+        </div>
+        <button class="sidebar-pin-btn" id="btn-toggle-sidebar-pin" type="button" title="Fixar menu aberto ou permitir recuo">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="17" x2="12" y2="22"></line>
+            <path d="M5 17h14v-2l-2-3V5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1v7l-2 3v2z"></path>
+          </svg>
         </button>
       </div>
-    </header>
-    <main class="main-content">
+
+      <nav class="sidebar-left-nav">
+        <!-- Grupo: REUNIÃO (Título) -->
+        <div class="sidebar-item-group">
+          <button class="sidebar-left-item main-item active" data-tab="tab-dashboard" id="side-item-reuniao" type="button" title="Reunião">
+            <span class="sidebar-icon-cell">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M9 12h6"></path>
+                <path d="M9 16h6"></path>
+              </svg>
+            </span>
+            <div class="sidebar-text-cell">
+              <span class="sidebar-item-name">Reunião</span>
+              <span class="sidebar-item-function">Pauta executiva de reuniões</span>
+            </div>
+          </button>
+
+          <!-- Subcategorias de Reunião: Agenda e Mensagem -->
+          <div class="sidebar-sub-branch">
+            <div class="sidebar-sub-rail"></div>
+            <!-- Subcategoria: Agenda -->
+            <button class="sidebar-left-item sub-item" data-tab="tab-calendar" id="side-item-agenda" type="button" title="Agenda">
+              <span class="sidebar-icon-cell sub">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </span>
+              <div class="sidebar-text-cell">
+                <span class="sidebar-item-name">Agenda</span>
+                <span class="sidebar-item-function">Google Agenda e horários</span>
+              </div>
+            </button>
+
+            <!-- Subcategoria: Mensagem -->
+            <button class="sidebar-left-item sub-item" data-tab="tab-templates" id="side-item-mensagem" type="button" title="Mensagem">
+              <span class="sidebar-icon-cell sub">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </span>
+              <div class="sidebar-text-cell">
+                <span class="sidebar-item-name">Mensagem</span>
+                <span class="sidebar-item-function">Régua anti no-show</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-left-divider"></div>
+
+        <!-- Grupo: CONFIGURAÇÃO (Título) -->
+        <div class="sidebar-item-group">
+          <button class="sidebar-left-item main-item" data-tab="tab-settings" id="side-item-configuracao" type="button" title="Configuração">
+            <span class="sidebar-icon-cell">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </span>
+            <div class="sidebar-text-cell">
+              <span class="sidebar-item-name">Configuração</span>
+              <span class="sidebar-item-function">MindChat, Nuvem & Parâmetros</span>
+            </div>
+          </button>
+        </div>
+      </nav>
+
+      <div class="sidebar-left-footer">
+        <div class="sidebar-pulse-dot" title="Sistema online"></div>
+        <div class="sidebar-footer-labels">
+          <span class="sidebar-footer-mode" id="sidebar-footer-mode-label">Recuado (Hover)</span>
+          <span class="sidebar-footer-ver">MVT v2.4</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="app-main-wrapper">
+      <header class="navbar">
+        <div class="brand-wrapper">
+          <div class="mvt-official-logo">
+            <div class="mvt-letters">MVT</div>
+            <div class="mvt-subtitle">
+              <span class="mvt-line"></span>
+              <span class="mvt-text">ADVOGADOS</span>
+              <span class="mvt-line"></span>
+            </div>
+          </div>
+          <div class="brand-badge-tag">
+            <span class="brand-tag-text">SISTEMA INTERNO</span>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <div class="theme-toggle-wrapper" title="Alternar entre modo escuro e claro">
+            <label class="theme-switch" for="theme-toggle-checkbox">
+              <input type="checkbox" id="theme-toggle-checkbox" aria-label="Alternar tema">
+              <span class="theme-switch-slider">
+                <span class="theme-switch-thumb" id="theme-switch-thumb">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </span>
+              </span>
+            </label>
+          </div>
+          <button class="btn-primary" id="btn-open-new-meeting">➕ Novo Agendamento</button>
+        </div>
+      </header>
+      <main class="main-content">
       <section id="tab-dashboard" class="tab-pane active">
         <!-- Barra Compacta de Indicadores (KPIs) e Relógio -->
         <div class="kpi-banner">
@@ -254,6 +345,45 @@
         </div>
       </section>
       <section id="tab-settings" class="tab-pane" style="display: none;">
+        <!-- Painel: Preferências de Interface / Menu Lateral -->
+        <div class="panel-card" style="margin-bottom: 1.25rem;">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">📐 Menu Lateral Esquerdo (Navegação)</h2>
+              <p class="panel-subtitle">Personalize como a barra lateral de navegação se comporta no seu computador.</p>
+            </div>
+          </div>
+          <div class="sidebar-mode-selector-grid">
+            <label class="sidebar-mode-card" id="card-mode-compact">
+              <input type="radio" name="sidebar-mode-radio" value="compact" id="radio-mode-compact" checked>
+              <div class="mode-card-content">
+                <div class="mode-card-top">
+                  <span class="mode-card-badge">Econômico (Padrão)</span>
+                  <span class="mode-card-check">✓ Ativo</span>
+                </div>
+                <div class="mode-card-title">Recuado (Expandir ao passar o mouse)</div>
+                <p class="mode-card-desc">
+                  A barra fica fininha mostrando apenas os ícones em branco (estilo VS Code). Ao aproximar o mouse sobre ela, expande suavemente exibindo os nomes e categorias.
+                </p>
+              </div>
+            </label>
+
+            <label class="sidebar-mode-card" id="card-mode-fixed">
+              <input type="radio" name="sidebar-mode-radio" value="fixed" id="radio-mode-fixed">
+              <div class="mode-card-content">
+                <div class="mode-card-top">
+                  <span class="mode-card-badge">Visão Completa</span>
+                  <span class="mode-card-check">✓ Ativo</span>
+                </div>
+                <div class="mode-card-title">Fixo (Sempre Aberto)</div>
+                <p class="mode-card-desc">
+                  Mantém a barra lateral sempre aberta e expandida exibindo permanentemente os ícones, títulos ("Reunião", "Agenda", "Mensagem", "Configuração") e suas funções.
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <!-- Painel 1: Status do Sistema & Modo de Segurança -->
         <div class="panel-card" style="margin-bottom: 1.25rem;">
           <div class="panel-header">
@@ -466,137 +596,8 @@
     </div>
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Backdrop do Menu Lateral Direito -->
-    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
-
-    <!-- Gatilho Flutuante Minimalista na Borda Direita -->
-    <button class="floating-sidebar-trigger" id="floating-sidebar-trigger" type="button" title="Abrir menu lateral">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-      <span class="floating-trigger-label">MENU</span>
-    </button>
-
-    <!-- Menu Lateral Direito com Ícones Minimalistas em Branco -->
-    <aside class="sidebar-right" id="sidebar-right" aria-label="Menu Lateral">
-      <div class="sidebar-header">
-        <div class="sidebar-header-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          <span>NAVEGAÇÃO</span>
-        </div>
-        <div class="sidebar-header-actions">
-          <button class="sidebar-icon-btn" id="btn-pin-sidebar" type="button" title="Fixar menu na tela">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="17" x2="12" y2="22"></line>
-              <path d="M5 17h14v-2l-2-3V5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1v7l-2 3v2z"></path>
-            </svg>
-          </button>
-          <button class="sidebar-icon-btn" id="btn-close-sidebar" type="button" title="Fechar menu lateral">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="sidebar-body">
-        <!-- Grupo: REUNIÃO (Título) -->
-        <div class="sidebar-nav-group">
-          <button class="sidebar-nav-item title-item active" data-tab="tab-dashboard" id="side-item-reuniao" type="button">
-            <span class="sidebar-icon-wrap">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                <path d="M9 12h6"></path>
-                <path d="M9 16h6"></path>
-              </svg>
-            </span>
-            <div class="sidebar-nav-text">
-              <span class="sidebar-nav-title">Reunião</span>
-              <span class="sidebar-nav-desc">Pauta executiva de reuniões</span>
-            </div>
-            <span class="sidebar-nav-arrow">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </span>
-          </button>
-
-          <!-- Subcategorias de Reunião: Agenda e Mensagem -->
-          <div class="sidebar-sub-group">
-            <div class="sidebar-sub-tree-rail"></div>
-            <div class="sidebar-sub-items-col">
-              <!-- Subcategoria: Agenda -->
-              <button class="sidebar-nav-item sub-item" data-tab="tab-calendar" id="side-item-agenda" type="button">
-                <span class="sidebar-icon-wrap sub">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                </span>
-                <div class="sidebar-nav-text">
-                  <span class="sidebar-nav-title">Agenda</span>
-                  <span class="sidebar-nav-desc">Google Agenda e horários</span>
-                </div>
-              </button>
-
-              <!-- Subcategoria: Mensagem -->
-              <button class="sidebar-nav-item sub-item" data-tab="tab-templates" id="side-item-mensagem" type="button">
-                <span class="sidebar-icon-wrap sub">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                </span>
-                <div class="sidebar-nav-text">
-                  <span class="sidebar-nav-title">Mensagem</span>
-                  <span class="sidebar-nav-desc">Régua anti no-show</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="sidebar-divider"></div>
-
-        <!-- Grupo: CONFIGURAÇÃO (Título) -->
-        <div class="sidebar-nav-group">
-          <button class="sidebar-nav-item title-item" data-tab="tab-settings" id="side-item-configuracao" type="button">
-            <span class="sidebar-icon-wrap">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </span>
-            <div class="sidebar-nav-text">
-              <span class="sidebar-nav-title">Configuração</span>
-              <span class="sidebar-nav-desc">MindChat, Nuvem & Parâmetros</span>
-            </div>
-            <span class="sidebar-nav-arrow">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="sidebar-footer-info">
-          <div class="sidebar-status-indicator">
-            <span class="status-pulse-dot"></span>
-            <span>Sistema Ativo</span>
-          </div>
-          <span class="sidebar-version-tag">MVT v2.4</span>
-        </div>
-      </div>
-    </aside>
-  </div>
+    </div><!-- fim app-main-wrapper -->
+  </div><!-- fim app-container -->
   <!-- Supabase SDK (versão mais recente, suporta chaves sb_publishable_) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   
