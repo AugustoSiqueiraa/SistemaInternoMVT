@@ -1305,19 +1305,121 @@ function setupFilterModal() {
   });
 }
 
+// Navegação Unificada de Abas (Navbar e Menu Lateral Direito)
+function switchTab(tabId) {
+  if (!tabId) return;
+
+  // Atualizar estado de todos os botões que apontam para abas
+  document.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabId);
+  });
+
+  // Ocultar todos os painéis e exibir o selecionado
+  document.querySelectorAll('.tab-pane').forEach(p => {
+    p.style.display = 'none';
+  });
+
+  const targetPane = document.getElementById(tabId);
+  if (targetPane) {
+    targetPane.style.display = 'block';
+  }
+
+  // Se a aba for a Agenda, recalcular a visualização do calendário
+  if (tabId === 'tab-calendar' && typeof renderCalendarGrid === 'function') {
+    renderCalendarGrid();
+  }
+}
+window.switchTab = switchTab;
+
+// Menu Lateral Direito Minimalista
+function setupRightSidebar() {
+  const sidebar = document.getElementById('sidebar-right');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const btnOpen = document.getElementById('btn-open-sidebar');
+  const btnFloating = document.getElementById('floating-sidebar-trigger');
+  const btnClose = document.getElementById('btn-close-sidebar');
+  const btnPin = document.getElementById('btn-pin-sidebar');
+
+  if (!sidebar) return;
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    if (!document.body.classList.contains('sidebar-pinned')) {
+      backdrop?.classList.add('open');
+    }
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    backdrop?.classList.remove('open');
+  }
+
+  function toggleSidebar() {
+    if (sidebar.classList.contains('open')) {
+      closeSidebar();
+    } else {
+      openSidebar();
+    }
+  }
+
+  // Restaurar estado de fixação salvo
+  const savedPin = localStorage.getItem('mvt_sidebar_pinned');
+  if (savedPin === 'true') {
+    document.body.classList.add('sidebar-pinned');
+    sidebar.classList.add('open');
+    btnPin?.classList.add('pinned');
+  }
+
+  btnOpen?.addEventListener('click', toggleSidebar);
+  btnFloating?.addEventListener('click', toggleSidebar);
+  btnClose?.addEventListener('click', closeSidebar);
+  backdrop?.addEventListener('click', closeSidebar);
+
+  // Fixar / Desfixar na tela
+  btnPin?.addEventListener('click', () => {
+    const isPinned = document.body.classList.toggle('sidebar-pinned');
+    btnPin.classList.toggle('pinned', isPinned);
+    localStorage.setItem('mvt_sidebar_pinned', isPinned ? 'true' : 'false');
+
+    if (isPinned) {
+      sidebar.classList.add('open');
+      backdrop?.classList.remove('open');
+      showToast('📌 Menu lateral fixado na tela.', 'info', 1800);
+    } else {
+      showToast('Menu lateral liberado.', 'info', 1800);
+    }
+  });
+
+  // Fechar com tecla ESC se não estiver fixado
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar.classList.contains('open') && !document.body.classList.contains('sidebar-pinned')) {
+      closeSidebar();
+    }
+  });
+
+  return { openSidebar, closeSidebar, toggleSidebar };
+}
+
 // Configuração de Eventos da Interface
 function setupEventListeners() {
-  // Navegação de Abas
-  document.querySelectorAll('.nav-tab-btn, .tab-btn').forEach(btn => {
+  // Navegação de Abas (Navbar e Sidebar)
+  document.querySelectorAll('[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.nav-tab-btn, .tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+      const tabId = btn.dataset.tab;
+      switchTab(tabId);
 
-      btn.classList.add('active');
-      const targetPane = document.getElementById(btn.dataset.tab);
-      if (targetPane) targetPane.style.display = 'block';
+      // Se a tela for pequena ou o menu não estiver fixado, fecha a gaveta lateral ao navegar
+      if (window.innerWidth < 1024 || !document.body.classList.contains('sidebar-pinned')) {
+        const sidebar = document.getElementById('sidebar-right');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        sidebar?.classList.remove('open');
+        backdrop?.classList.remove('open');
+      }
     });
   });
+
+  // Inicializa o menu lateral direito
+  setupRightSidebar();
 
   // Inicialização do Modal Popup de Filtros & Contador
   setupFilterModal();
