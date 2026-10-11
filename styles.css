@@ -617,7 +617,7 @@ body.light-theme .btn-xs:hover {
    ======================================================== */
 .table-header-row {
   display: grid;
-  grid-template-columns: 140px 1.4fr 1.1fr 1.6fr 170px;
+  grid-template-columns: 130px 1.35fr 1.05fr 0.95fr 1.4fr 170px;
   gap: 1rem;
   padding: 0.4rem 1rem;
   font-size: 0.68rem;
@@ -639,7 +639,7 @@ body.light-theme .btn-xs:hover {
   border-radius: var(--radius-sm);
   padding: 0.75rem 1rem;
   display: grid;
-  grid-template-columns: 140px 1.4fr 1.1fr 1.6fr 170px;
+  grid-template-columns: 130px 1.35fr 1.05fr 0.95fr 1.4fr 170px;
   gap: 1rem;
   align-items: center;
   transition: var(--transition);
@@ -709,21 +709,42 @@ body.light-theme .btn-xs:hover {
   color: var(--text-muted);
 }
 
-/* Coluna 3: Advogado */
-.lawyer-cell {
+/* Coluna 3: Comercial (Sem ícone) */
+.commercial-cell {
   display: flex;
-  flex-direction: column;
+  align-items: center;
 }
 
-.lawyer-cell-name {
-  font-size: 0.85rem;
+.commercial-cell-name {
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--text-main);
+  letter-spacing: -0.01em;
 }
 
-.lawyer-cell-area {
-  font-size: 0.72rem;
-  color: var(--blue-light);
+/* Coluna 4: Área */
+.area-cell {
+  display: flex;
+  align-items: center;
+}
+
+.area-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+
+body.light-theme .area-badge {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-muted);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 /* Coluna 4: Régua Anti No-Show (Mini Passos Elegantes) */
@@ -1846,7 +1867,7 @@ body.light-theme .cal-month-pill {
     background: var(--bg-row);
   }
 
-  .col-time, .col-client, .col-lawyer, .col-pipeline, .col-actions {
+  .col-time, .col-client, .col-commercial, .col-area, .col-lawyer, .col-pipeline, .col-actions {
     width: 100%;
   }
 

@@ -540,10 +540,14 @@ function renderMeetingsList() {
         <span class="client-cell-phone">📱 ${escapeHtml(meeting.clientPhone)}</span>
       </div>
 
-      <!-- Coluna 3: Advogado -->
-      <div class="lawyer-cell">
-        <span class="lawyer-cell-name">⚖️ ${escapeHtml(meeting.lawyer)}</span>
-        <span class="lawyer-cell-area">${escapeHtml(meeting.area)}</span>
+      <!-- Coluna 3: Comercial (Sem ícone) -->
+      <div class="commercial-cell">
+        <span class="commercial-cell-name">${escapeHtml(meeting.lawyer || 'Augusto')}</span>
+      </div>
+
+      <!-- Coluna 4: Área -->
+      <div class="area-cell">
+        <span class="area-badge">${escapeHtml(meeting.area || 'Geral')}</span>
       </div>
 
       <!-- Coluna 4: Régua Anti No-Show (Mini Passos) -->
