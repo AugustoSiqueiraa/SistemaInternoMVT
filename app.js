@@ -35,7 +35,12 @@ const STATE = {
   // Filtros ativos
   filterSearch: '',
   filterLawyer: 'all',
-  filterStatus: 'all'
+  filterStatus: 'all',
+
+  // Google Agenda: Visão, Data atual e Filtro do Comercial
+  calendarView: 'week', // 'week', 'day' ou 'month'
+  calendarDate: new Date(),
+  calendarTeamFilter: 'all'
 };
 
 // Pauta de Reuniões Integrada do Escritório (Leads Reais do MindChat)
@@ -44,7 +49,7 @@ const DEFAULT_ACTIVE_MEETINGS = [
     id: "mind-1942503",
     clientName: "vanessa CP",
     clientPhone: "5512991876015",
-    lawyer: "Dr. Augusto Siqueira",
+    lawyer: "Augusto",
     area: "Trabalhista",
     time: "09:00",
     meetLink: "https://meet.google.com/mvt-augusto",
@@ -61,7 +66,7 @@ const DEFAULT_ACTIVE_MEETINGS = [
     id: "mind-2019343",
     clientName: "Andrea",
     clientPhone: "5517991664291",
-    lawyer: "Dra. Ana Carla",
+    lawyer: "Ana Carla",
     area: "Trabalhista",
     time: "09:30",
     meetLink: "https://meet.google.com/mvt-anacarla",
@@ -78,7 +83,7 @@ const DEFAULT_ACTIVE_MEETINGS = [
     id: "mind-2011188",
     clientName: "Alexandre Faganelli Braun",
     clientPhone: "5513991505960",
-    lawyer: "Dr. Augusto Siqueira",
+    lawyer: "Augusto",
     area: "Trabalhista",
     time: "10:30",
     meetLink: "https://meet.google.com/mvt-augusto",
@@ -95,7 +100,7 @@ const DEFAULT_ACTIVE_MEETINGS = [
     id: "mind-2073737",
     clientName: "Maiara",
     clientPhone: "5517991411754",
-    lawyer: "Dr. Augusto Siqueira",
+    lawyer: "Augusto",
     area: "Trabalhista",
     time: "11:00",
     meetLink: "https://meet.google.com/mvt-augusto",
@@ -150,7 +155,7 @@ function _meetingToRow(m) {
     client_phone: String(m.clientPhone || ''),
     lawyer: String(m.lawyer || ''),
     area: String(m.area || ''),
-    meeting_date: today,
+    meeting_date: m.date || m.meeting_date || today,
     meeting_time: String(m.time || ''),
     meet_link: String(m.meetLink || ''),
     status: String(m.status || 'pending'),
@@ -273,8 +278,12 @@ async function loadMeetingsFromSupabase() {
       id: row.id,
       clientName: row.client_name,
       clientPhone: row.client_phone,
-      lawyer: row.lawyer,
+      lawyer: (row.lawyer || '')
+        .replace('Dr. Augusto Siqueira', 'Augusto')
+        .replace('Dra. Ana Carla', 'Ana Carla')
+        .replace('Dr. Augusto', 'Augusto'),
       area: row.area,
+      date: row.meeting_date || new Date().toISOString().split('T')[0],
       time: row.meeting_time,
       meetLink: row.meet_link,
       status: row.status,
@@ -347,34 +356,46 @@ function setupSupabaseRealtime() {
   }
 }
 
-// Alternador de Modo Noturno (Lua 🌙) / Modo Dia (Sol ☀️)
+// Alternador de Modo Noturno (Lua) / Modo Dia (Sol) com Chave Deslizante Minimalista
 function setupThemeToggle() {
-  const btn = document.getElementById('btn-theme-toggle');
-  const icon = document.getElementById('theme-icon');
-  const text = document.getElementById('theme-text');
+  const checkbox = document.getElementById('theme-toggle-checkbox');
+  const thumb = document.getElementById('theme-switch-thumb');
+  const legacyBtn = document.getElementById('btn-theme-toggle');
   
+  const moonSvg = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  const sunSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+
   const savedTheme = localStorage.getItem('mvt_theme') || 'dark';
   applyTheme(savedTheme);
 
-  if (btn) {
-    btn.addEventListener('click', () => {
+  if (checkbox) {
+    checkbox.addEventListener('change', () => {
+      const newTheme = checkbox.checked ? 'light' : 'dark';
+      applyTheme(newTheme);
+      localStorage.setItem('mvt_theme', newTheme);
+      showToast(`Modo ${newTheme === 'light' ? 'Dia ☀️' : 'Noturno 🌙'} ativado!`, 'info', 1800);
+    });
+  }
+
+  if (legacyBtn) {
+    legacyBtn.addEventListener('click', () => {
       const isLight = document.body.classList.contains('light-theme');
       const newTheme = isLight ? 'dark' : 'light';
       applyTheme(newTheme);
       localStorage.setItem('mvt_theme', newTheme);
-      showToast(`Modo ${newTheme === 'light' ? 'Dia ☀️' : 'Noturno 🌙'} ativado!`, 'info', 2000);
     });
   }
 
   function applyTheme(theme) {
-    if (theme === 'light') {
+    const isLight = theme === 'light';
+    if (checkbox) checkbox.checked = isLight;
+
+    if (isLight) {
       document.body.classList.add('light-theme');
-      if (icon) icon.textContent = '☀️';
-      if (text) text.textContent = 'Dia';
+      if (thumb) thumb.innerHTML = sunSvg;
     } else {
       document.body.classList.remove('light-theme');
-      if (icon) icon.textContent = '🌙';
-      if (text) text.textContent = 'Noturno';
+      if (thumb) thumb.innerHTML = moonSvg;
     }
   }
 }
@@ -601,11 +622,14 @@ function handleCardAction(e) {
   }
 }
 
-// Advogados do Escritório para a Grade
-const LAWYERS_LIST = [
-  { name: 'Dr. Augusto Siqueira', area: 'Trabalhista' },
-  { name: 'Dra. Natalia Tosatto', area: 'Trabalhista' },
-  { name: 'Dra. Ana Carla', area: 'Cível' }
+// Equipe do Comercial e Advogadas do Escritório
+const TEAM_MEMBERS = (window.CONFIG && window.CONFIG.TEAM) || [
+  { id: "augusto", name: "Augusto", role: "Comercial", area: "Comercial" },
+  { id: "ana_carla", name: "Ana Carla", role: "Comercial", area: "Comercial" },
+  { id: "julia", name: "Julia", role: "Comercial", area: "Comercial" },
+  { id: "joao", name: "João", role: "Comercial", area: "Comercial" },
+  { id: "natalia", name: "Dra. Natalia", role: "Advogada", area: "Trabalhista" },
+  { id: "ludmila", name: "Dra. Ludmila", role: "Advogada", area: "Cível / Geral" }
 ];
 
 const TIME_SLOTS = [
@@ -613,23 +637,191 @@ const TIME_SLOTS = [
   '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
 ];
 
-// Renderiza a Grade Horária do Calendário (Estilo Google Calendar)
-function renderCalendarGrid() {
-  const container = document.getElementById('calendar-grid-container');
-  if (!container) return;
+// Utilitário para formatar/obter a data da reunião (YYYY-MM-DD)
+function getMeetingDateStr(meeting) {
+  if (meeting.meeting_date) return String(meeting.meeting_date).substring(0, 10);
+  if (meeting.date) return String(meeting.date).substring(0, 10);
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
-  const selectedLawyer = STATE.calendarLawyerFilter || 'all';
-  const lawyersToDisplay = selectedLawyer === 'all' 
-    ? LAWYERS_LIST 
-    : LAWYERS_LIST.filter(l => l.name === selectedLawyer);
+// Filtro de equipe para o calendário
+function meetingMatchesTeamFilter(meeting) {
+  const filter = STATE.calendarTeamFilter || 'all';
+  if (filter === 'all') return true;
+
+  const mLawyer = (meeting.lawyer || '').toLowerCase();
+  const fLower = filter.toLowerCase();
+
+  if (fLower.includes('augusto') && mLawyer.includes('augusto')) return true;
+  if (fLower.includes('ana carla') && mLawyer.includes('ana carla')) return true;
+  if (fLower.includes('julia') && mLawyer.includes('julia')) return true;
+  if ((fLower.includes('joão') || fLower.includes('joao')) && (mLawyer.includes('joão') || mLawyer.includes('joao'))) return true;
+  if (fLower.includes('natalia') && mLawyer.includes('natalia')) return true;
+  if (fLower.includes('ludmila') && mLawyer.includes('ludmila')) return true;
+
+  return mLawyer.includes(fLower);
+}
+
+// Vincula cliques para abrir o modal de detalhes/mensagens
+function _bindMeetingBlockClicks(container) {
+  container.querySelectorAll('.cal-meeting-block, .cal-month-pill').forEach(el => {
+    el.addEventListener('click', () => {
+      const meeting = STATE.meetings.find(m => m.id === el.dataset.id);
+      if (meeting) openPreviewModal(meeting);
+    });
+  });
+}
+
+// VISÃO SEMANA (Google Agenda Oficial)
+function renderCalendarWeek(container) {
+  const current = new Date(STATE.calendarDate || new Date());
+  
+  // Calcular início da semana (Segunda-feira)
+  const dayOfWeek = current.getDay(); // 0 Dom, 1 Seg, ..., 6 Sab
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const startOfWeek = new Date(current);
+  startOfWeek.setDate(current.getDate() + diffToMonday);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    weekDays.push(d);
+  }
+
+  const endOfWeek = weekDays[6];
+
+  // Atualizar título na barra
+  const titleEl = document.getElementById('calendar-view-title');
+  if (titleEl) {
+    const sMonth = startOfWeek.toLocaleDateString('pt-BR', { month: 'short' });
+    const eMonth = endOfWeek.toLocaleDateString('pt-BR', { month: 'short' });
+    const year = endOfWeek.getFullYear();
+    if (sMonth === eMonth) {
+      titleEl.textContent = `📅 ${startOfWeek.getDate()} a ${endOfWeek.getDate()} de ${sMonth} de ${year}`;
+    } else {
+      titleEl.textContent = `📅 ${startOfWeek.getDate()} de ${sMonth} a ${endOfWeek.getDate()} de ${eMonth} de ${year}`;
+    }
+  }
+
+  const today = new Date();
+  const todayStr = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0')
+  ].join('-');
 
   let html = `
-    <div class="cal-grid-header" style="grid-template-columns: 80px repeat(${lawyersToDisplay.length}, 1fr);">
+    <div class="cal-grid-header" style="grid-template-columns: 80px repeat(7, 1fr);">
       <div class="cal-header-cell time-axis">HORÁRIO</div>
-      ${lawyersToDisplay.map(l => `
-        <div class="cal-header-cell">
-          <div>${escapeHtml(l.name)}</div>
-          <small style="color: var(--blue-light); font-weight: normal;">${escapeHtml(l.area)}</small>
+      ${weekDays.map(d => {
+        const dStr = [
+          d.getFullYear(),
+          String(d.getMonth() + 1).padStart(2, '0'),
+          String(d.getDate()).padStart(2, '0')
+        ].join('-');
+        const isToday = dStr === todayStr;
+        const weekdayName = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
+        return `
+          <div class="cal-header-cell ${isToday ? 'cal-col-is-today' : ''}">
+            <div style="font-weight: 700;">
+              ${weekdayName}
+              ${isToday ? `<span class="cal-today-circle">${d.getDate()}</span>` : d.getDate()}
+            </div>
+            <small style="color: var(--text-dim); font-size: 0.68rem;">${d.toLocaleDateString('pt-BR', { month: 'short' })}</small>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  TIME_SLOTS.forEach(slot => {
+    const slotHour = parseInt(slot.split(':')[0], 10);
+
+    html += `
+      <div class="cal-time-row" style="grid-template-columns: 80px repeat(7, 1fr);">
+        <div class="cal-time-label">${slot}</div>
+        ${weekDays.map(d => {
+          const dStr = [
+            d.getFullYear(),
+            String(d.getMonth() + 1).padStart(2, '0'),
+            String(d.getDate()).padStart(2, '0')
+          ].join('-');
+          const isToday = dStr === todayStr;
+
+          const slotMeetings = STATE.meetings.filter(m => {
+            const mDateStr = getMeetingDateStr(m);
+            if (mDateStr !== dStr) return false;
+            if (!meetingMatchesTeamFilter(m)) return false;
+            const [mH] = m.time.split(':').map(Number);
+            return mH === slotHour;
+          });
+
+          return `
+            <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
+              ${slotMeetings.map(m => `
+                <div class="cal-meeting-block ${m.status}" data-id="${m.id}" title="Reunião: ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
+                  <div class="cal-meeting-title">👤 ${escapeHtml(m.clientName)}</div>
+                  <div class="cal-meeting-meta">
+                    <span>🕒 ${m.time}</span>
+                    <span style="font-weight: 600; color: var(--blue-light);">${escapeHtml(m.lawyer ? m.lawyer.split(' ')[0] : '')}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+  _bindMeetingBlockClicks(container);
+}
+
+// VISÃO DIA (Google Agenda Oficial)
+function renderCalendarDay(container) {
+  const current = new Date(STATE.calendarDate || new Date());
+  const dayStr = [
+    current.getFullYear(),
+    String(current.getMonth() + 1).padStart(2, '0'),
+    String(current.getDate()).padStart(2, '0')
+  ].join('-');
+
+  const today = new Date();
+  const todayStr = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0')
+  ].join('-');
+  const isToday = dayStr === todayStr;
+
+  const titleEl = document.getElementById('calendar-view-title');
+  if (titleEl) {
+    const dayName = current.toLocaleDateString('pt-BR', { weekday: 'long' });
+    const fullDate = current.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    titleEl.textContent = `📅 ${dayName.charAt(0).toUpperCase() + dayName.slice(1)}, ${fullDate}`;
+  }
+
+  const selected = STATE.calendarTeamFilter || 'all';
+  const membersToDisplay = selected === 'all'
+    ? TEAM_MEMBERS
+    : TEAM_MEMBERS.filter(t => t.name.toLowerCase().includes(selected.toLowerCase()) || selected.toLowerCase().includes(t.name.toLowerCase()));
+
+  const colCount = Math.max(membersToDisplay.length, 1);
+
+  let html = `
+    <div class="cal-grid-header" style="grid-template-columns: 80px repeat(${colCount}, 1fr);">
+      <div class="cal-header-cell time-axis">HORÁRIO</div>
+      ${membersToDisplay.map(m => `
+        <div class="cal-header-cell ${isToday ? 'cal-col-is-today' : ''}">
+          <div style="font-weight: 700;">${escapeHtml(m.name)}</div>
+          <small style="color: var(--blue-light); font-size: 0.68rem;">${escapeHtml(m.role || m.area)}</small>
         </div>
       `).join('')}
     </div>
@@ -639,18 +831,24 @@ function renderCalendarGrid() {
     const slotHour = parseInt(slot.split(':')[0], 10);
 
     html += `
-      <div class="cal-time-row" style="grid-template-columns: 80px repeat(${lawyersToDisplay.length}, 1fr);">
+      <div class="cal-time-row" style="grid-template-columns: 80px repeat(${colCount}, 1fr);">
         <div class="cal-time-label">${slot}</div>
-        ${lawyersToDisplay.map(l => {
-          const meetingsInSlot = STATE.meetings.filter(m => {
+        ${membersToDisplay.map(member => {
+          const slotMeetings = STATE.meetings.filter(m => {
+            const mDateStr = getMeetingDateStr(m);
+            if (mDateStr !== dayStr) return false;
             const [mH] = m.time.split(':').map(Number);
-            return m.lawyer === l.name && mH === slotHour;
+            if (mH !== slotHour) return false;
+
+            const mLawyer = (m.lawyer || '').toLowerCase();
+            const memName = member.name.toLowerCase();
+            return mLawyer.includes(memName) || memName.includes(mLawyer);
           });
 
           return `
-            <div class="cal-slot-cell">
-              ${meetingsInSlot.map(m => `
-                <div class="cal-meeting-block ${m.status}" data-id="${m.id}" title="Clique para ver os detalhes da reunião">
+            <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
+              ${slotMeetings.map(m => `
+                <div class="cal-meeting-block ${m.status}" data-id="${m.id}" title="Reunião: ${escapeHtml(m.clientName)}">
                   <div class="cal-meeting-title">👤 ${escapeHtml(m.clientName)}</div>
                   <div class="cal-meeting-meta">
                     <span>🕒 ${m.time}</span>
@@ -666,14 +864,134 @@ function renderCalendarGrid() {
   });
 
   container.innerHTML = html;
+  _bindMeetingBlockClicks(container);
+}
 
-  // Clicks nos blocos para abrir pré-visualização da reunião
-  container.querySelectorAll('.cal-meeting-block').forEach(el => {
-    el.addEventListener('click', () => {
-      const meeting = STATE.meetings.find(m => m.id === el.dataset.id);
-      if (meeting) openPreviewModal(meeting);
-    });
-  });
+// VISÃO MÊS (Google Agenda Oficial)
+function renderCalendarMonth(container) {
+  const current = new Date(STATE.calendarDate || new Date());
+  const year = current.getFullYear();
+  const month = current.getMonth();
+
+  const titleEl = document.getElementById('calendar-view-title');
+  if (titleEl) {
+    const monthName = current.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    titleEl.textContent = `📅 ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+  }
+
+  const firstDayOfMonth = new Date(year, month, 1);
+  const lastDayOfMonth = new Date(year, month + 1, 0);
+
+  const startDayOfWeek = firstDayOfMonth.getDay(); // 0 Dom, ..., 6 Sab
+  const daysInMonth = lastDayOfMonth.getDate();
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+  const today = new Date();
+  const todayStr = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0')
+  ].join('-');
+
+  let html = `
+    <div class="cal-month-header">
+      <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SÁB</div>
+    </div>
+    <div class="cal-month-grid">
+  `;
+
+  // Dias do mês anterior
+  for (let i = startDayOfWeek - 1; i >= 0; i--) {
+    const dayNum = prevMonthLastDay - i;
+    const prevDate = new Date(year, month - 1, dayNum);
+    const prevDateStr = [
+      prevDate.getFullYear(),
+      String(prevDate.getMonth() + 1).padStart(2, '0'),
+      String(prevDate.getDate()).padStart(2, '0')
+    ].join('-');
+
+    const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === prevDateStr && meetingMatchesTeamFilter(m));
+
+    html += `
+      <div class="cal-month-cell other-month">
+        <div class="cal-month-date">${dayNum}</div>
+        ${meetingsThisDay.map(m => `
+          <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
+            ${m.time} ${escapeHtml(m.clientName)}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Dias do mês atual
+  for (let day = 1; day <= daysInMonth; day++) {
+    const thisDate = new Date(year, month, day);
+    const thisDateStr = [
+      thisDate.getFullYear(),
+      String(thisDate.getMonth() + 1).padStart(2, '0'),
+      String(thisDate.getDate()).padStart(2, '0')
+    ].join('-');
+    const isToday = thisDateStr === todayStr;
+
+    const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === thisDateStr && meetingMatchesTeamFilter(m));
+
+    html += `
+      <div class="cal-month-cell ${isToday ? 'today-cell' : ''}">
+        <div class="cal-month-date" style="${isToday ? 'color: var(--blue-light); font-weight: 800;' : ''}">${day}</div>
+        ${meetingsThisDay.map(m => `
+          <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
+            ${m.time} ${escapeHtml(m.clientName)}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Próximo mês para completar semanas
+  const totalCellsSoFar = startDayOfWeek + daysInMonth;
+  const remainingCells = (7 - (totalCellsSoFar % 7)) % 7;
+  for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
+    const nextDate = new Date(year, month + 1, nextDay);
+    const nextDateStr = [
+      nextDate.getFullYear(),
+      String(nextDate.getMonth() + 1).padStart(2, '0'),
+      String(nextDate.getDate()).padStart(2, '0')
+    ].join('-');
+
+    const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === nextDateStr && meetingMatchesTeamFilter(m));
+
+    html += `
+      <div class="cal-month-cell other-month">
+        <div class="cal-month-date">${nextDay}</div>
+        ${meetingsThisDay.map(m => `
+          <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
+            ${m.time} ${escapeHtml(m.clientName)}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+
+  container.innerHTML = html;
+  _bindMeetingBlockClicks(container);
+}
+
+// Renderiza a Grade do Calendário conforme visão selecionada
+function renderCalendarGrid() {
+  const container = document.getElementById('calendar-grid-container');
+  if (!container) return;
+
+  const view = STATE.calendarView || 'week';
+  if (view === 'day') {
+    renderCalendarDay(container);
+  } else if (view === 'month') {
+    renderCalendarMonth(container);
+  } else {
+    renderCalendarWeek(container);
+  }
 }
 
 // Simulação Segura de Movimentação no CRM
@@ -880,7 +1198,8 @@ function setupEventListeners() {
       clientName: name,
       clientPhone: phone,
       lawyer: lawyer,
-      area: lawyer.includes('Trabalhista') ? 'Trabalhista' : 'Geral',
+      area: lawyer.includes('Natalia') ? 'Trabalhista' : (lawyer.includes('Ludmila') ? 'Cível' : 'Comercial'),
+      date: new Date().toISOString().split('T')[0],
       time: time,
       meetLink: meetLink,
       status: 'pending',
@@ -961,6 +1280,66 @@ function setupEventListeners() {
       showToast('✅ Conexão ativa com Tosato advogados associados (Mind17)!', 'success');
     }, 1000);
   });
+
+  // ========================================================
+  // CONTROLES DO GOOGLE AGENDA (Visão, Navegação e Filtros)
+  // ========================================================
+  // Alternador de Visão: Semana / Dia / Mês
+  document.querySelectorAll('.cal-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      STATE.calendarView = btn.dataset.view;
+      renderCalendarGrid();
+    });
+  });
+
+  // Botão "Hoje"
+  document.getElementById('cal-btn-today')?.addEventListener('click', () => {
+    STATE.calendarDate = new Date();
+    renderCalendarGrid();
+    showToast('📅 Visualizando o dia de hoje no calendário.', 'info', 2000);
+  });
+
+  // Seta "Anterior" (◀)
+  document.getElementById('cal-btn-prev')?.addEventListener('click', () => {
+    const d = STATE.calendarDate || new Date();
+    if (STATE.calendarView === 'day') {
+      d.setDate(d.getDate() - 1);
+    } else if (STATE.calendarView === 'month') {
+      d.setMonth(d.getMonth() - 1);
+    } else {
+      d.setDate(d.getDate() - 7);
+    }
+    STATE.calendarDate = d;
+    renderCalendarGrid();
+  });
+
+  // Seta "Próximo" (▶)
+  document.getElementById('cal-btn-next')?.addEventListener('click', () => {
+    const d = STATE.calendarDate || new Date();
+    if (STATE.calendarView === 'day') {
+      d.setDate(d.getDate() + 1);
+    } else if (STATE.calendarView === 'month') {
+      d.setMonth(d.getMonth() + 1);
+    } else {
+      d.setDate(d.getDate() + 7);
+    }
+    STATE.calendarDate = d;
+    renderCalendarGrid();
+  });
+
+  // Filtro de Responsável / Comercial do Calendário
+  document.getElementById('cal-team-filter')?.addEventListener('change', (e) => {
+    STATE.calendarTeamFilter = e.target.value;
+    renderCalendarGrid();
+  });
+
+  // Botão "+ Nova Reunião" na Toolbar do Calendário
+  document.getElementById('btn-open-training-booking')?.addEventListener('click', () => {
+    modalNew.classList.add('active');
+    document.getElementById('new-time').value = getRelativeTime(60);
+  });
 }
 
 // Sincronização Inteligente com MindChat (WhatsApp)
@@ -997,11 +1376,14 @@ async function syncMindChatLeads(silent = false) {
       let h = 9;
       let m = 0;
       STATE.meetings = leads.map((l, idx) => {
-        let adv = 'Dr. Augusto Siqueira';
+        let adv = 'Augusto';
         const assigned = l.assigned_team_member_name || '';
-        if (assigned.includes('Ana Carla')) adv = 'Dra. Ana Carla';
-        else if (assigned.includes('Natalia')) adv = 'Dra. Natalia Tosatto';
-        else if (assigned.includes('Augusto')) adv = 'Dr. Augusto Siqueira';
+        if (assigned.includes('Ana Carla')) adv = 'Ana Carla';
+        else if (assigned.includes('Julia') || assigned.includes('Júlia')) adv = 'Julia';
+        else if (assigned.includes('João') || assigned.includes('Joao')) adv = 'João';
+        else if (assigned.includes('Natalia')) adv = 'Dra. Natalia';
+        else if (assigned.includes('Ludmila')) adv = 'Dra. Ludmila';
+        else if (assigned.includes('Augusto')) adv = 'Augusto';
 
         let area = 'Trabalhista';
         const tagStr = Array.isArray(l.tags) ? l.tags.map(t => t.name).join(' ') : '';
@@ -1023,8 +1405,9 @@ async function syncMindChatLeads(silent = false) {
           clientPhone: String(l.customer_phone || ''),
           lawyer: adv,
           area: area,
+          date: new Date().toISOString().split('T')[0],
           time: timeStr,
-          meetLink: `https://meet.google.com/mvt-${adv.split(' ')[1].toLowerCase()}`,
+          meetLink: `https://meet.google.com/mvt-${adv.toLowerCase().replace(/[^a-z]/g, '')}`,
           status: 'pending',
           pipeline: {
             alert60m: { sent: false, sentAt: null },
@@ -1496,15 +1879,41 @@ function importAllGcalEvents() {
       return;
     }
 
-    // Determinar área com base no título do evento (heurística simples)
-    let area = 'Geral';
-    let lawyer = 'Dr. Augusto Siqueira';
-    const titleLower = evt.summary.toLowerCase();
-    if (titleLower.includes('trabalhista') || titleLower.includes('emprego') || titleLower.includes('clt')) {
+    // Filtrar compromissos pessoais e focar apenas nas reuniões da equipe comercial
+    const titleLower = (evt.summary + ' ' + (evt.description || '')).toLowerCase();
+    const personalKeywords = [
+      'pessoal', 'almoço', 'almoco', 'médico', 'medico', 'dentista',
+      'aniversário', 'aniversario', 'academia', 'folga', 'feriado',
+      'lembrete pessoal', 'particular'
+    ];
+    if (personalKeywords.some(kw => titleLower.includes(kw))) {
+      skipped++;
+      return;
+    }
+
+    // Identificar responsável e área
+    let area = 'Comercial';
+    let lawyer = 'Augusto'; // Padrão da equipe comercial
+
+    if (titleLower.includes('ana carla') || titleLower.includes('anacarla')) {
+      lawyer = 'Ana Carla';
+    } else if (titleLower.includes('julia') || titleLower.includes('júlia')) {
+      lawyer = 'Julia';
+    } else if (titleLower.includes('joão') || titleLower.includes('joao')) {
+      lawyer = 'João';
+    } else if (titleLower.includes('natalia') || titleLower.includes('natália')) {
+      lawyer = 'Dra. Natalia';
       area = 'Trabalhista';
-    } else if (titleLower.includes('cível') || titleLower.includes('civil') || titleLower.includes('indenização')) {
+    } else if (titleLower.includes('ludmila')) {
+      lawyer = 'Dra. Ludmila';
       area = 'Cível';
-    } else if (titleLower.includes('previdenciári') || titleLower.includes('inss') || titleLower.includes('aposentadoria')) {
+    } else if (titleLower.includes('augusto')) {
+      lawyer = 'Augusto';
+    } else if (titleLower.includes('trabalhista') || titleLower.includes('clt')) {
+      area = 'Trabalhista';
+    } else if (titleLower.includes('cível') || titleLower.includes('civil')) {
+      area = 'Cível';
+    } else if (titleLower.includes('previdenci')) {
       area = 'Previdenciário';
     }
 
@@ -1514,6 +1923,7 @@ function importAllGcalEvents() {
       clientPhone: '', // não disponível no iCal
       lawyer: lawyer,
       area: area,
+      date: new Date().toISOString().split('T')[0],
       time: evt.time,
       meetLink: evt.meetLink || '',
       source: 'google_calendar',

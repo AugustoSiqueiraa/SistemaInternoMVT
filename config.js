@@ -27,10 +27,21 @@ window.CONFIG = {
     NO_SHOW_1H: "Olá, {cliente}. Notamos que você não conseguiu comparecer à reunião agendada para hoje às {horario}. Nossa equipe comercial entrará em contato para verificar se deseja reagendar um novo horário com a nossa equipe."
   },
 
-  // Advogados do Escritório (para seleção rápida)
+  // Equipe de Atendimento (Comercial) & Advogadas
+  TEAM: [
+    { id: "augusto", name: "Augusto", role: "Comercial", area: "Comercial" },
+    { id: "ana_carla", name: "Ana Carla", role: "Comercial", area: "Comercial" },
+    { id: "julia", name: "Julia", role: "Comercial", area: "Comercial" },
+    { id: "joao", name: "João", role: "Comercial", area: "Comercial" },
+    { id: "natalia", name: "Dra. Natalia", role: "Advogada", area: "Trabalhista" },
+    { id: "ludmila", name: "Dra. Ludmila", role: "Advogada", area: "Cível / Geral" }
+  ],
   LAWYERS: [
-    { id: "augusto", name: "Dr. Augusto Siqueira", area: "Trabalhista" },
-    { id: "natalia", name: "Dra. Natalia Tosatto", area: "Trabalhista" },
-    { id: "ana_carla", name: "Dra. Ana Carla", area: "Cível / Geral" }
+    { id: "augusto", name: "Augusto", area: "Comercial" },
+    { id: "ana_carla", name: "Ana Carla", area: "Comercial" },
+    { id: "julia", name: "Julia", area: "Comercial" },
+    { id: "joao", name: "João", area: "Comercial" },
+    { id: "natalia", name: "Dra. Natalia", area: "Trabalhista" },
+    { id: "ludmila", name: "Dra. Ludmila", area: "Cível / Geral" }
   ]
 };
