@@ -43,7 +43,10 @@ const STATE = {
   // Google Agenda: Visão, Data atual e Filtro do Comercial
   calendarView: 'week', // 'week', 'day' ou 'month'
   calendarDate: new Date(),
-  calendarTeamFilter: 'all'
+  calendarTeamFilter: 'all',
+
+  // Controle Geral da Automação Anti No-Show (WhatsApp)
+  automationEnabled: localStorage.getItem('mvt_automation_enabled') !== 'false'
 };
 
 // Pauta de Reuniões Integrada do Escritório (Leads Reais do MindChat)
@@ -336,6 +339,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Inicializar integração com Google Agenda
   setupGoogleCalendarIntegration();
   
+  // Inicializar controle de toggle da Automação Anti No-Show
+  setupAutomationToggle();
+  
   showToast('🛡️ Modo Seguro Ativado: Monitoramento automático em tempo real.', 'info', 6000);
 });
 
@@ -518,6 +524,7 @@ function renderMeetingsList() {
   });
 
   if (filtered.length === 0) {
+    updateFilteredResultsCounter(0, STATE.meetings.length);
     container.innerHTML = `
       <div class="empty-state">
         <p>Nenhuma reunião encontrada para os filtros selecionados.</p>
@@ -525,6 +532,8 @@ function renderMeetingsList() {
     `;
     return;
   }
+
+  updateFilteredResultsCounter(filtered.length, STATE.meetings.length);
 
   // Ordena por horário
   filtered.sort((a, b) => a.time.localeCompare(b.time));
@@ -1096,6 +1105,8 @@ function setupSimulationClock() {
 
 // Motor de Automação Anti No-Show (Disparos Automáticos Simulados)
 function checkAutomatedTriggers(now) {
+  if (STATE.automationEnabled === false) return; // Automação pausada pelo usuário
+
   STATE.meetings.forEach(meeting => {
     if (meeting.status === 'noshow') return;
 
@@ -1173,6 +1184,111 @@ function updateFilterBadge() {
     }
   }
   renderActiveFilterChips();
+}
+
+// Atualizar contador de reuniões na barra de filtros
+function updateFilteredResultsCounter(filteredCount, totalCount) {
+  const pill = document.getElementById('filter-results-counter-pill');
+  const countText = document.getElementById('filter-results-count-text');
+  if (!countText) return;
+
+  const activeFilters = getActiveFilterCount();
+
+  if (activeFilters > 0) {
+    if (pill) pill.classList.add('is-filtered');
+    if (filteredCount === 0) {
+      countText.innerHTML = `<span style="color: var(--rose); font-weight: 600;">0 de ${totalCount} reuniões (nenhuma encontrada)</span>`;
+    } else {
+      const plural = filteredCount === 1 ? 'reunião' : 'reuniões';
+      countText.innerHTML = `<strong>${filteredCount}</strong> de ${totalCount} ${plural} (filtrado)`;
+    }
+  } else {
+    if (pill) pill.classList.remove('is-filtered');
+    const plural = filteredCount === 1 ? 'reunião' : 'reuniões';
+    countText.innerHTML = `<strong>${filteredCount}</strong> ${plural} na pauta`;
+  }
+}
+
+// Atualizar interface visual do botão de automação
+function updateAutomationButtonUi() {
+  const btn = document.getElementById('btn-automation-toggle');
+  const label = document.getElementById('auto-toggle-label');
+  if (!btn) return;
+  const isEnabled = STATE.automationEnabled !== false;
+
+  if (isEnabled) {
+    btn.className = 'btn-automation-toggle active';
+    if (label) label.textContent = 'Automação Ativa';
+    btn.title = 'Automação Anti No-Show ligada. Clique para pausar os envios automáticos de WhatsApp.';
+  } else {
+    btn.className = 'btn-automation-toggle inactive';
+    if (label) label.textContent = 'Automação Pausada';
+    btn.title = 'Automação Anti No-Show desligada. Clique para reativar os envios automáticos de WhatsApp.';
+  }
+}
+
+// Configuração do Modal e Ações do Botão de Automação Anti No-Show
+function setupAutomationToggle() {
+  const toggleBtn = document.getElementById('btn-automation-toggle');
+  const modal = document.getElementById('modal-automation-confirm');
+  const btnCancel = document.getElementById('btn-cancel-automation-modal');
+  const btnConfirm = document.getElementById('btn-confirm-automation-action');
+  const icon = document.getElementById('confirm-auto-icon');
+  const title = document.getElementById('confirm-auto-title');
+  const desc = document.getElementById('confirm-auto-desc');
+
+  if (!toggleBtn || !modal) return;
+
+  updateAutomationButtonUi();
+
+  toggleBtn.addEventListener('click', () => {
+    const isCurrentlyEnabled = STATE.automationEnabled !== false;
+    if (isCurrentlyEnabled) {
+      if (icon) icon.textContent = '⚠️';
+      if (title) title.textContent = 'Pausar Automação Anti No-Show?';
+      if (desc) desc.textContent = 'Ao pausar a automação, o envio automático de todas as mensagens de confirmação e alertas da régua anti no-show pelo WhatsApp será interrompido para todos os clientes.';
+      if (btnConfirm) {
+        btnConfirm.textContent = 'Sim, Pausar Automação';
+        btnConfirm.style.background = '#ef4444';
+        btnConfirm.style.borderColor = '#ef4444';
+      }
+    } else {
+      if (icon) icon.textContent = '⚡';
+      if (title) title.textContent = 'Reativar Automação Anti No-Show?';
+      if (desc) desc.textContent = 'Ao reativar, o sistema retomará o monitoramento contínuo dos horários e o envio automático das mensagens da régua anti no-show no WhatsApp para os clientes da pauta.';
+      if (btnConfirm) {
+        btnConfirm.textContent = 'Sim, Reativar Automação';
+        btnConfirm.style.background = '#10b981';
+        btnConfirm.style.borderColor = '#10b981';
+      }
+    }
+    modal.classList.add('active');
+  });
+
+  if (btnCancel) {
+    btnCancel.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
+
+  if (btnConfirm) {
+    btnConfirm.addEventListener('click', () => {
+      STATE.automationEnabled = !STATE.automationEnabled;
+      localStorage.setItem('mvt_automation_enabled', String(STATE.automationEnabled));
+      modal.classList.remove('active');
+      updateAutomationButtonUi();
+
+      if (STATE.automationEnabled) {
+        showToast('🟢 Automação Anti No-Show ATIVADA com sucesso!', 'success', 3500);
+      } else {
+        showToast('⏸️ Automação Anti No-Show PAUSADA! Disparos suspensos.', 'warning', 4500);
+      }
+    });
+  }
 }
 
 function renderActiveFilterChips() {

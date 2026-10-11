@@ -163,6 +163,11 @@
             <p class="page-sub-heading">Pauta diária de atendimentos, confirmações e régua anti no-show</p>
           </div>
           <div class="page-top-actions">
+            <!-- Botão de Parada/Ativação da Automação Anti No-Show -->
+            <button class="btn-automation-toggle active" id="btn-automation-toggle" type="button" title="Clique para pausar ou reativar o disparo automático de WhatsApp">
+              <span class="auto-signal-dot"></span>
+              <span class="auto-toggle-label" id="auto-toggle-label">Automação Ativa</span>
+            </button>
             <button class="btn-primary" id="btn-open-new-meeting" type="button">➕ Novo Agendamento</button>
           </div>
         </div>
@@ -216,6 +221,10 @@
             <span>Filtros</span>
             <span class="filter-counter-badge" id="filter-counter-badge" style="display: none;">0</span>
           </button>
+          <div class="filter-results-counter-pill" id="filter-results-counter-pill" title="Contagem de reuniões listadas abaixo">
+            <span class="results-count-dot"></span>
+            <span class="results-count-text" id="filter-results-count-text">0 reuniões</span>
+          </div>
           <div class="active-filter-chips" id="active-filter-chips"></div>
         </div>
         <div class="table-header-row">
@@ -653,6 +662,21 @@
         </form>
       </div>
     </div>
+    <!-- Modal Popup de Confirmação da Automação Anti No-Show -->
+    <div class="modal-confirm-overlay" id="modal-automation-confirm">
+      <div class="modal-confirm-box">
+        <div class="modal-confirm-icon" id="confirm-auto-icon">⚠️</div>
+        <h3 class="modal-confirm-title" id="confirm-auto-title">Pausar Automação Anti No-Show?</h3>
+        <p class="modal-confirm-desc" id="confirm-auto-desc">
+          Ao pausar a automação, o sistema interromperá o envio automático de todas as mensagens de confirmação e alertas pelo WhatsApp para os clientes.
+        </p>
+        <div class="modal-confirm-actions">
+          <button type="button" class="btn-secondary" id="btn-cancel-automation-modal">Cancelar</button>
+          <button type="button" class="btn-primary" id="btn-confirm-automation-action" style="background: #ef4444; border-color: #ef4444;">Sim, Pausar Automação</button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
 
     </div><!-- fim app-main-wrapper -->
