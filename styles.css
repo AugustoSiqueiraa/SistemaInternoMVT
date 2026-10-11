@@ -484,9 +484,10 @@ body.light-theme .btn-secondary:hover {
 }
 
 .kpi-lbl {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .kpi-item.confirmed .kpi-val { color: var(--emerald); }
