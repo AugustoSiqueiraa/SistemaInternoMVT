@@ -1446,6 +1446,22 @@ function switchTab(tabId, subtab) {
     targetPane.style.display = 'block';
   }
 
+  // Controle inteligente de expansão de subcategorias no menu lateral:
+  const groupComercial = document.getElementById('group-comercial');
+  const groupAgenda = document.getElementById('group-agenda');
+
+  if (tabId === 'tab-comercial') {
+    groupComercial?.classList.add('expanded');
+    groupAgenda?.classList.remove('expanded');
+  } else if (tabId === 'tab-calendar' || tabId === 'tab-reunioes' || tabId === 'tab-templates') {
+    groupAgenda?.classList.add('expanded');
+    groupComercial?.classList.remove('expanded');
+  } else {
+    // No Dashboard ou Configurações, recolhe subcategorias para manter visual limpo
+    groupComercial?.classList.remove('expanded');
+    groupAgenda?.classList.remove('expanded');
+  }
+
   // Se a aba for o Comercial, acionar renderização ou mudar sub-aba
   if (tabId === 'tab-comercial') {
     if (subtab && typeof window.setCommercialSubtab === 'function') {
@@ -1458,6 +1474,11 @@ function switchTab(tabId, subtab) {
   // Se a aba for a Agenda, recalcular a visualização do calendário
   if (tabId === 'tab-calendar' && typeof renderCalendarGrid === 'function') {
     renderCalendarGrid();
+  }
+
+  // Se a aba for Reuniões / Anti No-Show, renderizar lista
+  if (tabId === 'tab-reunioes' && typeof renderMeetingsList === 'function') {
+    renderMeetingsList();
   }
 }
 window.switchTab = switchTab;
@@ -1545,6 +1566,16 @@ function setupEventListeners() {
     btn.addEventListener('click', () => {
       const tabId = btn.dataset.tab;
       const subtab = btn.dataset.subtab;
+      const parentGroup = btn.closest('.collapsible-group');
+
+      // Se for um item principal com subcategorias e já estiver ativo e expandido, permite alternar/recolher
+      if (btn.classList.contains('main-item') && parentGroup) {
+        if (parentGroup.classList.contains('expanded') && btn.classList.contains('active')) {
+          parentGroup.classList.remove('expanded');
+          return;
+        }
+      }
+
       switchTab(tabId, subtab);
     });
   });

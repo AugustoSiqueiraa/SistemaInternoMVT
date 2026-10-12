@@ -2511,19 +2511,39 @@ body.sidebar-left-fixed .sidebar-text-cell {
   margin-top: 1px;
 }
 
-/* Subcategorias com Recuo e Árvore */
+/* ========================================================
+   SUBCATEGORIAS COM RECUO, ACORDEÃO E CONTROLE DE EXPANSÃO
+   ======================================================== */
+
+/* 1. MODO RECUADO (COMPACTO): NENHUMA SUBCATEGORIA É VISÍVEL */
+body:not(.sidebar-left-fixed) .sidebar-left:not(:hover) .sidebar-sub-branch,
+body:not(.sidebar-left-fixed) .sidebar-left:not(:hover) .sidebar-chevron {
+  display: none !important;
+}
+
+/* 2. SUBCATEGORIAS: COLAPSADAS POR PADRÃO */
 .sidebar-sub-branch {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  margin-top: 0.1rem;
-  transition: margin-left 0.2s ease, padding-left 0.2s ease;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-top: 0;
+  margin-left: 0;
+  padding-left: 0;
+  pointer-events: none;
+  transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, margin 0.2s ease;
 }
 
-body:not(.sidebar-left-fixed) .sidebar-left:hover .sidebar-sub-branch,
-body.sidebar-left-fixed .sidebar-sub-branch {
-  margin-left: 1.25rem;
+/* 3. QUANDO O GRUPO ESTÁ EXPANDIDO (.expanded): ABRE COM SUAVIDADE */
+.sidebar-item-group.expanded .sidebar-sub-branch {
+  max-height: 320px;
+  opacity: 1;
+  pointer-events: auto;
+  margin-top: 0.3rem;
+  margin-left: 1.15rem;
   padding-left: 0.65rem;
 }
 
@@ -2531,41 +2551,311 @@ body.sidebar-left-fixed .sidebar-sub-branch {
   position: absolute;
   left: 0;
   top: 0;
-  bottom: 0.75rem;
+  bottom: 0.5rem;
   width: 2px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 2px;
   opacity: 0;
-  transition: opacity 0.18s ease;
+  transition: opacity 0.2s ease;
 }
 
-body:not(.sidebar-left-fixed) .sidebar-left:hover .sidebar-sub-rail,
-body.sidebar-left-fixed .sidebar-sub-rail {
+.sidebar-item-group.expanded .sidebar-sub-rail {
   opacity: 1;
 }
 
 .sidebar-left-item.sub-item {
-  padding: 0.3rem 0.45rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-xs);
 }
 
 .sidebar-icon-cell.sub {
-  width: 44px;
-  height: 38px;
-}
-
-body:not(.sidebar-left-fixed) .sidebar-left:hover .sidebar-icon-cell.sub,
-body.sidebar-left-fixed .sidebar-icon-cell.sub {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
 }
 
 .sidebar-left-item.sub-item .sidebar-item-name {
-  font-size: 0.84rem;
+  font-size: 0.83rem;
+  font-weight: 500;
 }
 
 .sidebar-left-item.sub-item .sidebar-item-function {
   font-size: 0.68rem;
+}
+
+/* Seta / Chevron Indicador de Expansão */
+.sidebar-chevron {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+body:not(.sidebar-left-fixed) .sidebar-left:hover .sidebar-chevron,
+body.sidebar-left-fixed .sidebar-chevron {
+  opacity: 0.75;
+}
+
+.sidebar-item-group.expanded .sidebar-chevron {
+  transform: rotate(90deg);
+  color: #ffffff;
+  opacity: 1;
+}
+
+/* ========================================================
+   ESTILOS DA NOVA TELA: DASHBOARD (ÁREA CLEAN / EXECUTIVA)
+   ======================================================== */
+.dashboard-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.dashboard-clean-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.dashboard-welcome-card {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-welcome-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.dashboard-welcome-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-welcome-desc {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Grid de Atalhos Rápidos do Dashboard */
+.dashboard-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 1.15rem;
+}
+
+.dashboard-nav-card {
+  background: var(--bg-row);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-nav-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  background: rgba(30, 32, 38, 0.95);
+}
+
+.dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.dash-card-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dash-card-icon-box.commercial {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.dash-card-icon-box.calendar {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+
+.dash-card-icon-box.meetings {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.dash-card-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dash-card-tag.gold {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.dash-card-tag.blue {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.dash-card-tag.emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.dash-card-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.35rem;
+}
+
+.dash-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.42;
+  margin-bottom: 1.1rem;
+  flex: 1;
+}
+
+.dash-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.dashboard-nav-card:hover .dash-arrow {
+  transform: translateX(4px);
+  color: var(--blue-light);
+}
+
+.dash-arrow {
+  transition: transform 0.2s ease, color 0.2s ease;
+  font-size: 1.1rem;
+}
+
+/* Área em Branco / Clean reservada */
+.dashboard-blank-canvas {
+  margin-top: 0.5rem;
+  padding: 3rem 1.5rem;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.blank-canvas-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.65rem;
+  opacity: 0.7;
+}
+
+.blank-canvas-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+
+.blank-canvas-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  max-width: 480px;
+  line-height: 1.45;
+}
+
+/* Suporte ao Modo Claro no Dashboard */
+body.light-theme .dashboard-welcome-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+body.light-theme .dashboard-welcome-title {
+  color: #0b1426;
+}
+body.light-theme .dashboard-nav-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+body.light-theme .dashboard-nav-card:hover {
+  background: #f8fafc;
+  border-color: rgba(2, 132, 199, 0.3);
+  box-shadow: 0 8px 24px rgba(11, 20, 38, 0.08);
+}
+body.light-theme .dash-card-title {
+  color: #0b1426;
+}
+body.light-theme .dash-card-footer {
+  color: #0284c7;
+}
+body.light-theme .dashboard-blank-canvas {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.01);
+}
+body.light-theme .blank-canvas-title {
+  color: #0b1426;
 }
 
 /* Rodapé da Sidebar */
