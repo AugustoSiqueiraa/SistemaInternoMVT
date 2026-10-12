@@ -957,7 +957,7 @@ const DEFAULT_COMMERCIAL_CLIENTS = [
 // ESTADO DO MODULO COMERCIAL
 const COMMERCIAL_STATE = {
   clients: [],
-  subtab: 'fechar', // 'fechar', 'leads', 'kanban'
+  subtab: 'leads', // 'leads' como padrão para exibir todos os clientes da planilha
   search: '',
   area: 'all'
 };
@@ -976,7 +976,7 @@ function loadCommercialData() {
   } catch (e) {
     console.warn('Erro ao carregar clientes comerciais do localStorage:', e);
   }
-  // Se nao houver dados salvos, usa a base da planilha
+  // Se nao houver dados salvos ou estiver vazio, usa a base da planilha
   COMMERCIAL_STATE.clients = JSON.parse(JSON.stringify(DEFAULT_COMMERCIAL_CLIENTS));
   saveCommercialData();
 }
@@ -990,6 +990,94 @@ function saveCommercialData() {
   }
 }
 
+// Restaurar base original da planilha do Augusto
+function restoreCommercialData() {
+  if (!confirm('Deseja restaurar a base original extraída da Planilha do Augusto (86 clientes)? Quaisquer clientes adicionados manualmente serão redefinidos.')) {
+    return;
+  }
+  localStorage.removeItem('mvt_commercial_clients');
+  COMMERCIAL_STATE.clients = JSON.parse(JSON.stringify(DEFAULT_COMMERCIAL_CLIENTS));
+  saveCommercialData();
+  COMMERCIAL_STATE.subtab = 'leads';
+  setCommercialSubtab('leads');
+  if (typeof showToast === 'function') {
+    showToast(`✅ Base da Planilha do Augusto restaurada com sucesso! (${COMMERCIAL_STATE.clients.length} clientes carregados)`, 'success', 4000);
+  }
+}
+window.restoreCommercialData = restoreCommercialData;
+
+// Importar e sincronizar arquivo Excel (.xlsx / .csv)
+function importCommercialExcelFile(file) {
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    if (typeof showToast === 'function') showToast('Aguarde um momento enquanto a ferramenta de Excel é carregada...', 'warning');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+      if (!jsonRows || jsonRows.length === 0) {
+        if (typeof showToast === 'function') showToast('Nenhum dado encontrado na planilha selecionada.', 'warning');
+        return;
+      }
+
+      let addedCount = 0;
+      const importedClients = [];
+
+      jsonRows.forEach((row, index) => {
+        // Tenta identificar as colunas mesmo se houver variacoes de cabecalho
+        const name = row['Cliente'] || row['CLIENTE'] || row['Nome'] || row['NOME'] || row['Nome do Cliente'] || row['cliente'] || '';
+        if (!name || String(name).trim() === '') return;
+
+        const phone = row['Telefone'] || row['TELEFONE'] || row['WhatsApp'] || row['Contato'] || row['fone'] || '';
+        const area = row['Area'] || row['Área'] || row['AREA'] || row['ÁREA'] || 'Trab/Prev';
+        const status = row['Status'] || row['STATUS'] || row['Fase'] || row['Tipo de Atendimento'] || 'Follow-up';
+        const nextStep = row['Proximo Passo'] || row['Próximo Passo'] || row['PROXIMO PASSO'] || row['Acompanhamento'] || 'Acompanhamento comercial';
+        const notes = row['Observações'] || row['Observação'] || row['Notas'] || row['OBS'] || '';
+        const date = row['Data'] || row['DATA'] || new Date().toISOString().split('T')[0];
+
+        importedClients.push({
+          id: `comm-import-${Date.now()}-${index}`,
+          name: String(name).trim(),
+          phone: String(phone).trim(),
+          area: String(area).trim(),
+          status: String(status).trim(),
+          nextStep: String(nextStep).trim(),
+          notes: String(notes).trim(),
+          date: String(date).trim(),
+          responsible: 'Augusto',
+          task: null
+        });
+        addedCount++;
+      });
+
+      if (addedCount > 0) {
+        COMMERCIAL_STATE.clients = importedClients;
+        saveCommercialData();
+        setCommercialSubtab('leads');
+        if (typeof showToast === 'function') {
+          showToast(`🎉 Sincronização concluída! ${addedCount} clientes importados da planilha com sucesso!`, 'success', 5000);
+        }
+      } else {
+        if (typeof showToast === 'function') showToast('Não foram encontrados nomes de clientes válidos nas colunas da planilha.', 'warning');
+      }
+    } catch (err) {
+      console.error('Erro ao ler planilha Excel:', err);
+      if (typeof showToast === 'function') showToast('Erro ao processar arquivo Excel: ' + err.message, 'danger');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+window.importCommercialExcelFile = importCommercialExcelFile;
+
 // Alternar sub-aba comercial ('fechar', 'leads', 'kanban')
 function setCommercialSubtab(subtab) {
   if (!subtab) return;
@@ -997,13 +1085,15 @@ function setCommercialSubtab(subtab) {
 
   // Atualiza botoes internos do Comercial
   document.querySelectorAll('.comm-view-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.commView === subtab);
+    const target = btn.dataset.subtab || btn.dataset.subtabTarget || btn.dataset.commView || (btn.id || '').replace('btn-comm-view-', '').replace('comm-view-', '');
+    btn.classList.toggle('active', target === subtab);
   });
 
   // Atualiza sub-itens do menu lateral esquerdo
-  document.querySelectorAll('#side-item-comercial-fechar, #side-item-comercial-leads').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.subtab === subtab);
-  });
+  const sideFechar = document.getElementById('side-item-comercial-fechar');
+  const sideLeads = document.getElementById('side-item-comercial-leads');
+  if (sideFechar) sideFechar.classList.toggle('active', subtab === 'fechar');
+  if (sideLeads) sideLeads.classList.toggle('active', subtab === 'leads');
 
   renderCommercialApp();
 }
@@ -1049,8 +1139,18 @@ function renderCommercialApp() {
   }
 
   // Filtro de Area
-  if (COMMERCIAL_STATE.area !== 'all') {
-    filtered = filtered.filter(c => c.area === COMMERCIAL_STATE.area);
+  if (COMMERCIAL_STATE.area && COMMERCIAL_STATE.area !== 'all') {
+    const fAreaLower = COMMERCIAL_STATE.area.toLowerCase();
+    filtered = filtered.filter(c => {
+      const cArea = (c.area || '').toLowerCase();
+      if (fAreaLower.includes('trab/prev') || fAreaLower.includes('trab')) {
+        return cArea.includes('trab');
+      }
+      if (fAreaLower.includes('prev')) return cArea.includes('prev');
+      if (fAreaLower.includes('estatut')) return cArea.includes('estatut');
+      if (fAreaLower.includes('aux')) return cArea.includes('aux');
+      return cArea.includes(fAreaLower);
+    });
   }
 
   // Filtro de Busca textual (nome, telefone, notas, proximo passo)
@@ -1064,17 +1164,13 @@ function renderCommercialApp() {
     );
   }
 
-  // 4. Atualizar badge de contagem
+  // 4. Atualizar contador de resultados na barra de ferramentas
+  const counterPillText = document.getElementById('comm-counter-text');
   const countBadge = document.getElementById('comm-count-badge');
-  if (countBadge) {
-    if (COMMERCIAL_STATE.subtab === 'fechar') {
-      countBadge.textContent = `🎯 Exibindo ${filtered.length} prontos para fechar (Total: ${fecharCount})`;
-    } else if (COMMERCIAL_STATE.subtab === 'kanban') {
-      countBadge.textContent = `📊 Quadro do Funil Comercial (${totalCount} clientes)`;
-    } else {
-      countBadge.textContent = `Exibindo ${filtered.length} de ${totalCount} clientes`;
-    }
-  }
+  const textLabel = `${filtered.length} cliente${filtered.length === 1 ? '' : 's'}`;
+  
+  if (counterPillText) counterPillText.textContent = textLabel;
+  if (countBadge) countBadge.textContent = textLabel;
 
   // 5. Renderizar view correspondente
   if (isKanban) {
@@ -1611,6 +1707,21 @@ function setupCommercialEvents() {
   // Botao "+ Novo Cliente Comercial"
   document.getElementById('btn-open-commercial-modal')?.addEventListener('click', () => openCommercialModal());
 
+  // Botao de Sincronizar / Importar Planilha Excel
+  const btnImportExcel = document.getElementById('btn-import-commercial-excel');
+  const inputExcel = document.getElementById('input-commercial-excel');
+  btnImportExcel?.addEventListener('click', () => inputExcel?.click());
+  inputExcel?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      importCommercialExcelFile(file);
+      e.target.value = ''; // reseta para permitir subir o mesmo arquivo se reeditado
+    }
+  });
+
+  // Botao de Restaurar Base Planilha Original (Augusto)
+  document.getElementById('btn-restore-commercial-data')?.addEventListener('click', restoreCommercialData);
+
   // Fechar modal de cliente
   document.getElementById('modal-commercial-close')?.addEventListener('click', closeCommercialModal);
   document.getElementById('btn-cancel-commercial-modal')?.addEventListener('click', closeCommercialModal);
@@ -1635,10 +1746,20 @@ function setupCommercialEvents() {
 
   document.getElementById('form-commercial-task')?.addEventListener('submit', handleCommercialTaskSubmit);
 
-  // Botoes de alternancia das sub-abas internas
-  document.getElementById('btn-comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
+  // Botoes de alternancia das sub-abas internas (por classe generica e por IDs)
+  document.querySelectorAll('.comm-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.subtab || btn.dataset.subtabTarget || btn.dataset.commView || (btn.id || '').replace('btn-comm-view-', '').replace('comm-view-', '');
+      if (target) setCommercialSubtab(target);
+    });
+  });
+
   document.getElementById('btn-comm-view-leads')?.addEventListener('click', () => setCommercialSubtab('leads'));
+  document.getElementById('comm-view-leads')?.addEventListener('click', () => setCommercialSubtab('leads'));
+  document.getElementById('btn-comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
+  document.getElementById('comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
   document.getElementById('btn-comm-view-kanban')?.addEventListener('click', () => setCommercialSubtab('kanban'));
+  document.getElementById('comm-view-kanban')?.addEventListener('click', () => setCommercialSubtab('kanban'));
 
   // Campo de Busca Rapida (com debounce)
   const searchInput = document.getElementById('comm-search-input');

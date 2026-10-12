@@ -578,9 +578,16 @@
             <h1 class="page-main-heading">Comercial</h1>
             <p class="page-sub-heading">Gestão executiva de clientes, pipeline de prospecção e fechamentos</p>
           </div>
-          <div class="page-top-actions">
+          <div class="page-top-actions" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <input type="file" id="input-commercial-excel" accept=".xlsx, .xls, .csv" style="display: none;">
+            <button class="btn-secondary" id="btn-import-commercial-excel" type="button" title="Importar ou sincronizar arquivo Excel da planilha">
+              📥 Sincronizar Planilha Excel
+            </button>
+            <button class="btn-secondary" id="btn-restore-commercial-data" type="button" title="Restaurar base da Planilha Augusto">
+              🔄 Restaurar Base Planilha
+            </button>
             <button class="btn-primary" id="btn-open-commercial-modal" type="button">
-              ➕ Novo Cliente Comercial
+              ➕ Novo Cliente
             </button>
           </div>
         </div>
@@ -619,13 +626,13 @@
         <div class="commercial-controls-bar">
           <!-- Alternador de Sub-Abas -->
           <div class="commercial-view-pills">
-            <button type="button" class="comm-view-btn active" id="comm-view-fechar" data-subtab-target="fechar">
-              🎯 Prontos para Fechar
-            </button>
-            <button type="button" class="comm-view-btn" id="comm-view-leads" data-subtab-target="leads">
+            <button type="button" class="comm-view-btn active" id="btn-comm-view-leads" onclick="setCommercialSubtab('leads')" data-subtab="leads" data-comm-view="leads">
               👥 Todos os Leads & Clientes
             </button>
-            <button type="button" class="comm-view-btn" id="comm-view-kanban" data-subtab-target="kanban">
+            <button type="button" class="comm-view-btn" id="btn-comm-view-fechar" onclick="setCommercialSubtab('fechar')" data-subtab="fechar" data-comm-view="fechar">
+              🎯 Prontos para Fechar
+            </button>
+            <button type="button" class="comm-view-btn" id="btn-comm-view-kanban" onclick="setCommercialSubtab('kanban')" data-subtab="kanban" data-comm-view="kanban">
               📊 Funil Kanban
             </button>
           </div>
@@ -1165,6 +1172,8 @@
   </div><!-- fim app-container -->
   <!-- Supabase SDK (versão mais recente, suporta chaves sb_publishable_) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <!-- SheetJS para importação e sincronização de planilhas Excel (.xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
   <script src="commercial.js"></script>
