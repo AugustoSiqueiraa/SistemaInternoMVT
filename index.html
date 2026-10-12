@@ -578,14 +578,18 @@
             <h1 class="page-main-heading">Comercial</h1>
             <p class="page-sub-heading">Gestão executiva de clientes, pipeline de prospecção e fechamentos</p>
           </div>
-          <div class="page-top-actions" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-            <input type="file" id="input-commercial-excel" accept=".xlsx, .xls, .csv" style="display: none;">
-            <button class="btn-secondary" id="btn-import-commercial-excel" type="button" title="Importar ou sincronizar arquivo Excel da planilha">
-              📥 Sincronizar Planilha Excel
+          <div class="page-top-actions" style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+            <!-- Botão de Conexão MindChat (Verde = Conectado / Vermelho = Desconectado) -->
+            <button class="btn-automation-toggle active" id="btn-mindchat-commercial-toggle" type="button" title="Status da Conexão com o MindChat (WhatsApp)">
+              <span class="auto-signal-dot"></span>
+              <span class="auto-toggle-label" id="mindchat-commercial-label">MindChat Conectado</span>
             </button>
-            <button class="btn-secondary" id="btn-restore-commercial-data" type="button" title="Restaurar base da Planilha Augusto">
-              🔄 Restaurar Base Planilha
+
+            <!-- Botão de Sincronizar Leads do MindChat -->
+            <button class="btn-secondary" id="btn-sync-mindchat-commercial" type="button" title="Puxar novos leads e clientes do MindChat diretamente para o Comercial">
+              🔄 Sincronizar MindChat
             </button>
+
             <button class="btn-primary" id="btn-open-commercial-modal" type="button">
               ➕ Novo Cliente
             </button>
@@ -1027,6 +1031,21 @@
         <div class="modal-confirm-actions">
           <button type="button" class="btn-secondary" id="btn-cancel-automation-modal">Cancelar</button>
           <button type="button" class="btn-primary" id="btn-confirm-automation-action" style="background: #ef4444; border-color: #ef4444;">Sim, Pausar Automação</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Popup de Confirmação da Conexão MindChat no Comercial -->
+    <div class="modal-confirm-overlay" id="modal-mindchat-commercial-confirm">
+      <div class="modal-confirm-box">
+        <div class="modal-confirm-icon" id="confirm-mindchat-icon">⚠️</div>
+        <h3 class="modal-confirm-title" id="confirm-mindchat-title">Desconectar Integração MindChat?</h3>
+        <p class="modal-confirm-desc" id="confirm-mindchat-desc">
+          Ao pausar a conexão, o sistema não sincronizará novos leads e conversas do WhatsApp do MindChat diretamente para o pipeline comercial.
+        </p>
+        <div class="modal-confirm-actions">
+          <button type="button" class="btn-secondary" id="btn-cancel-mindchat-modal">Cancelar</button>
+          <button type="button" class="btn-primary" id="btn-confirm-mindchat-action" style="background: #ef4444; border-color: #ef4444;">Sim, Pausar Conexão</button>
         </div>
       </div>
     </div>

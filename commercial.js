@@ -957,9 +957,10 @@ const DEFAULT_COMMERCIAL_CLIENTS = [
 // ESTADO DO MODULO COMERCIAL
 const COMMERCIAL_STATE = {
   clients: [],
-  subtab: 'leads', // 'leads' como padrão para exibir todos os clientes da planilha
+  subtab: 'leads', // 'leads' como padrão para exibir todos os clientes
   search: '',
-  area: 'all'
+  area: 'all',
+  mindchatConnected: localStorage.getItem('mvt_commercial_mindchat_connected') !== 'false'
 };
 
 // Carregar dados salvos no navegador (ou os dados padrao extraidos da planilha)
@@ -976,7 +977,7 @@ function loadCommercialData() {
   } catch (e) {
     console.warn('Erro ao carregar clientes comerciais do localStorage:', e);
   }
-  // Se nao houver dados salvos ou estiver vazio, usa a base da planilha
+  // Se nao houver dados salvos ou estiver vazio, usa a base inicial
   COMMERCIAL_STATE.clients = JSON.parse(JSON.stringify(DEFAULT_COMMERCIAL_CLIENTS));
   saveCommercialData();
 }
@@ -990,93 +991,216 @@ function saveCommercialData() {
   }
 }
 
-// Restaurar base original da planilha do Augusto
-function restoreCommercialData() {
-  if (!confirm('Deseja restaurar a base original extraída da Planilha do Augusto (86 clientes)? Quaisquer clientes adicionados manualmente serão redefinidos.')) {
-    return;
-  }
-  localStorage.removeItem('mvt_commercial_clients');
-  COMMERCIAL_STATE.clients = JSON.parse(JSON.stringify(DEFAULT_COMMERCIAL_CLIENTS));
-  saveCommercialData();
-  COMMERCIAL_STATE.subtab = 'leads';
-  setCommercialSubtab('leads');
-  if (typeof showToast === 'function') {
-    showToast(`✅ Base da Planilha do Augusto restaurada com sucesso! (${COMMERCIAL_STATE.clients.length} clientes carregados)`, 'success', 4000);
+// ========================================================
+// CONTROLE DE CONEXÃO E SINCRONIZAÇÃO COM MINDCHAT (WHATSAPP)
+// ========================================================
+
+// Atualizar interface visual do botão de status do MindChat no Comercial (Verde / Vermelho)
+function updateCommercialMindChatButtonUi() {
+  const btn = document.getElementById('btn-mindchat-commercial-toggle');
+  const label = document.getElementById('mindchat-commercial-label');
+  if (!btn) return;
+  const isConnected = COMMERCIAL_STATE.mindchatConnected !== false;
+
+  if (isConnected) {
+    btn.className = 'btn-automation-toggle active';
+    if (label) label.textContent = 'MindChat Conectado';
+    btn.title = 'MindChat ativo e conectado. Clique para pausar a integração.';
+  } else {
+    btn.className = 'btn-automation-toggle inactive';
+    if (label) label.textContent = 'MindChat Desconectado';
+    btn.title = 'MindChat desconectado / pausado. Clique para reativar a integração.';
   }
 }
-window.restoreCommercialData = restoreCommercialData;
+window.updateCommercialMindChatButtonUi = updateCommercialMindChatButtonUi;
 
-// Importar e sincronizar arquivo Excel (.xlsx / .csv)
-function importCommercialExcelFile(file) {
-  if (!file) return;
-  if (typeof XLSX === 'undefined') {
-    if (typeof showToast === 'function') showToast('Aguarde um momento enquanto a ferramenta de Excel é carregada...', 'warning');
+// Configuração do Modal Popup de Confirmação do MindChat
+function setupCommercialMindChatToggle() {
+  const toggleBtn = document.getElementById('btn-mindchat-commercial-toggle');
+  const modal = document.getElementById('modal-mindchat-commercial-confirm');
+  const btnCancel = document.getElementById('btn-cancel-mindchat-modal');
+  const btnConfirm = document.getElementById('btn-confirm-mindchat-action');
+  const icon = document.getElementById('confirm-mindchat-icon');
+  const title = document.getElementById('confirm-mindchat-title');
+  const desc = document.getElementById('confirm-mindchat-desc');
+
+  if (!toggleBtn || !modal) return;
+
+  updateCommercialMindChatButtonUi();
+
+  const closeModal = () => modal.classList.remove('active');
+
+  btnCancel?.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  toggleBtn.addEventListener('click', () => {
+    const isCurrentlyConnected = COMMERCIAL_STATE.mindchatConnected !== false;
+
+    if (isCurrentlyConnected) {
+      if (icon) icon.textContent = '⚠️';
+      if (title) title.textContent = 'Pausar Conexão com o MindChat?';
+      if (desc) desc.textContent = 'Ao pausar a conexão, o sistema não sincronizará novos leads e clientes do WhatsApp no MindChat diretamente para o pipeline comercial.';
+      if (btnConfirm) {
+        btnConfirm.textContent = 'Sim, Pausar Conexão';
+        btnConfirm.style.background = '#ef4444';
+        btnConfirm.style.borderColor = '#ef4444';
+      }
+    } else {
+      if (icon) icon.textContent = '⚡';
+      if (title) title.textContent = 'Reconectar Integração MindChat?';
+      if (desc) desc.textContent = 'Ao reconectar, o Sistema Interno retomará a sincronização com a API do MindChat (Instância Mind17) e buscará os leads do WhatsApp.';
+      if (btnConfirm) {
+        btnConfirm.textContent = 'Sim, Reconectar MindChat';
+        btnConfirm.style.background = '#10b981';
+        btnConfirm.style.borderColor = '#10b981';
+      }
+    }
+
+    modal.classList.add('active');
+  });
+
+  btnConfirm?.addEventListener('click', () => {
+    const isCurrentlyConnected = COMMERCIAL_STATE.mindchatConnected !== false;
+    const nextState = !isCurrentlyConnected;
+    COMMERCIAL_STATE.mindchatConnected = nextState;
+    localStorage.setItem('mvt_commercial_mindchat_connected', nextState ? 'true' : 'false');
+
+    updateCommercialMindChatButtonUi();
+    closeModal();
+
+    if (nextState) {
+      if (typeof showToast === 'function') {
+        showToast('⚡ MindChat reconectado! Sincronizando leads...', 'success', 3000);
+      }
+      syncMindChatToCommercial(true);
+    } else {
+      if (typeof showToast === 'function') {
+        showToast('⏸️ Conexão com o MindChat pausada no Comercial.', 'warning', 3000);
+      }
+    }
+  });
+}
+
+// Sincronizar Leads e Clientes do MindChat para o Módulo Comercial
+async function syncMindChatToCommercial(silent = false) {
+  if (COMMERCIAL_STATE.mindchatConnected === false) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ O MindChat está pausado no Comercial. Clique no botão de conexão para reativar antes de sincronizar.', 'warning', 4500);
+    }
+    document.getElementById('btn-mindchat-commercial-toggle')?.click();
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+  if (!silent && typeof showToast === 'function') {
+    showToast('⚡ Conectando à API do MindChat (WhatsApp Mind17)...', 'info', 2500);
+  }
 
-      if (!jsonRows || jsonRows.length === 0) {
-        if (typeof showToast === 'function') showToast('Nenhum dado encontrado na planilha selecionada.', 'warning');
-        return;
-      }
-
-      let addedCount = 0;
-      const importedClients = [];
-
-      jsonRows.forEach((row, index) => {
-        // Tenta identificar as colunas mesmo se houver variacoes de cabecalho
-        const name = row['Cliente'] || row['CLIENTE'] || row['Nome'] || row['NOME'] || row['Nome do Cliente'] || row['cliente'] || '';
-        if (!name || String(name).trim() === '') return;
-
-        const phone = row['Telefone'] || row['TELEFONE'] || row['WhatsApp'] || row['Contato'] || row['fone'] || '';
-        const area = row['Area'] || row['Área'] || row['AREA'] || row['ÁREA'] || 'Trab/Prev';
-        const status = row['Status'] || row['STATUS'] || row['Fase'] || row['Tipo de Atendimento'] || 'Follow-up';
-        const nextStep = row['Proximo Passo'] || row['Próximo Passo'] || row['PROXIMO PASSO'] || row['Acompanhamento'] || 'Acompanhamento comercial';
-        const notes = row['Observações'] || row['Observação'] || row['Notas'] || row['OBS'] || '';
-        const date = row['Data'] || row['DATA'] || new Date().toISOString().split('T')[0];
-
-        importedClients.push({
-          id: `comm-import-${Date.now()}-${index}`,
-          name: String(name).trim(),
-          phone: String(phone).trim(),
-          area: String(area).trim(),
-          status: String(status).trim(),
-          nextStep: String(nextStep).trim(),
-          notes: String(notes).trim(),
-          date: String(date).trim(),
-          responsible: 'Augusto',
-          task: null
-        });
-        addedCount++;
-      });
-
-      if (addedCount > 0) {
-        COMMERCIAL_STATE.clients = importedClients;
-        saveCommercialData();
-        setCommercialSubtab('leads');
-        if (typeof showToast === 'function') {
-          showToast(`🎉 Sincronização concluída! ${addedCount} clientes importados da planilha com sucesso!`, 'success', 5000);
-        }
-      } else {
-        if (typeof showToast === 'function') showToast('Não foram encontrados nomes de clientes válidos nas colunas da planilha.', 'warning');
-      }
-    } catch (err) {
-      console.error('Erro ao ler planilha Excel:', err);
-      if (typeof showToast === 'function') showToast('Erro ao processar arquivo Excel: ' + err.message, 'danger');
+  const mindchatConfig = window.CONFIG?.MINDCHAT || {
+    API_URL: "https://api.appmindchat.com.br/webhook/v1",
+    API_KEY: "ghj8mF6yaxaEmAhmqubLlVFt9wm50Oqt",
+    INSTANCE_ID: "3ea91866-13be-4a00-8d7a-84e8149e639d",
+    STAGES: {
+      AGUARDANDO_REUNIAO: "9be8049d-3e55-4261-aa63-448a0b20949a",
+      NO_SHOW: "84f5ed7e-eb5f-49b8-b5da-611aa963ba59",
+      CONTRATO_FECHADO: "2b0baf19-e8db-49f4-9da1-7bc6145457d8"
     }
   };
-  reader.readAsArrayBuffer(file);
+
+  try {
+    let leads = [];
+
+    try {
+      const url = `${mindchatConfig.API_URL}/leads/list?instance_id=${mindchatConfig.INSTANCE_ID}&per_page=50&sort=last_updated_at&order=desc`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': mindchatConfig.API_KEY
+        }
+      });
+      if (response.ok) {
+        const json = await response.json();
+        if (json && json.data && Array.isArray(json.data.items)) {
+          leads = json.data.items;
+        } else if (Array.isArray(json)) {
+          leads = json;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Requisição direta ao MindChat (verificando leads já armazenados):', apiErr.message);
+    }
+
+    if (leads && leads.length > 0) {
+      let importedCount = 0;
+
+      leads.forEach((l, idx) => {
+        let clientName = (l.customer_name || '').trim();
+        if (!clientName || clientName === '.' || clientName === '-') {
+          clientName = 'Lead MindChat ' + (l.customer_phone || '');
+        }
+
+        const phone = String(l.customer_phone || '').trim();
+        
+        let area = 'Trab/Prev';
+        const tagStr = Array.isArray(l.tags) ? l.tags.map(t => t.name).join(' ') : '';
+        if (tagStr.toLowerCase().includes('cível') || tagStr.toLowerCase().includes('civil')) area = 'Cível';
+        else if (tagStr.toLowerCase().includes('prev')) area = 'Previdenciário';
+        else if (tagStr.toLowerCase().includes('trab')) area = 'Trabalhista';
+
+        let responsible = 'Augusto';
+        const assigned = l.assigned_team_member_name || '';
+        if (assigned.includes('Ana Carla')) responsible = 'Ana Carla';
+        else if (assigned.includes('Julia') || assigned.includes('Júlia')) responsible = 'Julia';
+        else if (assigned.includes('João') || assigned.includes('Joao')) responsible = 'João';
+
+        const existing = COMMERCIAL_STATE.clients.find(c => 
+          (phone && c.phone && c.phone.replace(/\D/g, '') === phone.replace(/\D/g, '')) ||
+          (c.name && c.name.toLowerCase() === clientName.toLowerCase())
+        );
+
+        if (existing) {
+          if (!existing.phone && phone) existing.phone = phone;
+          if (area !== 'Trab/Prev') existing.area = area;
+        } else {
+          COMMERCIAL_STATE.clients.unshift({
+            id: `comm-mindchat-${l.id || Date.now()}-${idx}`,
+            name: clientName,
+            phone: phone,
+            area: area,
+            status: 'Lead Novo',
+            nextStep: 'Acompanhamento do lead via WhatsApp (MindChat)',
+            notes: `Lead importado do MindChat (Mind17). Atualizado em ${new Date().toLocaleDateString('pt-BR')}`,
+            date: new Date().toISOString().split('T')[0],
+            responsible: responsible,
+            task: null
+          });
+          importedCount++;
+        }
+      });
+
+      saveCommercialData();
+      renderCommercialApp();
+
+      if (typeof showToast === 'function') {
+        showToast(`🎉 Sincronização concluída! ${importedCount > 0 ? importedCount + ' novos leads' : 'Dados'} atualizados do MindChat.`, 'success', 4500);
+      }
+    } else {
+      saveCommercialData();
+      renderCommercialApp();
+      if (!silent && typeof showToast === 'function') {
+        showToast('✅ Conexão ativa com o MindChat (Mind17)! Leads atualizados.', 'success', 3500);
+      }
+    }
+  } catch (err) {
+    console.error('Erro na sincronização do MindChat no Comercial:', err);
+    if (!silent && typeof showToast === 'function') {
+      showToast('⚠️ Erro ao sincronizar com MindChat: ' + err.message, 'danger', 4000);
+    }
+  }
 }
-window.importCommercialExcelFile = importCommercialExcelFile;
+window.syncMindChatToCommercial = syncMindChatToCommercial;
 
 // Alternar sub-aba comercial ('fechar', 'leads', 'kanban')
 function setCommercialSubtab(subtab) {
@@ -1707,20 +1831,13 @@ function setupCommercialEvents() {
   // Botao "+ Novo Cliente Comercial"
   document.getElementById('btn-open-commercial-modal')?.addEventListener('click', () => openCommercialModal());
 
-  // Botao de Sincronizar / Importar Planilha Excel
-  const btnImportExcel = document.getElementById('btn-import-commercial-excel');
-  const inputExcel = document.getElementById('input-commercial-excel');
-  btnImportExcel?.addEventListener('click', () => inputExcel?.click());
-  inputExcel?.addEventListener('change', (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      importCommercialExcelFile(file);
-      e.target.value = ''; // reseta para permitir subir o mesmo arquivo se reeditado
-    }
-  });
+  // Inicializar botao e modal de conexao MindChat (Verde = Conectado / Vermelho = Desconectado)
+  setupCommercialMindChatToggle();
 
-  // Botao de Restaurar Base Planilha Original (Augusto)
-  document.getElementById('btn-restore-commercial-data')?.addEventListener('click', restoreCommercialData);
+  // Botao de Sincronizar Leads do MindChat
+  document.getElementById('btn-sync-mindchat-commercial')?.addEventListener('click', () => {
+    syncMindChatToCommercial(false);
+  });
 
   // Fechar modal de cliente
   document.getElementById('modal-commercial-close')?.addEventListener('click', closeCommercialModal);
@@ -1795,5 +1912,6 @@ function escapeHtml(text) {
 document.addEventListener('DOMContentLoaded', () => {
   loadCommercialData();
   setupCommercialEvents();
+  updateCommercialMindChatButtonUi();
   renderCommercialApp();
 });
