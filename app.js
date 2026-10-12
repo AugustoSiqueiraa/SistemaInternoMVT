@@ -1027,9 +1027,26 @@ function renderCalendarMonth(container) {
 // Renderiza a Grade do Calendário conforme visão selecionada
 function renderCalendarGrid() {
   const container = document.getElementById('calendar-grid-container');
+  const embedContainer = document.getElementById('calendar-google-embed-container');
+  const iframe = document.getElementById('gcal-embed-iframe');
   if (!container) return;
 
   const view = STATE.calendarView || 'week';
+
+  if (view === 'google') {
+    container.style.display = 'none';
+    if (embedContainer) embedContainer.style.display = 'block';
+
+    const savedEmbed = localStorage.getItem('mvt_gcal_embed_url') || 'https://calendar.google.com/calendar/embed?src=asiqueira%40mvtadvogados.com.br&ctz=America%2FSao_Paulo';
+    if (iframe && iframe.src !== savedEmbed) {
+      iframe.src = savedEmbed;
+    }
+    return;
+  }
+
+  container.style.display = 'block';
+  if (embedContainer) embedContainer.style.display = 'none';
+
   if (view === 'day') {
     renderCalendarDay(container);
   } else if (view === 'month') {
@@ -1937,37 +1954,105 @@ const GCAL_STATE = {
   pendingEvents: [] // eventos buscados aguardando importação
 };
 
-// Salvar link da agenda
+// Salvar link da agenda (suporta tanto links .ics quanto URLs de embed/iframe)
 window.handleSaveGcal = function() {
   const inputEl = document.getElementById('gcal-ical-input');
   if (!inputEl) return;
-  const url = inputEl.value.trim();
-  if (!url) {
-    showToast('⚠️ Cole o link iCal no campo antes de salvar.', 'warning');
+  let raw = inputEl.value.trim();
+  if (!raw) {
+    showToast('⚠️ Cole o link ou código da agenda antes de salvar.', 'warning');
     return;
   }
-  if (!url.includes('google.com') && !url.endsWith('.ics')) {
-    showToast('⚠️ O link não parece ser um arquivo iCal válido do Google. Verifique e tente novamente.', 'warning', 5000);
+
+  // 1. Extração automática caso o usuário cole a tag <iframe src="...">
+  let cleanUrl = raw;
+  if (raw.includes('<iframe') && raw.includes('src=')) {
+    const match = raw.match(/src=["']([^"']+)["']/i);
+    if (match && match[1]) {
+      cleanUrl = match[1];
+      inputEl.value = cleanUrl; // limpa o campo na tela para ficar elegante
+    }
+  }
+
+  // 2. Se for link do tipo Embed do Google Calendar (URL público / Incorporar)
+  if (cleanUrl.includes('calendar.google.com/calendar/embed') || cleanUrl.includes('/embed?src=')) {
+    GCAL_STATE.icalUrl = cleanUrl;
+    localStorage.setItem('mvt_gcal_url', cleanUrl);
+    localStorage.setItem('mvt_gcal_embed_url', cleanUrl);
+    _showSyncPanel(cleanUrl);
+    _setGcalStatus('connected');
+
+    // Configura o iframe do Google Agenda
+    const iframe = document.getElementById('gcal-embed-iframe');
+    if (iframe) iframe.src = cleanUrl;
+
+    // Ativa automaticamente a visão do Google Agenda Oficial
+    STATE.calendarView = 'google';
+    document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'google'));
+    renderCalendarGrid();
+
+    showToast('🎉 Google Agenda Oficial conectada com sucesso! Visualização ao vivo ativada.', 'success', 5000);
     return;
   }
-  if (url.includes('/public/basic.ics') || url.includes('/public/')) {
-    showToast('⚠️ ATENÇÃO: Você colou o endereço PÚBLICO (/public/), que fica bloqueado pelo Google em contas corporativas (@mvtadvogados.com.br). Copie o "Endereço secreto em formato iCal" logo abaixo na sua agenda Google!', 'warning', 10000);
+
+  // 3. Se for link iCal (.ics)
+  if (!cleanUrl.includes('google.com') && !cleanUrl.endsWith('.ics')) {
+    showToast('⚠️ O link não parece ser válido. Cole o URL da sua agenda ou o código do iframe.', 'warning', 5000);
+    return;
   }
-  GCAL_STATE.icalUrl = url;
-  localStorage.setItem('mvt_gcal_url', url);
-  _showSyncPanel(url);
-  showToast('✅ Link da agenda salvo com sucesso! Clique em "Sincronizar Agora" para puxar os eventos.', 'success', 4000);
+
+  if (cleanUrl.includes('/public/basic.ics')) {
+    showToast('⚠️ Nota: o Google Workspace corporativo (@mvtadvogados.com.br) bloqueia links /public/. Caso dê erro 404, use o código de Incorporar (iframe) ou o botão "Importar Arquivo .ics direto".', 'warning', 7000);
+  }
+
+  GCAL_STATE.icalUrl = cleanUrl;
+  localStorage.setItem('mvt_gcal_url', cleanUrl);
+  _showSyncPanel(cleanUrl);
+  showToast('✅ Link salvo com sucesso! Clique em "Sincronizar Agora" para processar.', 'success', 4000);
 };
 
 // Sincronizar agenda
 window.handleSyncGcal = function() {
   const inputEl = document.getElementById('gcal-ical-input');
   if (inputEl && inputEl.value.trim()) {
-    const url = inputEl.value.trim();
+    let url = inputEl.value.trim();
+    if (url.includes('<iframe') && url.includes('src=')) {
+      const match = url.match(/src=["']([^"']+)["']/i);
+      if (match && match[1]) {
+        url = match[1];
+        inputEl.value = url;
+      }
+    }
     GCAL_STATE.icalUrl = url;
     localStorage.setItem('mvt_gcal_url', url);
     _showSyncPanel(url);
+
+    // Se for link embed, atualiza o iframe e confirma conexão
+    if (url.includes('/embed?src=') || url.includes('/calendar/embed')) {
+      localStorage.setItem('mvt_gcal_embed_url', url);
+      const iframe = document.getElementById('gcal-embed-iframe');
+      if (iframe) iframe.src = url;
+      STATE.calendarView = 'google';
+      document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'google'));
+      renderCalendarGrid();
+      _setGcalStatus('connected');
+      showToast('🔄 Google Agenda Oficial atualizada ao vivo na tela!', 'success', 3500);
+      return;
+    }
   }
+
+  // Se for link de embed já salvo
+  if (GCAL_STATE.icalUrl && (GCAL_STATE.icalUrl.includes('/embed?src=') || GCAL_STATE.icalUrl.includes('/calendar/embed'))) {
+    const iframe = document.getElementById('gcal-embed-iframe');
+    if (iframe) iframe.src = GCAL_STATE.icalUrl;
+    STATE.calendarView = 'google';
+    document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'google'));
+    renderCalendarGrid();
+    _setGcalStatus('connected');
+    showToast('🔄 Google Agenda Oficial atualizada ao vivo na tela!', 'success', 3500);
+    return;
+  }
+
   fetchAndParseIcal();
 };
 
@@ -2038,10 +2123,22 @@ function setupGoogleCalendarIntegration() {
     userSelect.value = savedUser;
   }
 
-  // Restaurar URL salva
+  // Restaurar URL salva (com normalização caso tenha tag iframe)
   if (GCAL_STATE.icalUrl) {
-    if (inputEl) inputEl.value = GCAL_STATE.icalUrl;
-    _showSyncPanel(GCAL_STATE.icalUrl);
+    let clean = GCAL_STATE.icalUrl;
+    if (clean.includes('<iframe') && clean.includes('src=')) {
+      const match = clean.match(/src=["']([^"']+)["']/i);
+      if (match && match[1]) {
+        clean = match[1];
+        localStorage.setItem('mvt_gcal_url', clean);
+      }
+    }
+    if (inputEl) inputEl.value = clean;
+    if (clean.includes('/embed?src=') || clean.includes('/calendar/embed')) {
+      const iframe = document.getElementById('gcal-embed-iframe');
+      if (iframe) iframe.src = clean;
+    }
+    _showSyncPanel(clean);
     _updateSyncTimestamp();
     _setGcalStatus('connected');
   } else {

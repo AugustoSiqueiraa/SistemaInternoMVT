@@ -475,23 +475,27 @@
           </div>
 
           <div class="calendar-toolbar-right">
-            <!-- Alternador de Visão: Semana / Dia / Mês -->
+            <!-- Alternador de Visão: Semana / Dia / Mês / Google Agenda Ao Vivo -->
             <div class="cal-view-pills">
               <button class="cal-view-btn active" data-view="week" id="cal-view-week" type="button">Semana</button>
               <button class="cal-view-btn" data-view="day" id="cal-view-day" type="button">Dia</button>
               <button class="cal-view-btn" data-view="month" id="cal-view-month" type="button">Mês</button>
+              <button class="cal-view-btn" data-view="google" id="cal-view-google" type="button" title="Ver sua agenda oficial do Google ao vivo">🌐 Google Agenda Oficial</button>
             </div>
             <button class="btn-primary" id="btn-open-training-booking" type="button">➕ Nova Reunião</button>
           </div>
         </div>
         <div class="calendar-grid-card">
           <div class="calendar-grid-wrapper" id="calendar-grid-container"></div>
+          <div id="calendar-google-embed-container" style="display: none; width: 100%; min-height: 720px; border-radius: var(--radius-sm); overflow: hidden; background: #ffffff;">
+            <iframe id="gcal-embed-iframe" src="" style="width: 100%; height: 720px; border: none;" frameborder="0" scrolling="yes"></iframe>
+          </div>
         </div>
         <div class="calendar-integration-box">
           <div class="cal-int-header">
             <div>
               <h3>🔗 Sincronizar Google Agenda</h3>
-              <p>Cole o link iCal privado da sua agenda para importar os eventos de <strong>hoje</strong> automaticamente.</p>
+              <p>Cole o link da sua agenda (seja o <strong>Link de Incorporação Embed</strong> da caixa 1 ou o <strong>Link iCal</strong>) ou importe o arquivo .ics.</p>
             </div>
             <div id="gcal-status-pill" class="status-pill" style="background: rgba(100,116,139,0.15); border-color: rgba(100,116,139,0.3);">
               <span class="status-dot" style="background: #64748b;"></span>
@@ -511,9 +515,9 @@
                   <option value="Dra. Ludmila">Dra. Ludmila (Advogada)</option>
                 </select>
               </div>
-              <label class="gcal-label">Link iCal da agenda (termina em .ics)</label>
+              <label class="gcal-label">Link da Agenda (Link Embed / URL público / ou iCal .ics)</label>
               <div class="gcal-input-row">
-                <input type="text" id="gcal-ical-input" class="clean-input gcal-input" placeholder="https://calendar.google.com/calendar/ical/.../basic.ics">
+                <input type="text" id="gcal-ical-input" class="clean-input gcal-input" placeholder="Cole o URL público (embed) ou link iCal .ics">
                 <button type="button" class="btn-secondary" id="btn-save-gcal" onclick="handleSaveGcal()">💾 Salvar</button>
                 <button type="button" class="btn-primary gcal-sync-btn" id="btn-gcal-sync" onclick="handleSyncGcal()">
                   <span id="gcal-sync-icon">🔄</span> Sincronizar Agora
