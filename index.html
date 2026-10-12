@@ -346,12 +346,12 @@
         </div>
       </section>
 
-      <!-- SEÇÃO: REUNIÕES / ANTI NO-SHOW -->
+      <!-- SEÇÃO: ANTI NO-SHOW -->
       <section id="tab-reunioes" class="tab-pane" style="display: none;">
-        <!-- Título da Página: Reuniões / Anti No-Show -->
+        <!-- Título da Página: Anti No-Show -->
         <div class="page-top-header">
           <div class="page-title-box">
-            <h1 class="page-main-heading">Reuniões / Anti No-Show</h1>
+            <h1 class="page-main-heading">Anti No-Show</h1>
             <p class="page-sub-heading">Pauta diária de atendimentos, confirmações e régua anti no-show</p>
           </div>
           <div class="page-top-actions">
@@ -425,6 +425,64 @@
             <span class="results-count-text" id="filter-results-count-text"><strong>0</strong> reuniões</span>
           </div>
           <div class="active-filter-chips" id="active-filter-chips"></div>
+
+          <!-- Botão Ícone de Configuração de Visualização da Tabela Anti No-Show (Exibição: Proporção, Zoom e Tela) -->
+          <div class="comm-view-settings-dropdown-wrapper" style="margin-left: auto;">
+            <button type="button" class="btn-table-settings-trigger" id="btn-noshow-view-config" onclick="toggleNoShowViewConfigDropdown(event)" title="Configurações de visualização da tabela (Proporção, Zoom e Panorâmica)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="1" y1="14" x2="7" y2="14"></line>
+                <line x1="9" y1="8" x2="15" y2="8"></line>
+                <line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+              <span>Exibição</span>
+              <svg class="comm-settings-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+
+            <!-- Popover Flutuante com as Opções da Tabela Anti No-Show -->
+            <div class="comm-view-settings-popover" id="noshow-table-view-menu" style="display: none; right: 0;">
+              <div class="comm-settings-popover-header">
+                <span class="comm-settings-title">Visualização da Tabela</span>
+                <button type="button" class="btn-close-popover" onclick="closeNoShowViewConfigDropdown()" title="Fechar">✕</button>
+              </div>
+
+              <div class="comm-settings-section">
+                <span class="comm-settings-label">Proporção / Densidade</span>
+                <div class="comm-density-switch" title="Alternar densidade da tabela">
+                  <button type="button" class="btn-comm-density" id="btn-noshow-density-compact" onclick="setNoShowTableDensity('compact')" title="Disposição Tabela Ampla (alta densidade de linhas)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    <span>Tabela Ampla</span>
+                  </button>
+                  <button type="button" class="btn-comm-density active" id="btn-noshow-density-comfortable" onclick="setNoShowTableDensity('comfortable')" title="Disposição Confortável (espaçamento padrão)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line></svg>
+                    <span>Confortável</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="comm-settings-section">
+                <span class="comm-settings-label">Zoom / Escala</span>
+                <div class="comm-zoom-box" title="Ajustar zoom da tabela">
+                  <button type="button" class="btn-comm-zoom-btn" onclick="changeNoShowTableZoom(-10)" title="Reduzir zoom">−</button>
+                  <span class="comm-zoom-indicator" id="noshow-zoom-display" onclick="resetNoShowTableZoom()" title="Clique para redefinir zoom para 100%">100%</span>
+                  <button type="button" class="btn-comm-zoom-btn" onclick="changeNoShowTableZoom(10)" title="Aumentar zoom">+</button>
+                </div>
+              </div>
+
+              <div class="comm-settings-section no-border">
+                <span class="comm-settings-label">Modo de Tela</span>
+                <button type="button" class="btn-comm-panoramic" id="btn-noshow-panoramic-toggle" onclick="toggleNoShowPanoramicView()" title="Modo Panorâmico: Ganhe altura máxima recolhendo os indicadores do topo">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                  <span id="noshow-panoramic-text">Visão Panorâmica</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="table-header-row">
           <div class="col-time">HORÁRIO</div>
@@ -432,9 +490,12 @@
           <div class="col-commercial">COMERCIAL</div>
           <div class="col-area">ÁREA</div>
           <div class="col-pipeline">RÉGUA ANTI NO-SHOW</div>
+          <div class="col-meet">VÍDEO CHAMADA</div>
           <div class="col-actions">AÇÕES RÁPIDAS</div>
         </div>
-        <div class="meetings-list" id="meetings-list-container"></div>
+        <div class="noshow-table-view-container" id="noshow-table-view-container">
+          <div class="meetings-list" id="meetings-list-container"></div>
+        </div>
       </section>
       <section id="tab-calendar" class="tab-pane" style="display: none;">
         <!-- Título da Página: Agenda -->
@@ -987,15 +1048,195 @@
         <!-- Título da Página: Mensagens -->
         <div class="page-top-header">
           <div class="page-title-box">
-            <h1 class="page-main-heading">Mensagens</h1>
-            <p class="page-sub-heading">Régua de comunicação automatizada e modelos de lembrete anti no-show</p>
+            <h1 class="page-main-heading">Mensagens & Régua Anti No-Show</h1>
+            <p class="page-sub-heading">Régua de comunicação automatizada, cadência de horários e modelos de lembrete</p>
+          </div>
+        </div>
+
+        <!-- NOVO: Painel de Controle de Cadência de Horários (Anti No-Show) -->
+        <div class="panel-card" id="panel-cadence-control" style="margin-bottom: 1.5rem;">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">⏱️ Controle de Cadência de Horários</h2>
+              <p class="panel-subtitle">Configure os intervalos de tempo e a antecedência de cada disparo automático da régua.</p>
+            </div>
+            <button class="btn-primary" id="btn-save-cadence" type="button">Salvar Cadência</button>
+          </div>
+
+          <!-- Linha do Tempo Visual da Cadência -->
+          <div class="cadence-timeline-bar">
+            <div class="cadence-timeline-step" id="timeline-step-1">
+              <span class="cadence-time-tag amber" id="tag-cadence-step1">60m antes</span>
+              <span class="cadence-dot amber"></span>
+              <span class="cadence-desc">1º: Confirmação</span>
+            </div>
+            <div class="cadence-timeline-connector"></div>
+            <div class="cadence-timeline-step" id="timeline-step-2">
+              <span class="cadence-time-tag amber" id="tag-cadence-step2">30m antes</span>
+              <span class="cadence-dot amber"></span>
+              <span class="cadence-desc">2º: Reforço</span>
+            </div>
+            <div class="cadence-timeline-connector"></div>
+            <div class="cadence-timeline-step" id="timeline-step-3">
+              <span class="cadence-time-tag rose" id="tag-cadence-step3">15m antes</span>
+              <span class="cadence-dot rose"></span>
+              <span class="cadence-desc">3º: Urgência</span>
+            </div>
+            <div class="cadence-timeline-connector"></div>
+            <div class="cadence-timeline-step" id="timeline-step-4">
+              <span class="cadence-time-tag emerald" id="tag-cadence-step4">No Horário</span>
+              <span class="cadence-dot emerald"></span>
+              <span class="cadence-desc">4º: Google Meet</span>
+            </div>
+            <div class="cadence-timeline-connector"></div>
+            <div class="cadence-timeline-step" id="timeline-step-5">
+              <span class="cadence-time-tag rose" id="tag-cadence-step5">60m após</span>
+              <span class="cadence-dot rose"></span>
+              <span class="cadence-desc">Pós: No-Show</span>
+            </div>
+          </div>
+
+          <!-- Grid de Configuração dos Horários -->
+          <div class="cadence-settings-grid">
+            <!-- Etapa 1 -->
+            <div class="cadence-step-card">
+              <div class="cadence-card-header">
+                <span class="step-badge amber">1</span>
+                <div>
+                  <h4 class="cadence-card-title">1º Disparo (Confirmação)</h4>
+                  <span class="cadence-card-hint">Dispara pedido ativo de presença</span>
+                </div>
+              </div>
+              <div class="cadence-field-row">
+                <label class="cadence-field-label" for="cadence-interval-step1">Antecedência:</label>
+                <select id="cadence-interval-step1" class="clean-select cadence-select">
+                  <option value="120">2 Horas antes (120m)</option>
+                  <option value="90">1h30 antes (90m)</option>
+                  <option value="60" selected>1 Hora antes (60m) - Padrão</option>
+                  <option value="45">45 Minutos antes</option>
+                </select>
+              </div>
+              <div class="cadence-toggle-row">
+                <label class="theme-switch" style="width:36px; height:20px;">
+                  <input type="checkbox" id="cadence-enable-step1" checked>
+                  <span class="theme-switch-slider"></span>
+                </label>
+                <span class="cadence-toggle-text">Disparo Ativo</span>
+              </div>
+            </div>
+
+            <!-- Etapa 2 -->
+            <div class="cadence-step-card">
+              <div class="cadence-card-header">
+                <span class="step-badge amber">2</span>
+                <div>
+                  <h4 class="cadence-card-title">2º Disparo (Reforço)</h4>
+                  <span class="cadence-card-hint">Dispara se ainda não confirmou</span>
+                </div>
+              </div>
+              <div class="cadence-field-row">
+                <label class="cadence-field-label" for="cadence-interval-step2">Antecedência:</label>
+                <select id="cadence-interval-step2" class="clean-select cadence-select">
+                  <option value="45">45 Minutos antes</option>
+                  <option value="30" selected>30 Minutos antes - Padrão</option>
+                  <option value="20">20 Minutos antes</option>
+                </select>
+              </div>
+              <div class="cadence-toggle-row">
+                <label class="theme-switch" style="width:36px; height:20px;">
+                  <input type="checkbox" id="cadence-enable-step2" checked>
+                  <span class="theme-switch-slider"></span>
+                </label>
+                <span class="cadence-toggle-text">Disparo Ativo</span>
+              </div>
+            </div>
+
+            <!-- Etapa 3 -->
+            <div class="cadence-step-card">
+              <div class="cadence-card-header">
+                <span class="step-badge rose">3</span>
+                <div>
+                  <h4 class="cadence-card-title">3º Disparo (Última Chamada)</h4>
+                  <span class="cadence-card-hint">Aviso imediato pré-sala</span>
+                </div>
+              </div>
+              <div class="cadence-field-row">
+                <label class="cadence-field-label" for="cadence-interval-step3">Antecedência:</label>
+                <select id="cadence-interval-step3" class="clean-select cadence-select">
+                  <option value="20">20 Minutos antes</option>
+                  <option value="15" selected>15 Minutos antes - Padrão</option>
+                  <option value="10">10 Minutos antes</option>
+                  <option value="5">5 Minutos antes</option>
+                </select>
+              </div>
+              <div class="cadence-toggle-row">
+                <label class="theme-switch" style="width:36px; height:20px;">
+                  <input type="checkbox" id="cadence-enable-step3" checked>
+                  <span class="theme-switch-slider"></span>
+                </label>
+                <span class="cadence-toggle-text">Disparo Ativo</span>
+              </div>
+            </div>
+
+            <!-- Etapa 4 -->
+            <div class="cadence-step-card">
+              <div class="cadence-card-header">
+                <span class="step-badge emerald">4</span>
+                <div>
+                  <h4 class="cadence-card-title">4º Disparo (Google Meet)</h4>
+                  <span class="cadence-card-hint">Link oficial de entrada na reunião</span>
+                </div>
+              </div>
+              <div class="cadence-field-row">
+                <label class="cadence-field-label" for="cadence-interval-step4">Momento:</label>
+                <select id="cadence-interval-step4" class="clean-select cadence-select">
+                  <option value="0" selected>No Horário Exato (0 min) - Padrão</option>
+                  <option value="2">2 Minutos antes</option>
+                  <option value="5">5 Minutos antes</option>
+                </select>
+              </div>
+              <div class="cadence-toggle-row">
+                <label class="theme-switch" style="width:36px; height:20px;">
+                  <input type="checkbox" id="cadence-enable-step4" checked>
+                  <span class="theme-switch-slider"></span>
+                </label>
+                <span class="cadence-toggle-text">Disparo Ativo</span>
+              </div>
+            </div>
+
+            <!-- Etapa 5 -->
+            <div class="cadence-step-card">
+              <div class="cadence-card-header">
+                <span class="step-badge rose">⚠️</span>
+                <div>
+                  <h4 class="cadence-card-title">5º Disparo (No-Show)</h4>
+                  <span class="cadence-card-hint">Tolerância após falta sem entrada</span>
+                </div>
+              </div>
+              <div class="cadence-field-row">
+                <label class="cadence-field-label" for="cadence-interval-step5">Tolerância Falta:</label>
+                <select id="cadence-interval-step5" class="clean-select cadence-select">
+                  <option value="30">30 Minutos após horário</option>
+                  <option value="45">45 Minutos após horário</option>
+                  <option value="60" selected>60 Minutos (1h) após - Padrão</option>
+                  <option value="90">1h30 após horário</option>
+                </select>
+              </div>
+              <div class="cadence-toggle-row">
+                <label class="theme-switch" style="width:36px; height:20px;">
+                  <input type="checkbox" id="cadence-enable-step5" checked>
+                  <span class="theme-switch-slider"></span>
+                </label>
+                <span class="cadence-toggle-text">Auto No-Show Ativo</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h2 class="panel-title">Regua de Mensagens Anti No-Show</h2>
+              <h2 class="panel-title">Modelos de Mensagem Anti No-Show</h2>
               <p class="panel-subtitle">Personalize as mensagens disparadas pelo WhatsApp para os clientes.</p>
             </div>
             <button class="btn-primary" id="btn-save-templates">Salvar Mensagens</button>
@@ -1552,6 +1793,75 @@
               <span>Agendar Nova Tarefa</span>
             </button>
           </div>
+        </div>
+      </div>
+    <!-- MODAL: Editar Informações do Cliente / Reunião (Ícone de Lápis) -->
+    <div class="modal-backdrop" id="modal-edit-meeting" style="display: none;">
+      <div class="modal-card modal-md">
+        <div class="modal-header">
+          <div class="modal-title-box">
+            <h3 class="modal-title">✏️ Editar Informações do Cliente</h3>
+            <p class="modal-subtitle">Atualize os dados cadastrais, responsável e detalhes da reunião.</p>
+          </div>
+          <button class="modal-close" type="button" id="btn-close-edit-meeting" onclick="closeEditMeetingModal()" title="Fechar">✕</button>
+        </div>
+        <div class="modal-body">
+          <form id="form-edit-meeting" onsubmit="event.preventDefault(); saveEditedMeeting();">
+            <input type="hidden" id="edit-meeting-id">
+
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label" for="edit-client-name">Nome do Cliente</label>
+              <input type="text" id="edit-client-name" class="clean-input" required placeholder="Nome completo do cliente">
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+              <div class="form-group">
+                <label class="form-label" for="edit-client-phone">Telefone / WhatsApp</label>
+                <input type="text" id="edit-client-phone" class="clean-input" required placeholder="5511999999999">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="edit-meeting-time">Horário da Reunião</label>
+                <input type="time" id="edit-meeting-time" class="clean-input" required>
+              </div>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+              <div class="form-group">
+                <label class="form-label" for="edit-meeting-lawyer">Comercial / Responsável</label>
+                <select id="edit-meeting-lawyer" class="clean-input">
+                  <option value="Augusto">Augusto</option>
+                  <option value="Ana Carla">Ana Carla</option>
+                  <option value="Julia">Julia</option>
+                  <option value="João">João</option>
+                  <option value="Dra. Natalia">Dra. Natalia</option>
+                  <option value="Dra. Ludmila">Dra. Ludmila</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="edit-meeting-area">Área</label>
+                <select id="edit-meeting-area" class="clean-input">
+                  <option value="Trabalhista">Trabalhista</option>
+                  <option value="Previdenciário">Previdenciário</option>
+                  <option value="Cível">Cível</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label" for="edit-meeting-link">Link da Vídeo Chamada (Google Meet)</label>
+              <input type="url" id="edit-meeting-link" class="clean-input" placeholder="https://meet.google.com/...">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label" for="edit-meeting-notes">Observações / Anotações</label>
+              <textarea id="edit-meeting-notes" class="clean-textarea" rows="2" placeholder="Informações relevantes sobre este cliente ou processo..."></textarea>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem;">
+              <button type="button" class="btn-secondary" id="btn-cancel-edit-meeting" onclick="closeEditMeetingModal()">Cancelar</button>
+              <button type="submit" class="btn-primary" id="btn-save-edit-meeting">Salvar Informações</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

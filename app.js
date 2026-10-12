@@ -342,6 +342,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Inicializar controle de toggle da Automação Anti No-Show
   setupAutomationToggle();
   
+  // Inicializar controle de Cadência de Horários (Anti No-Show)
+  setupCadenceControls();
+
+  // Inicializar controles de visualização/exibição da tabela Anti No-Show (Proporção, Zoom e Tela)
+  updateNoShowDisplayControlsUi();
+  
   showToast('🛡️ Modo Seguro Ativado: Monitoramento automático em tempo real.', 'info', 6000);
 });
 
@@ -478,6 +484,50 @@ function renderMetrics() {
   }
 }
 
+// Badge Interativo com Select Embutido: Área (Trabalhista [Âmbar], Cível [Azul], Previdenciário [Roxo])
+function getMeetingAreaSelect(meeting) {
+  const rawArea = (meeting.area || '').toLowerCase();
+  let area = 'Trabalhista';
+  let areaClass = 'trabalhista';
+
+  if (rawArea.includes('cív') || rawArea.includes('civ')) {
+    area = 'Cível';
+    areaClass = 'civel';
+  } else if (rawArea.includes('prev') || rawArea.includes('aposent') || rawArea.includes('aux')) {
+    area = 'Previdenciário';
+    areaClass = 'previdenciario';
+  } else {
+    area = 'Trabalhista';
+    areaClass = 'trabalhista';
+  }
+
+  return `
+    <div class="comm-area-badge-container">
+      <select class="comm-area-pill-select area-${areaClass}" onchange="changeMeetingArea('${meeting.id}', this.value)" title="Clique para alterar a área">
+        <option value="Trabalhista" ${area === 'Trabalhista' ? 'selected' : ''}>Trabalhista</option>
+        <option value="Cível" ${area === 'Cível' ? 'selected' : ''}>Cível</option>
+        <option value="Previdenciário" ${area === 'Previdenciário' ? 'selected' : ''}>Previdenciário</option>
+      </select>
+      <svg class="comm-status-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </div>
+  `;
+}
+window.getMeetingAreaSelect = getMeetingAreaSelect;
+
+async function changeMeetingArea(meetingId, newArea) {
+  const meeting = STATE.meetings.find(m => String(m.id) === String(meetingId));
+  if (!meeting) return;
+  const oldArea = meeting.area;
+  meeting.area = newArea;
+  await saveSingleMeeting(meeting);
+  await logEvent('ALTERACAO_AREA', meeting, `Área de ${meeting.clientName} alterada de "${oldArea}" para "${newArea}"`);
+  renderApp();
+  showToast(`Área de ${meeting.clientName} alterada para "${newArea}".`, 'success', 2500);
+}
+window.changeMeetingArea = changeMeetingArea;
+
 // Renderiza a Lista de Reuniões em Linhas Executivas
 function renderMeetingsList() {
   const container = document.getElementById('meetings-list-container');
@@ -555,7 +605,7 @@ function renderMeetingsList() {
     row.className = `meeting-row status-${meeting.status}`;
     row.id = `meeting-${meeting.id}`;
 
-    // Cálculo da contagem regressiva
+    // Cálculo da contagem regressiva com indicador minimalista
     const [mHours, mMinutes] = meeting.time.split(':').map(Number);
     const meetingDate = new Date(now);
     meetingDate.setHours(mHours, mMinutes, 0, 0);
@@ -564,17 +614,17 @@ function renderMeetingsList() {
     let countdownPillHtml = '';
 
     if (meeting.status === 'noshow') {
-      countdownPillHtml = `<span class="countdown-pill" style="color: var(--rose);">🚫 No-Show</span>`;
+      countdownPillHtml = `<span class="countdown-pill pill-noshow"><span class="pill-dot dot-rose"></span>No-Show</span>`;
     } else if (diffMinutes > 60) {
-      countdownPillHtml = `<span class="countdown-pill">Faltam ${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m</span>`;
+      countdownPillHtml = `<span class="countdown-pill"><span class="pill-dot dot-muted"></span>Faltam ${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m</span>`;
     } else if (diffMinutes > 15) {
-      countdownPillHtml = `<span class="countdown-pill due-soon">⚡ Faltam ${diffMinutes}m</span>`;
+      countdownPillHtml = `<span class="countdown-pill due-soon"><span class="pill-dot dot-amber"></span>Faltam ${diffMinutes}m</span>`;
     } else if (diffMinutes > 0) {
-      countdownPillHtml = `<span class="countdown-pill urgent">🔥 Faltam ${diffMinutes}m</span>`;
+      countdownPillHtml = `<span class="countdown-pill urgent"><span class="pill-dot dot-rose"></span>Faltam ${diffMinutes}m</span>`;
     } else if (diffMinutes > -30) {
-      countdownPillHtml = `<span class="countdown-pill now">🟢 No Horário</span>`;
+      countdownPillHtml = `<span class="countdown-pill now"><span class="pill-dot dot-emerald"></span>No Horário</span>`;
     } else {
-      countdownPillHtml = `<span class="countdown-pill">Encerrada</span>`;
+      countdownPillHtml = `<span class="countdown-pill"><span class="pill-dot dot-muted"></span>Encerrada</span>`;
     }
 
     const p = meeting.pipeline;
@@ -587,10 +637,21 @@ function renderMeetingsList() {
         ${countdownPillHtml}
       </div>
 
-      <!-- Coluna 2: Cliente -->
+      <!-- Coluna 2: Cliente (Com Ícones Minimalistas) -->
       <div class="client-cell">
-        <span class="client-cell-name">👤 ${escapeHtml(meeting.clientName)}</span>
-        <span class="client-cell-phone">📱 ${escapeHtml(meeting.clientPhone)}</span>
+        <span class="client-cell-name">
+          <svg class="mini-client-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>${escapeHtml(meeting.clientName)}</span>
+        </span>
+        <span class="client-cell-phone">
+          <svg class="mini-phone-svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+          <span>${escapeHtml(meeting.clientPhone)}</span>
+        </span>
       </div>
 
       <!-- Coluna 3: Comercial (Sem ícone) -->
@@ -598,12 +659,12 @@ function renderMeetingsList() {
         <span class="commercial-cell-name">${escapeHtml(meeting.lawyer || 'Augusto')}</span>
       </div>
 
-      <!-- Coluna 4: Área -->
+      <!-- Coluna 4: Área (Select Interativo de Cores Oficiais) -->
       <div class="area-cell">
-        <span class="area-badge">${escapeHtml(meeting.area || 'Geral')}</span>
+        ${getMeetingAreaSelect(meeting)}
       </div>
 
-      <!-- Coluna 4: Régua Anti No-Show (Mini Passos) -->
+      <!-- Coluna 5: Régua Anti No-Show (Mini Passos) -->
       <div class="pipeline-cell">
         <div class="pipe-step ${p.alert60m.sent ? 'sent' : ''}" title="Alerta 1h">1h</div>
         <div class="pipe-step ${isConfirmed ? 'skipped' : (p.alert30m.sent ? 'sent' : '')}" title="Alerta 30m">30m</div>
@@ -611,28 +672,62 @@ function renderMeetingsList() {
         <div class="pipe-step ${p.alert0m.sent ? 'confirmed' : ''}" title="Google Meet">Meet</div>
       </div>
 
-      <!-- Coluna 5: Ações Rápidas -->
+      <!-- Coluna 6: Vídeo Chamada (Coluna Dedicada com Link do Google Meet) -->
+      <div class="meet-cell">
+        <a href="${escapeHtml(meeting.meetLink)}" target="_blank" class="btn-meet-video" title="Entrar na sala de vídeo: ${escapeHtml(meeting.meetLink)}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path>
+            <rect x="2" y="6" width="14" height="12" rx="2"></rect>
+          </svg>
+          <span>Entrar Meet</span>
+        </a>
+      </div>
+
+      <!-- Coluna 7: Ações Rápidas (Confirmar, Registrar Falta e Lápis de Edição) -->
       <div class="actions-cell">
-        ${meeting.status !== 'confirmed' && meeting.status !== 'noshow' ? `
-          <button class="btn-tbl confirm" data-action="confirm" data-id="${meeting.id}" title="Confirmar Presença">
-            ✓ Confirmar
+        ${meeting.status === 'confirmed' ? `
+          <span class="act-confirmed-pill" title="Presença confirmada">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Confirmada</span>
+          </span>
+        ` : (meeting.status !== 'noshow' ? `
+          <button class="btn-tbl-compact btn-confirm" data-action="confirm" data-id="${meeting.id}" title="Confirmar Presença do Cliente">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Confirmar</span>
+          </button>
+        ` : `
+          <span class="act-noshow-pill" title="Falta registrada">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>Falta Registrada</span>
+          </span>
+        `)}
+
+        ${meeting.status !== 'noshow' ? `
+          <button class="btn-tbl-compact btn-falta" data-action="noshow" data-id="${meeting.id}" title="Registrar Falta do Cliente (No-Show)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>Registrar Falta</span>
           </button>
         ` : ''}
 
-        <a href="${escapeHtml(meeting.meetLink)}" target="_blank" class="btn-tbl meet" title="Abrir Link do Google Meet">
-          🔗 Meet
-        </a>
-
-        ${meeting.status !== 'noshow' ? `
-          <button class="btn-tbl more" data-action="preview" data-id="${meeting.id}" title="Ver Mensagem">
-            💬
-          </button>
-          <button class="btn-tbl more" data-action="noshow" data-id="${meeting.id}" title="Declarar No-Show" style="color: var(--rose);">
-            🚫
-          </button>
-        ` : `
-          <span class="noshow-tag">NO-SHOW</span>
-        `}
+        <!-- Ícone de Lápis: Editar Informações do Cliente -->
+        <button class="btn-tbl-icon btn-edit-client" data-action="edit" data-id="${meeting.id}" title="Editar informações do cliente">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+        </button>
       </div>
     `;
 
@@ -649,7 +744,7 @@ function renderMeetingsList() {
 function handleCardAction(e) {
   const action = e.currentTarget.dataset.action;
   const id = e.currentTarget.dataset.id;
-  const meeting = STATE.meetings.find(m => m.id === id);
+  const meeting = STATE.meetings.find(m => String(m.id) === String(id));
   if (!meeting) return;
 
   if (action === 'confirm') {
@@ -662,22 +757,207 @@ function handleCardAction(e) {
     showToast(`✅ Reunião com ${meeting.clientName} marcada como CONFIRMADA! Lembretes intermediários pulados.`, 'success');
   } 
   else if (action === 'noshow') {
-    if (confirm(`Deseja registrar NO-SHOW para ${meeting.clientName}? O cliente será movido para a coluna NO SHOW no CRM.`)) {
+    if (confirm(`Deseja registrar FALTA (NO-SHOW) para ${meeting.clientName}? O cliente será movido para a coluna NO SHOW no CRM.`)) {
       meeting.status = 'noshow';
       meeting.pipeline.noShowAlert.sent = true;
       meeting.pipeline.noShowAlert.sentAt = new Date().toLocaleTimeString().slice(0, 5);
       saveSingleMeeting(meeting);
-      logEvent('NO_SHOW', meeting, `Cliente ${meeting.clientName} (${meeting.clientPhone}) registrado como NO-SHOW na reunião das ${meeting.time} com ${meeting.lawyer}`);
+      logEvent('NO_SHOW', meeting, `Falta registrada para ${meeting.clientName} (${meeting.clientPhone}) na reunião das ${meeting.time} com ${meeting.lawyer}`);
       renderApp();
       
       // Simula a movimentação de etapa no MindChat
       simulateCrmMove(meeting);
     }
   }
+  else if (action === 'edit') {
+    openEditMeetingModal(id);
+  }
   else if (action === 'preview') {
     openPreviewModal(meeting);
   }
 }
+
+// ========================================================
+// MODAL: EDITAR INFORMAÇÕES DO CLIENTE (LÁPIS)
+// ========================================================
+function openEditMeetingModal(meetingId) {
+  const meeting = STATE.meetings.find(m => String(m.id) === String(meetingId));
+  if (!meeting) return;
+
+  const modal = document.getElementById('modal-edit-meeting');
+  if (!modal) return;
+
+  document.getElementById('edit-meeting-id').value = meeting.id;
+  document.getElementById('edit-client-name').value = meeting.clientName || '';
+  document.getElementById('edit-client-phone').value = meeting.clientPhone || '';
+  document.getElementById('edit-meeting-time').value = meeting.time || '';
+  document.getElementById('edit-meeting-lawyer').value = meeting.lawyer || 'Augusto';
+  document.getElementById('edit-meeting-area').value = meeting.area || 'Trabalhista';
+  document.getElementById('edit-meeting-link').value = meeting.meetLink || '';
+  document.getElementById('edit-meeting-notes').value = meeting.notes || meeting.obs || '';
+
+  modal.style.display = 'flex';
+}
+window.openEditMeetingModal = openEditMeetingModal;
+
+function closeEditMeetingModal() {
+  const modal = document.getElementById('modal-edit-meeting');
+  if (modal) modal.style.display = 'none';
+}
+window.closeEditMeetingModal = closeEditMeetingModal;
+
+async function saveEditedMeeting() {
+  const id = document.getElementById('edit-meeting-id').value;
+  const meeting = STATE.meetings.find(m => String(m.id) === String(id));
+  if (!meeting) return;
+
+  const name = document.getElementById('edit-client-name').value.trim();
+  const phone = document.getElementById('edit-client-phone').value.trim();
+  const time = document.getElementById('edit-meeting-time').value.trim();
+  const lawyer = document.getElementById('edit-meeting-lawyer').value;
+  const area = document.getElementById('edit-meeting-area').value;
+  const link = document.getElementById('edit-meeting-link').value.trim();
+  const notes = document.getElementById('edit-meeting-notes').value.trim();
+
+  if (!name || !time) {
+    showToast('⚠️ Por favor preencha ao menos o nome e o horário.', 'warning');
+    return;
+  }
+
+  meeting.clientName = name;
+  meeting.clientPhone = phone;
+  meeting.time = time;
+  meeting.lawyer = lawyer;
+  meeting.area = area;
+  meeting.meetLink = link || meeting.meetLink;
+  meeting.notes = notes;
+
+  await saveSingleMeeting(meeting);
+  await logEvent('EDICAO_CLIENTE', meeting, `Dados de ${meeting.clientName} atualizados via edição rápida`);
+
+  closeEditMeetingModal();
+  renderApp();
+  showToast(`✅ Informações de ${meeting.clientName} atualizadas e sincronizadas no banco com sucesso!`, 'success', 3500);
+}
+window.saveEditedMeeting = saveEditedMeeting;
+
+// ========================================================
+// CONTROLES DE EXIBIÇÃO / VISUALIZAÇÃO (ANTI NO-SHOW)
+// ========================================================
+const NOSHOW_VIEW_STATE = {
+  density: localStorage.getItem('mvt_noshow_density') || 'comfortable',
+  zoom: Number(localStorage.getItem('mvt_noshow_zoom')) || 100,
+  panoramic: localStorage.getItem('mvt_noshow_panoramic') === 'true'
+};
+
+function toggleNoShowViewConfigDropdown(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('noshow-table-view-menu');
+  const btn = document.getElementById('btn-noshow-view-config');
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none' || !menu.style.display;
+  if (isHidden) {
+    menu.style.display = 'flex';
+    if (btn) btn.classList.add('active');
+  } else {
+    menu.style.display = 'none';
+    if (btn) btn.classList.remove('active');
+  }
+}
+window.toggleNoShowViewConfigDropdown = toggleNoShowViewConfigDropdown;
+
+function closeNoShowViewConfigDropdown() {
+  const menu = document.getElementById('noshow-table-view-menu');
+  const btn = document.getElementById('btn-noshow-view-config');
+  if (menu) menu.style.display = 'none';
+  if (btn) btn.classList.remove('active');
+}
+window.closeNoShowViewConfigDropdown = closeNoShowViewConfigDropdown;
+
+function setNoShowTableDensity(density) {
+  NOSHOW_VIEW_STATE.density = density;
+  localStorage.setItem('mvt_noshow_density', density);
+  updateNoShowDisplayControlsUi();
+}
+window.setNoShowTableDensity = setNoShowTableDensity;
+
+function changeNoShowTableZoom(delta) {
+  let z = (NOSHOW_VIEW_STATE.zoom || 100) + delta;
+  if (z < 70) z = 70;
+  if (z > 140) z = 140;
+  NOSHOW_VIEW_STATE.zoom = z;
+  localStorage.setItem('mvt_noshow_zoom', String(z));
+  applyNoShowTableZoom();
+}
+window.changeNoShowTableZoom = changeNoShowTableZoom;
+
+function resetNoShowTableZoom() {
+  NOSHOW_VIEW_STATE.zoom = 100;
+  localStorage.setItem('mvt_noshow_zoom', '100');
+  applyNoShowTableZoom();
+}
+window.resetNoShowTableZoom = resetNoShowTableZoom;
+
+function applyNoShowTableZoom() {
+  const display = document.getElementById('noshow-zoom-display');
+  if (display) display.textContent = `${NOSHOW_VIEW_STATE.zoom}%`;
+  const container = document.getElementById('noshow-table-view-container');
+  if (container) {
+    container.style.zoom = `${(NOSHOW_VIEW_STATE.zoom || 100) / 100}`;
+  }
+}
+window.applyNoShowTableZoom = applyNoShowTableZoom;
+
+function toggleNoShowPanoramicView() {
+  NOSHOW_VIEW_STATE.panoramic = !NOSHOW_VIEW_STATE.panoramic;
+  localStorage.setItem('mvt_noshow_panoramic', String(NOSHOW_VIEW_STATE.panoramic));
+  updateNoShowPanoramicUi();
+}
+window.toggleNoShowPanoramicView = toggleNoShowPanoramicView;
+
+function updateNoShowPanoramicUi() {
+  const sec = document.getElementById('tab-reunioes');
+  const btn = document.getElementById('btn-noshow-panoramic-toggle');
+  const text = document.getElementById('noshow-panoramic-text');
+  if (NOSHOW_VIEW_STATE.panoramic) {
+    if (sec) sec.classList.add('noshow-panoramic');
+    if (btn) btn.classList.add('active');
+    if (text) text.textContent = 'Visão Padrão';
+  } else {
+    if (sec) sec.classList.remove('noshow-panoramic');
+    if (btn) btn.classList.remove('active');
+    if (text) text.textContent = 'Visão Panorâmica';
+  }
+}
+window.updateNoShowPanoramicUi = updateNoShowPanoramicUi;
+
+function updateNoShowDisplayControlsUi() {
+  const btnCompact = document.getElementById('btn-noshow-density-compact');
+  const btnComfortable = document.getElementById('btn-noshow-density-comfortable');
+  const container = document.getElementById('noshow-table-view-container');
+  if (btnCompact && btnComfortable) {
+    if (NOSHOW_VIEW_STATE.density === 'compact') {
+      btnCompact.classList.add('active');
+      btnComfortable.classList.remove('active');
+      if (container) container.classList.add('density-compact');
+    } else {
+      btnComfortable.classList.add('active');
+      btnCompact.classList.remove('active');
+      if (container) container.classList.remove('density-compact');
+    }
+  }
+  applyNoShowTableZoom();
+  updateNoShowPanoramicUi();
+}
+window.updateNoShowDisplayControlsUi = updateNoShowDisplayControlsUi;
+
+// Fechar menus de exibição ao clicar fora
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.comm-view-settings-dropdown-wrapper')) {
+    if (typeof closeTableViewConfigDropdown === 'function') closeTableViewConfigDropdown();
+    closeNoShowViewConfigDropdown();
+  }
+});
 
 // Equipe do Comercial e Advogadas do Escritório
 const TEAM_MEMBERS = (window.CONFIG && window.CONFIG.TEAM) || [
@@ -1239,9 +1519,103 @@ function setupSimulationClock() {
   }, 1000);
 }
 
-// Motor de Automação Anti No-Show (Disparos Automáticos Simulados)
+// ========================================================
+// CONTROLE DE CADÊNCIA DE HORÁRIOS (RÉGUA ANTI NO-SHOW)
+// ========================================================
+const DEFAULT_CADENCE_CONFIG = {
+  step1: { interval: 60, enabled: true },
+  step2: { interval: 30, enabled: true },
+  step3: { interval: 15, enabled: true },
+  step4: { interval: 0, enabled: true },
+  step5: { interval: 60, enabled: true }
+};
+
+function getCadenceConfig() {
+  try {
+    const saved = localStorage.getItem('mvt_cadence_settings');
+    if (saved) return { ...DEFAULT_CADENCE_CONFIG, ...JSON.parse(saved) };
+  } catch (e) {}
+  return { ...DEFAULT_CADENCE_CONFIG };
+}
+
+function saveCadenceConfig(cfg) {
+  localStorage.setItem('mvt_cadence_settings', JSON.stringify(cfg));
+  updateCadenceTimelineUi(cfg);
+}
+
+function updateCadenceTimelineUi(cfg) {
+  const t1 = document.getElementById('tag-cadence-step1');
+  const t2 = document.getElementById('tag-cadence-step2');
+  const t3 = document.getElementById('tag-cadence-step3');
+  const t4 = document.getElementById('tag-cadence-step4');
+  const t5 = document.getElementById('tag-cadence-step5');
+
+  if (t1) t1.textContent = cfg.step1.enabled ? `${cfg.step1.interval}m antes` : 'Pausado';
+  if (t2) t2.textContent = cfg.step2.enabled ? `${cfg.step2.interval}m antes` : 'Pausado';
+  if (t3) t3.textContent = cfg.step3.enabled ? `${cfg.step3.interval}m antes` : 'Pausado';
+  if (t4) t4.textContent = cfg.step4.enabled ? (cfg.step4.interval === 0 ? 'No Horário' : `${cfg.step4.interval}m antes`) : 'Pausado';
+  if (t5) t5.textContent = cfg.step5.enabled ? `${cfg.step5.interval}m após` : 'Pausado';
+}
+
+function setupCadenceControls() {
+  const cfg = getCadenceConfig();
+
+  const s1 = document.getElementById('cadence-interval-step1');
+  const e1 = document.getElementById('cadence-enable-step1');
+  const s2 = document.getElementById('cadence-interval-step2');
+  const e2 = document.getElementById('cadence-enable-step2');
+  const s3 = document.getElementById('cadence-interval-step3');
+  const e3 = document.getElementById('cadence-enable-step3');
+  const s4 = document.getElementById('cadence-interval-step4');
+  const e4 = document.getElementById('cadence-enable-step4');
+  const s5 = document.getElementById('cadence-interval-step5');
+  const e5 = document.getElementById('cadence-enable-step5');
+
+  if (s1 && cfg.step1) s1.value = String(cfg.step1.interval);
+  if (e1 && cfg.step1) e1.checked = Boolean(cfg.step1.enabled);
+  if (s2 && cfg.step2) s2.value = String(cfg.step2.interval);
+  if (e2 && cfg.step2) e2.checked = Boolean(cfg.step2.enabled);
+  if (s3 && cfg.step3) s3.value = String(cfg.step3.interval);
+  if (e3 && cfg.step3) e3.checked = Boolean(cfg.step3.enabled);
+  if (s4 && cfg.step4) s4.value = String(cfg.step4.interval);
+  if (e4 && cfg.step4) e4.checked = Boolean(cfg.step4.enabled);
+  if (s5 && cfg.step5) s5.value = String(cfg.step5.interval);
+  if (e5 && cfg.step5) e5.checked = Boolean(cfg.step5.enabled);
+
+  updateCadenceTimelineUi(cfg);
+
+  const readCurrentForm = () => ({
+    step1: { interval: Number(s1?.value || 60), enabled: Boolean(e1?.checked) },
+    step2: { interval: Number(s2?.value || 30), enabled: Boolean(e2?.checked) },
+    step3: { interval: Number(s3?.value || 15), enabled: Boolean(e3?.checked) },
+    step4: { interval: Number(s4?.value || 0), enabled: Boolean(e4?.checked) },
+    step5: { interval: Number(s5?.value || 60), enabled: Boolean(e5?.checked) }
+  });
+
+  [s1, e1, s2, e2, s3, e3, s4, e4, s5, e5].forEach(el => {
+    if (el) {
+      el.addEventListener('change', () => {
+        const current = readCurrentForm();
+        updateCadenceTimelineUi(current);
+      });
+    }
+  });
+
+  const btnSave = document.getElementById('btn-save-cadence');
+  if (btnSave) {
+    btnSave.addEventListener('click', () => {
+      const current = readCurrentForm();
+      saveCadenceConfig(current);
+      showToast('✅ Cadência de horários anti no-show salva com sucesso!', 'success', 3500);
+    });
+  }
+}
+
+// Motor de Automação Anti No-Show (Disparos Automáticos Conforme Cadência)
 function checkAutomatedTriggers(now) {
   if (STATE.automationEnabled === false) return; // Automação pausada pelo usuário
+
+  const cadence = getCadenceConfig();
 
   STATE.meetings.forEach(meeting => {
     if (meeting.status === 'noshow') return;
@@ -1252,44 +1626,44 @@ function checkAutomatedTriggers(now) {
 
     const diffMinutes = Math.round((meetingDate - now) / 60000);
 
-    // 1 Hora antes (60m)
-    if (diffMinutes <= 60 && diffMinutes > 30 && !meeting.pipeline.alert60m.sent) {
+    // 1º Disparo (Confirmação)
+    if (cadence.step1.enabled && diffMinutes <= cadence.step1.interval && diffMinutes > cadence.step2.interval && !meeting.pipeline.alert60m.sent) {
       meeting.pipeline.alert60m.sent = true;
       meeting.pipeline.alert60m.sentAt = meeting.time;
       saveMeetings();
-      showToast(`🟡 Alerta de 1h disparado para ${meeting.clientName}!`, 'warning');
+      showToast(`🟡 Alerta de ${cadence.step1.interval}m disparado para ${meeting.clientName}!`, 'warning');
     }
 
-    // 30 Minutos antes (se não confirmado)
-    if (diffMinutes <= 30 && diffMinutes > 15 && !meeting.pipeline.alert30m.sent && meeting.status !== 'confirmed') {
+    // 2º Disparo (Reforço se não confirmado)
+    if (cadence.step2.enabled && diffMinutes <= cadence.step2.interval && diffMinutes > cadence.step3.interval && !meeting.pipeline.alert30m.sent && meeting.status !== 'confirmed') {
       meeting.pipeline.alert30m.sent = true;
       meeting.pipeline.alert30m.sentAt = meeting.time;
       saveMeetings();
-      showToast(`🟠 Reforço de 30 min disparado para ${meeting.clientName}!`, 'warning');
+      showToast(`🟠 Reforço de ${cadence.step2.interval}m disparado para ${meeting.clientName}!`, 'warning');
     }
 
-    // 15 Minutos antes (se não confirmado)
-    if (diffMinutes <= 15 && diffMinutes > 0 && !meeting.pipeline.alert15m.sent && meeting.status !== 'confirmed') {
+    // 3º Disparo (Última Chamada se não confirmado)
+    if (cadence.step3.enabled && diffMinutes <= cadence.step3.interval && diffMinutes > 0 && !meeting.pipeline.alert15m.sent && meeting.status !== 'confirmed') {
       meeting.pipeline.alert15m.sent = true;
       meeting.pipeline.alert15m.sentAt = meeting.time;
       saveMeetings();
-      showToast(`🔴 Última chamada de 15 min disparada para ${meeting.clientName}!`, 'danger');
+      showToast(`🔴 Última chamada de ${cadence.step3.interval}m disparada para ${meeting.clientName}!`, 'danger');
     }
 
-    // No Horário (0m) - Envio do Google Meet
-    if (diffMinutes <= 0 && diffMinutes > -30 && !meeting.pipeline.alert0m.sent) {
+    // 4º Disparo (Link do Google Meet)
+    if (cadence.step4.enabled && diffMinutes <= cadence.step4.interval && diffMinutes > -30 && !meeting.pipeline.alert0m.sent) {
       meeting.pipeline.alert0m.sent = true;
       meeting.pipeline.alert0m.sentAt = meeting.time;
       saveMeetings();
       showToast(`🚀 Horário da Reunião! Link do Meet enviado para ${meeting.clientName}!`, 'success');
     }
 
-    // 1 Hora pós-reunião (Se não confirmou e passou 60 min -> NO SHOW automático)
-    if (diffMinutes <= -60 && meeting.status !== 'confirmed' && meeting.status !== 'noshow') {
+    // 5º Disparo (Tolerância pós-falta / NO SHOW automático)
+    if (cadence.step5.enabled && diffMinutes <= -cadence.step5.interval && meeting.status !== 'confirmed' && meeting.status !== 'noshow') {
       meeting.status = 'noshow';
       meeting.pipeline.noShowAlert.sent = true;
       saveMeetings();
-      showToast(`⚠️ NO-SHOW DETECTADO: ${meeting.clientName} não compareceu. Movido para NO SHOW no CRM.`, 'danger', 6000);
+      showToast(`⚠️ NO-SHOW DETECTADO: ${meeting.clientName} não compareceu após ${cadence.step5.interval}m. Movido para NO SHOW no CRM.`, 'danger', 6000);
       renderApp();
     }
   });
