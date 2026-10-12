@@ -711,12 +711,60 @@ function meetingMatchesTeamFilter(meeting) {
   return mLawyer.includes(fLower);
 }
 
-// Vincula cliques para abrir o modal de detalhes/mensagens
+// Obtém tarefas comerciais de 30m para integração na Grade da Agenda
+function getCommercialCalendarTasks() {
+  const clients = (window.COMMERCIAL_STATE && Array.isArray(window.COMMERCIAL_STATE.clients))
+    ? window.COMMERCIAL_STATE.clients
+    : (() => {
+        try {
+          return JSON.parse(localStorage.getItem('mvt_commercial_clients') || '[]');
+        } catch(e) {
+          return [];
+        }
+      })();
+
+  return clients
+    .filter(c => c && c.task && c.task.dueDate)
+    .map(c => {
+      const startTime = c.task.dueTime || '10:00';
+      const endTime = c.task.endTime || (typeof window.calculateEndTime30m === 'function' ? window.calculateEndTime30m(startTime) : '10:30');
+      return {
+        id: 'task-' + c.id,
+        clientId: c.id,
+        clientName: c.name || 'Cliente Comercial',
+        clientPhone: c.phone || '',
+        date: c.task.dueDate,
+        time: startTime,
+        endTime: endTime,
+        action: c.task.action || 'Compromisso Comercial',
+        notes: c.task.notes || '',
+        status: c.task.status || 'pending',
+        lawyer: c.responsible || 'Augusto',
+        area: c.area || 'Comercial',
+        isCommercialTask: true
+      };
+    });
+}
+window.getCommercialCalendarTasks = getCommercialCalendarTasks;
+
+// Vincula cliques para abrir o modal de detalhes/mensagens ou modal de tarefa de 30m
 function _bindMeetingBlockClicks(container) {
-  container.querySelectorAll('.cal-meeting-block, .cal-month-pill').forEach(el => {
+  // Reuniões Anti No-Show (Google Agenda / CRM)
+  container.querySelectorAll('.cal-meeting-block:not(.task-block), .cal-month-pill:not(.task-commercial-pill)').forEach(el => {
     el.addEventListener('click', () => {
       const meeting = STATE.meetings.find(m => m.id === el.dataset.id);
       if (meeting) openPreviewModal(meeting);
+    });
+  });
+
+  // Tarefas Comerciais de 30m (Abre modal de edição/acompanhamento da tarefa)
+  container.querySelectorAll('.cal-meeting-block.task-block, .cal-month-pill.task-commercial-pill').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const clientId = el.dataset.taskId;
+      if (clientId && typeof window.openCommercialTaskModal === 'function') {
+        window.openCommercialTaskModal(clientId);
+      }
     });
   });
 }
@@ -807,6 +855,13 @@ function renderCalendarWeek(container) {
             return mH === slotHour;
           });
 
+          const slotTasks = getCommercialCalendarTasks().filter(t => {
+            if (t.date !== dStr) return false;
+            if (!meetingMatchesTeamFilter({ lawyer: t.lawyer })) return false;
+            const [tH] = t.time.split(':').map(Number);
+            return tH === slotHour;
+          });
+
           return `
             <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
               ${slotMeetings.map(m => `
@@ -815,6 +870,18 @@ function renderCalendarWeek(container) {
                   <div class="cal-meeting-meta">
                     <span>🕒 ${m.time}</span>
                     <span style="font-weight: 600; color: var(--blue-light);">${escapeHtml(m.lawyer ? m.lawyer.split(' ')[0] : '')}</span>
+                  </div>
+                </div>
+              `).join('')}
+              ${slotTasks.map(t => `
+                <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+                  <div class="cal-meeting-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎯 ${escapeHtml(t.clientName)}</span>
+                    <span class="cal-task-tag-30m">30m</span>
+                  </div>
+                  <div class="cal-meeting-meta">
+                    <span>🕒 ${t.time} - ${t.endTime}</span>
+                    <span style="font-weight: 600; color: #c084fc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px;" title="${escapeHtml(t.action)}">${escapeHtml(t.action)}</span>
                   </div>
                 </div>
               `).join('')}
@@ -890,6 +957,16 @@ function renderCalendarDay(container) {
             return mLawyer.includes(memName) || memName.includes(mLawyer);
           });
 
+          const slotTasks = getCommercialCalendarTasks().filter(t => {
+            if (t.date !== dayStr) return false;
+            const [tH] = t.time.split(':').map(Number);
+            if (tH !== slotHour) return false;
+
+            const tLawyer = (t.lawyer || '').toLowerCase();
+            const memName = member.name.toLowerCase();
+            return tLawyer.includes(memName) || memName.includes(tLawyer);
+          });
+
           return `
             <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
               ${slotMeetings.map(m => `
@@ -898,6 +975,18 @@ function renderCalendarDay(container) {
                   <div class="cal-meeting-meta">
                     <span>🕒 ${m.time}</span>
                     <span>${m.status === 'confirmed' ? '✓ Confirmado' : (m.status === 'noshow' ? '🚫 No-Show' : '⏳ Aguardando')}</span>
+                  </div>
+                </div>
+              `).join('')}
+              ${slotTasks.map(t => `
+                <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+                  <div class="cal-meeting-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎯 ${escapeHtml(t.clientName)}</span>
+                    <span class="cal-task-tag-30m">30m</span>
+                  </div>
+                  <div class="cal-meeting-meta">
+                    <span>🕒 ${t.time} - ${t.endTime}</span>
+                    <span style="color: #c084fc; font-weight: 600;">${t.status === 'done' ? '✓ Concluída' : '⏱️ 30 min'}</span>
                   </div>
                 </div>
               `).join('')}
@@ -956,6 +1045,7 @@ function renderCalendarMonth(container) {
     ].join('-');
 
     const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === prevDateStr && meetingMatchesTeamFilter(m));
+    const tasksThisDay = getCommercialCalendarTasks().filter(t => t.date === prevDateStr && meetingMatchesTeamFilter({ lawyer: t.lawyer }));
 
     html += `
       <div class="cal-month-cell other-month">
@@ -963,6 +1053,11 @@ function renderCalendarMonth(container) {
         ${meetingsThisDay.map(m => `
           <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
             ${m.time} ${escapeHtml(m.clientName)}
+          </div>
+        `).join('')}
+        ${tasksThisDay.map(t => `
+          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+            ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
           </div>
         `).join('')}
       </div>
@@ -980,6 +1075,7 @@ function renderCalendarMonth(container) {
     const isToday = thisDateStr === todayStr;
 
     const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === thisDateStr && meetingMatchesTeamFilter(m));
+    const tasksThisDay = getCommercialCalendarTasks().filter(t => t.date === thisDateStr && meetingMatchesTeamFilter({ lawyer: t.lawyer }));
 
     html += `
       <div class="cal-month-cell ${isToday ? 'today-cell' : ''}">
@@ -987,6 +1083,11 @@ function renderCalendarMonth(container) {
         ${meetingsThisDay.map(m => `
           <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
             ${m.time} ${escapeHtml(m.clientName)}
+          </div>
+        `).join('')}
+        ${tasksThisDay.map(t => `
+          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+            ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
           </div>
         `).join('')}
       </div>
@@ -1005,6 +1106,7 @@ function renderCalendarMonth(container) {
     ].join('-');
 
     const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === nextDateStr && meetingMatchesTeamFilter(m));
+    const tasksThisDay = getCommercialCalendarTasks().filter(t => t.date === nextDateStr && meetingMatchesTeamFilter({ lawyer: t.lawyer }));
 
     html += `
       <div class="cal-month-cell other-month">
@@ -1012,6 +1114,11 @@ function renderCalendarMonth(container) {
         ${meetingsThisDay.map(m => `
           <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
             ${m.time} ${escapeHtml(m.clientName)}
+          </div>
+        `).join('')}
+        ${tasksThisDay.map(t => `
+          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+            ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
           </div>
         `).join('')}
       </div>

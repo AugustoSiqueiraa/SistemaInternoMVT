@@ -1214,6 +1214,73 @@ function renderCommercialApp() {
 }
 window.renderCommercialApp = renderCommercialApp;
 
+// Funções Auxiliares de Formatação e Badges do Módulo Comercial
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '<span style="color: var(--text-muted); font-size: 0.76rem;">-</span>';
+  const parts = String(dateStr).split('T')[0].split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return escapeHtml(dateStr);
+}
+window.formatDateDisplay = formatDateDisplay;
+
+function getStatusBadge(status) {
+  switch(status) {
+    case 'Lead Novo':
+      return '<span class="comm-status-badge status-novo">Lead Novo</span>';
+    case 'Pronto para Fechar':
+      return '<span class="comm-status-badge status-fechar">Pronto p/ Fechar</span>';
+    case 'Aguardando DOCS':
+      return '<span class="comm-status-badge status-docs">Aguardando DOCS</span>';
+    case 'Fechado':
+      return '<span class="comm-status-badge status-fechado">Contrato Fechado</span>';
+    case 'Desqualificado':
+      return '<span class="comm-status-badge status-desqualificado">Desqualificado</span>';
+    case 'Aguardando Reunião':
+      return '<span class="comm-status-badge status-reuniao">Aguardando Reunião</span>';
+    default:
+      return '<span class="comm-status-badge status-followup">Follow-up</span>';
+  }
+}
+window.getStatusBadge = getStatusBadge;
+
+function getAreaBadge(area) {
+  const areaLower = (area || '').toLowerCase();
+  let cls = 'badge-area-trabalhista';
+  if (areaLower.includes('trab/prev') || (areaLower.includes('trab') && areaLower.includes('prev'))) cls = 'badge-area-trabprev';
+  else if (areaLower.includes('prev') || areaLower.includes('aposentadoria')) cls = 'badge-area-previdenciario';
+  else if (areaLower.includes('aux')) cls = 'badge-area-auxacidente';
+  else if (areaLower.includes('estatut')) cls = 'badge-area-estatutaria';
+  else if (areaLower.includes('cível') || areaLower.includes('civil')) cls = 'badge-area-civel';
+  return `<span class="area-badge ${cls}">${escapeHtml(area || 'Geral')}</span>`;
+}
+window.getAreaBadge = getAreaBadge;
+
+function cleanPhoneForWa(phone) {
+  if (!phone) return '';
+  let digits = phone.replace(/\D/g, '');
+  if (digits.length === 10 || digits.length === 11) digits = '55' + digits;
+  return digits;
+}
+window.cleanPhoneForWa = cleanPhoneForWa;
+
+function formatPhoneDisplay(phone) {
+  if (!phone) return '<span style="color: var(--text-muted); font-size: 0.74rem; font-style: italic;">Sem contato</span>';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 13 && digits.startsWith('55')) {
+    return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return escapeHtml(phone);
+}
+window.formatPhoneDisplay = formatPhoneDisplay;
+
 // Renderizacao da lista executiva / tabela de clientes
 function renderCommercialTable(clients) {
   const container = document.getElementById('comm-leads-list');
@@ -1236,67 +1303,6 @@ function renderCommercialTable(clients) {
     `;
     return;
   }
-
-  const formatDateDisplay = (dateStr) => {
-    if (!dateStr) return '<span style="color: var(--text-muted); font-size: 0.76rem;">-</span>';
-    const parts = String(dateStr).split('T')[0].split('-');
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-    return escapeHtml(dateStr);
-  };
-
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case 'Lead Novo':
-        return '<span class="comm-status-badge status-novo">Lead Novo</span>';
-      case 'Pronto para Fechar':
-        return '<span class="comm-status-badge status-fechar">Pronto p/ Fechar</span>';
-      case 'Aguardando DOCS':
-        return '<span class="comm-status-badge status-docs">Aguardando DOCS</span>';
-      case 'Fechado':
-        return '<span class="comm-status-badge status-fechado">Contrato Fechado</span>';
-      case 'Desqualificado':
-        return '<span class="comm-status-badge status-desqualificado">Desqualificado</span>';
-      case 'Aguardando Reunião':
-        return '<span class="comm-status-badge status-reuniao">Aguardando Reunião</span>';
-      default:
-        return '<span class="comm-status-badge status-followup">Follow-up</span>';
-    }
-  };
-
-  const getAreaBadge = (area) => {
-    const areaLower = (area || '').toLowerCase();
-    let cls = 'badge-area-trabalhista';
-    if (areaLower.includes('trab/prev') || (areaLower.includes('trab') && areaLower.includes('prev'))) cls = 'badge-area-trabprev';
-    else if (areaLower.includes('prev') || areaLower.includes('aposentadoria')) cls = 'badge-area-previdenciario';
-    else if (areaLower.includes('aux')) cls = 'badge-area-auxacidente';
-    else if (areaLower.includes('estatut')) cls = 'badge-area-estatutaria';
-    else if (areaLower.includes('cível') || areaLower.includes('civil')) cls = 'badge-area-civel';
-    return `<span class="area-badge ${cls}">${escapeHtml(area || 'Geral')}</span>`;
-  };
-
-  const cleanPhoneForWa = (phone) => {
-    if (!phone) return '';
-    let digits = phone.replace(/\D/g, '');
-    if (digits.length === 10 || digits.length === 11) digits = '55' + digits;
-    return digits;
-  };
-
-  const formatPhoneDisplay = (phone) => {
-    if (!phone) return '<span style="color: var(--text-muted); font-size: 0.74rem; font-style: italic;">Sem contato</span>';
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length === 13 && digits.startsWith('55')) {
-      return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
-    }
-    if (digits.length === 11) {
-      return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-    }
-    if (digits.length === 10) {
-      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-    }
-    return escapeHtml(phone);
-  };
 
   container.innerHTML = clients.map(client => {
     const waDigits = cleanPhoneForWa(client.phone);
@@ -1654,6 +1660,9 @@ function toggleCommercialTaskStatus(clientId) {
 
   saveCommercialData();
   renderCommercialApp();
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
 
   if (typeof showToast === 'function') {
     showToast(newStatus === 'done' ? `Tarefa de "${client.name}" marcada como concluída! 🎉` : `Tarefa de "${client.name}" reaberta como pendente.`, 'success');
@@ -1668,6 +1677,9 @@ function deleteCommercialTask(clientId) {
   client.task = null;
   saveCommercialData();
   renderCommercialApp();
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
 
   if (typeof showToast === 'function') {
     showToast(`Tarefa de "${client.name}" desmarcada com sucesso.`, 'info');
@@ -1750,6 +1762,8 @@ function renderCommercialTasksView() {
     const startTime = task.dueTime || '10:00';
     const endTime = task.endTime || calculateEndTime30m(startTime);
     const dateBadge = isToday ? 'Hoje' : formatDateDisplay(task.dueDate);
+    const waDigits = cleanPhoneForWa(client.phone);
+    const waLink = waDigits ? `https://wa.me/${waDigits}?text=${encodeURIComponent(`Olá, ${client.name}! Tudo bem? Augusto da MVT Advogados por aqui.`)}` : '';
 
     return `
       <div class="comm-task-row ${isDone ? 'status-done' : ''}" id="comm-task-row-${client.id}">
@@ -1765,7 +1779,14 @@ function renderCommercialTasksView() {
         <!-- Coluna 2: Cliente & Contato -->
         <div class="comm-col-client">
           <span class="comm-client-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-          <span class="comm-client-phone">${formatPhoneDisplay(client.phone)}</span>
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span class="comm-client-phone">${formatPhoneDisplay(client.phone)}</span>
+            ${waLink ? `
+              <a href="${waLink}" target="_blank" rel="noopener" class="btn-whatsapp-sm" title="Conversar no WhatsApp com ${escapeHtml(client.name)}" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">
+                💬
+              </a>
+            ` : ''}
+          </div>
         </div>
 
         <!-- Coluna 3: Comercial -->
@@ -1793,43 +1814,56 @@ function renderCommercialTasksView() {
         </div>
 
         <!-- Coluna 6: Status & Ações Rápidas -->
-        <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.4rem;">
+        <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.35rem;">
           ${!isDone ? `
             <button type="button" class="btn-task-done" onclick="toggleCommercialTaskStatus('${client.id}')" title="Marcar tarefa como concluída">
               ✓ Concluir
             </button>
-            <button type="button" class="btn-icon-clean" onclick="openCommercialTaskModal('${client.id}')" title="Editar horário de 30m ou detalhes da tarefa">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-            </button>
-            <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTask('${client.id}')" title="Remover tarefa">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
           ` : `
-            <span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.2rem 0.5rem; border-radius: var(--radius-xs);">
-              ✓ Concluída
-            </span>
             <button type="button" class="btn-task-reopen" onclick="toggleCommercialTaskStatus('${client.id}')" title="Reabrir tarefa como pendente">
               ↩ Reabrir
             </button>
-            <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTask('${client.id}')" title="Remover tarefa">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
           `}
+          <button type="button" class="btn-icon-clean" onclick="jumpToCalendarTask('${task.dueDate}', '${startTime}')" title="Ver esta tarefa de 30m na Grade da Agenda Oficial">
+            <span style="font-size: 0.85rem;">📅</span>
+          </button>
+          <button type="button" class="btn-icon-clean" onclick="openCommercialTaskModal('${client.id}')" title="Editar horário de 30m ou detalhes da tarefa">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+          <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTask('${client.id}')" title="Remover tarefa">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
         </div>
       </div>
     `;
   }).join('');
 }
 window.renderCommercialTasksView = renderCommercialTasksView;
+
+// Abrir e destacar o compromisso de 30m diretamente na Grade da Agenda
+function jumpToCalendarTask(dueDate, startTime) {
+  if (typeof switchTab === 'function') {
+    switchTab('tab-calendar');
+  }
+  if (dueDate && window.STATE) {
+    window.STATE.calendarDate = new Date(dueDate + 'T12:00:00');
+    if (typeof renderCalendarGrid === 'function') {
+      renderCalendarGrid();
+    }
+    if (typeof showToast === 'function') {
+      const parts = dueDate.split('-');
+      const dBr = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dueDate;
+      showToast(`📅 Exibindo na Agenda: ${dBr} às ${startTime || '10:00'} (30m)`, 'info', 3000);
+    }
+  }
+}
+window.jumpToCalendarTask = jumpToCalendarTask;
 
 // ========================================================
 // MODAL DE MARCAR TAREFA COMERCIAL (PROXIMO PASSO - 30 MIN)
@@ -1931,6 +1965,9 @@ function handleCommercialTaskSubmit(e) {
   saveCommercialData();
   closeCommercialTaskModal();
   renderCommercialApp();
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
 
   if (typeof showToast === 'function') {
     showToast(`⏱️ Tarefa de 30min agendada para "${client.name}" (${dueTime} às ${endTime}) com sucesso!`, 'success', 4000);
