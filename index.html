@@ -85,6 +85,61 @@
 
         <div class="sidebar-left-divider"></div>
 
+        <!-- Grupo: COMERCIAL (Título) -->
+        <div class="sidebar-item-group">
+          <button class="sidebar-left-item main-item" data-tab="tab-comercial" id="side-item-comercial" type="button" title="Comercial">
+            <span class="sidebar-icon-cell">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+            </span>
+            <div class="sidebar-text-cell">
+              <span class="sidebar-item-name">Comercial</span>
+              <span class="sidebar-item-function">Gestão de clientes & vendas</span>
+            </div>
+          </button>
+
+          <!-- Subcategorias de Comercial: Prontos para Fechar e Leads & Clientes -->
+          <div class="sidebar-sub-branch">
+            <div class="sidebar-sub-rail"></div>
+            <!-- Subcategoria: Prontos para Fechar -->
+            <button class="sidebar-left-item sub-item" data-tab="tab-comercial" data-subtab="fechar" id="side-item-comercial-fechar" type="button" title="Prontos para Fechar">
+              <span class="sidebar-icon-cell sub">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </span>
+              <div class="sidebar-text-cell">
+                <span class="sidebar-item-name">Prontos para Fechar</span>
+                <span class="sidebar-item-function">Funil e contratos</span>
+              </div>
+            </button>
+
+            <!-- Subcategoria: Leads & Clientes -->
+            <button class="sidebar-left-item sub-item" data-tab="tab-comercial" data-subtab="leads" id="side-item-comercial-leads" type="button" title="Leads & Clientes">
+              <span class="sidebar-icon-cell sub">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </span>
+              <div class="sidebar-text-cell">
+                <span class="sidebar-item-name">Leads & Clientes</span>
+                <span class="sidebar-item-function">Controle e prospecção</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-left-divider"></div>
+
         <!-- Grupo: CONFIGURAÇÃO (Título) -->
         <div class="sidebar-item-group">
           <button class="sidebar-left-item main-item" data-tab="tab-settings" id="side-item-configuracao" type="button" title="Configuração">
@@ -363,6 +418,146 @@
           </div>
         </div>
       </section>
+
+      <!-- SEÇÃO: COMERCIAL (Gestão de Clientes & Prontos para Fechar) -->
+      <section id="tab-comercial" class="tab-pane" style="display: none;">
+        <!-- Título da Página: Comercial -->
+        <div class="page-top-header">
+          <div class="page-title-box">
+            <h1 class="page-main-heading">Comercial</h1>
+            <p class="page-sub-heading">Gestão executiva de clientes, pipeline de prospecção e fechamentos</p>
+          </div>
+          <div class="page-top-actions">
+            <button class="btn-primary" id="btn-open-commercial-modal" type="button">
+              ➕ Novo Cliente Comercial
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner de Métricas / KPIs do Comercial -->
+        <div class="kpi-banner commercial-kpi-banner">
+          <div class="kpi-group">
+            <div class="kpi-item">
+              <span class="kpi-val" id="comm-kpi-total">0</span>
+              <span class="kpi-lbl">Total de Clientes</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-item">
+              <span class="kpi-val" id="comm-kpi-fechar" style="color: var(--amber);">0</span>
+              <span class="kpi-lbl">🎯 Prontos para Fechar</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-item">
+              <span class="kpi-val" id="comm-kpi-docs" style="color: var(--blue-light);">0</span>
+              <span class="kpi-lbl">📄 Aguardando DOCS</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-item">
+              <span class="kpi-val" id="comm-kpi-followup" style="color: #a855f7;">0</span>
+              <span class="kpi-lbl">⏳ Follow-up / No Tempo</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-item confirmed">
+              <span class="kpi-val" id="comm-kpi-fechado" style="color: var(--emerald);">0</span>
+              <span class="kpi-lbl">✅ Fechados</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Controle & Sub-Categorias do Comercial -->
+        <div class="commercial-controls-bar">
+          <!-- Alternador de Sub-Abas -->
+          <div class="commercial-view-pills">
+            <button type="button" class="comm-view-btn active" id="comm-view-fechar" data-subtab-target="fechar">
+              🎯 Prontos para Fechar
+            </button>
+            <button type="button" class="comm-view-btn" id="comm-view-leads" data-subtab-target="leads">
+              👥 Todos os Leads & Clientes
+            </button>
+            <button type="button" class="comm-view-btn" id="comm-view-kanban" data-subtab-target="kanban">
+              📊 Funil Kanban
+            </button>
+          </div>
+
+          <!-- Filtros e Busca Rápida -->
+          <div class="commercial-filter-tools">
+            <div class="comm-search-box">
+              <input type="text" id="comm-search-input" class="clean-input" placeholder="🔍 Buscar cliente, telefone ou observação...">
+            </div>
+            <select id="comm-area-filter" class="select-clean" style="font-size: 0.8rem; padding: 0.4rem 0.65rem;">
+              <option value="all">Todas as Áreas</option>
+              <option value="Trabalhista">Trabalhista</option>
+              <option value="Estatutaria">Estatutária</option>
+              <option value="Trab/Prev">Trab/Prev</option>
+              <option value="Auxilio Acidente">Auxílio Acidente</option>
+              <option value="Aposentadoria">Aposentadoria</option>
+              <option value="Cível">Cível</option>
+            </select>
+            <div class="filter-results-counter-pill" id="comm-counter-pill">
+              <span class="results-count-dot"></span>
+              <span id="comm-counter-text">0 clientes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visão Tabela / Lista Executiva -->
+        <div id="comm-table-view-container" class="commercial-table-view">
+          <div class="comm-table-header-row">
+            <div class="comm-col-status">FASE / STATUS</div>
+            <div class="comm-col-client">CLIENTE & CONTATO</div>
+            <div class="comm-col-area">ÁREA</div>
+            <div class="comm-col-next">PRÓXIMO PASSO / OBSERVAÇÃO</div>
+            <div class="comm-col-actions">AÇÕES RÁPIDAS</div>
+          </div>
+          <div class="comm-leads-list" id="comm-leads-list"></div>
+        </div>
+
+        <!-- Visão Funil Kanban -->
+        <div id="comm-kanban-view-container" class="commercial-kanban-view" style="display: none;">
+          <div class="kanban-board-grid">
+            <!-- Coluna 1: Leads Novos & Follow-up -->
+            <div class="kanban-column" id="kanban-col-followup">
+              <div class="kanban-column-header">
+                <span class="kanban-col-dot" style="background: #a855f7;"></span>
+                <span class="kanban-col-title">Leads & Follow-up</span>
+                <span class="kanban-col-badge" id="kanban-count-followup">0</span>
+              </div>
+              <div class="kanban-cards-wrapper" id="kanban-cards-followup"></div>
+            </div>
+
+            <!-- Coluna 2: Aguardando Documentos -->
+            <div class="kanban-column" id="kanban-col-docs">
+              <div class="kanban-column-header">
+                <span class="kanban-col-dot" style="background: var(--blue-light);"></span>
+                <span class="kanban-col-title">Aguardando DOCS</span>
+                <span class="kanban-col-badge" id="kanban-count-docs">0</span>
+              </div>
+              <div class="kanban-cards-wrapper" id="kanban-cards-docs"></div>
+            </div>
+
+            <!-- Coluna 3: Prontos para Fechar -->
+            <div class="kanban-column" id="kanban-col-fechar">
+              <div class="kanban-column-header">
+                <span class="kanban-col-dot" style="background: var(--amber);"></span>
+                <span class="kanban-col-title">🎯 Prontos para Fechar</span>
+                <span class="kanban-col-badge" id="kanban-count-fechar">0</span>
+              </div>
+              <div class="kanban-cards-wrapper" id="kanban-cards-fechar"></div>
+            </div>
+
+            <!-- Coluna 4: Contratos Fechados -->
+            <div class="kanban-column" id="kanban-col-fechado">
+              <div class="kanban-column-header">
+                <span class="kanban-col-dot" style="background: var(--emerald);"></span>
+                <span class="kanban-col-title">✅ Contratos Fechados</span>
+                <span class="kanban-col-badge" id="kanban-count-fechado">0</span>
+              </div>
+              <div class="kanban-cards-wrapper" id="kanban-cards-fechado"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="tab-templates" class="tab-pane" style="display: none;">
         <!-- Título da Página: Mensagens -->
         <div class="page-top-header">
@@ -677,6 +872,64 @@
       </div>
     </div>
 
+    <!-- Modal: Cadastro / Edição de Cliente Comercial -->
+    <div class="modal-overlay" id="modal-commercial-client">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modal-commercial-title">➕ Novo Cliente Comercial</h2>
+          <button class="modal-close" id="modal-commercial-close" type="button">&times;</button>
+        </div>
+        <form id="form-commercial-client">
+          <input type="hidden" id="comm-client-id">
+          <div class="form-group">
+            <label class="form-label" for="comm-client-name">Nome do Cliente *</label>
+            <input type="text" id="comm-client-name" class="clean-input" placeholder="Ex: Alexandre Faganelli" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="comm-client-phone">WhatsApp / Telefone</label>
+              <input type="tel" id="comm-client-phone" class="clean-input" placeholder="Ex: (11) 98765-4321">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="comm-client-area">Área Jurídica</label>
+              <select id="comm-client-area" class="select-clean">
+                <option value="Trabalhista">Trabalhista</option>
+                <option value="Estatutária">Estatutária</option>
+                <option value="Trab/Prev">Trab/Prev</option>
+                <option value="Auxílio Acidente">Auxílio Acidente</option>
+                <option value="Aposentadoria">Aposentadoria</option>
+                <option value="Cível">Cível</option>
+                <option value="Outra">Outra</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="comm-client-status">Fase / Status Comercial</label>
+            <select id="comm-client-status" class="select-clean">
+              <option value="Pronto para Fechar">🎯 Pronto para Fechar</option>
+              <option value="Aguardando DOCS">📄 Aguardando DOCS</option>
+              <option value="Follow-up">⏳ Follow-up / No tempo do cliente</option>
+              <option value="Lead Novo">🆕 Lead Novo</option>
+              <option value="Fechado">✅ Contrato Fechado</option>
+              <option value="Desqualificado">❌ Desqualificado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="comm-client-next-step">Próximo Passo / Tarefa</label>
+            <input type="text" id="comm-client-next-step" class="clean-input" placeholder="Ex: Cobrar documentos amanhã às 10h">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="comm-client-notes">Observações / Detalhes</label>
+            <textarea id="comm-client-notes" class="clean-textarea" rows="2" placeholder="Anotações comerciais sobre a negociação..."></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btn-cancel-commercial-modal">Cancelar</button>
+            <button type="submit" class="btn-primary" id="btn-save-commercial-client">💾 Salvar Cliente</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
 
     </div><!-- fim app-main-wrapper -->
@@ -685,6 +938,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   
   <script src="config.js"></script>
+  <script src="commercial.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

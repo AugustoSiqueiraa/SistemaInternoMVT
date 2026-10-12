@@ -1422,12 +1422,18 @@ function setupFilterModal() {
 }
 
 // Navegação Unificada de Abas (Menu Lateral Esquerdo)
-function switchTab(tabId) {
+function switchTab(tabId, subtab) {
   if (!tabId) return;
 
   // Atualizar estado de todos os botões que apontam para abas
   document.querySelectorAll('[data-tab]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === tabId);
+    if (subtab && btn.dataset.subtab) {
+      btn.classList.toggle('active', btn.dataset.tab === tabId && btn.dataset.subtab === subtab);
+    } else if (!subtab && btn.dataset.subtab) {
+      btn.classList.remove('active');
+    } else {
+      btn.classList.toggle('active', btn.dataset.tab === tabId);
+    }
   });
 
   // Ocultar todos os painéis e exibir o selecionado
@@ -1438,6 +1444,15 @@ function switchTab(tabId) {
   const targetPane = document.getElementById(tabId);
   if (targetPane) {
     targetPane.style.display = 'block';
+  }
+
+  // Se a aba for o Comercial, acionar renderização ou mudar sub-aba
+  if (tabId === 'tab-comercial') {
+    if (subtab && typeof window.setCommercialSubtab === 'function') {
+      window.setCommercialSubtab(subtab);
+    } else if (typeof window.renderCommercialApp === 'function') {
+      window.renderCommercialApp();
+    }
   }
 
   // Se a aba for a Agenda, recalcular a visualização do calendário
@@ -1529,7 +1544,8 @@ function setupEventListeners() {
   document.querySelectorAll('[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
       const tabId = btn.dataset.tab;
-      switchTab(tabId);
+      const subtab = btn.dataset.subtab;
+      switchTab(tabId, subtab);
     });
   });
 
