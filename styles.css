@@ -3828,6 +3828,51 @@ body.light-theme .modal-confirm-desc {
   color: #000000;
 }
 
+/* Botões de Ação Minimalistas (Editar, Excluir) */
+.btn-icon-clean {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  padding: 0;
+  box-shadow: none;
+}
+
+.btn-icon-clean:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.btn-icon-clean.danger {
+  color: var(--text-muted);
+}
+
+.btn-icon-clean.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+body.light-theme .btn-icon-clean:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+body.light-theme .btn-icon-clean.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
 .btn-tag-pill {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);

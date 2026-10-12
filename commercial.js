@@ -968,10 +968,15 @@ function loadCommercialData() {
   try {
     const saved = localStorage.getItem('mvt_commercial_clients');
     if (saved) {
-      const parsed = JSON.parse(saved);
+      let parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        COMMERCIAL_STATE.clients = parsed;
-        return;
+        // Remove quaisquer leads brutos importados indevidamente do MindChat (mantém apenas clientes qualificados)
+        parsed = parsed.filter(c => !c.id || !c.id.startsWith('comm-mindchat-'));
+        if (parsed.length > 0) {
+          COMMERCIAL_STATE.clients = parsed;
+          saveCommercialData();
+          return;
+        }
       }
     }
   } catch (e) {
@@ -1072,9 +1077,8 @@ function setupCommercialMindChatToggle() {
 
     if (nextState) {
       if (typeof showToast === 'function') {
-        showToast('⚡ MindChat reconectado! Sincronizando leads...', 'success', 3000);
+        showToast('⚡ Conexão com o MindChat ativa!', 'success', 3000);
       }
-      syncMindChatToCommercial(true);
     } else {
       if (typeof showToast === 'function') {
         showToast('⏸️ Conexão com o MindChat pausada no Comercial.', 'warning', 3000);
@@ -1083,120 +1087,15 @@ function setupCommercialMindChatToggle() {
   });
 }
 
-// Sincronizar Leads e Clientes do MindChat para o Módulo Comercial
-async function syncMindChatToCommercial(silent = false) {
+// Status da conexão com MindChat (apenas informativo para a aba Comercial)
+function syncMindChatToCommercial() {
   if (COMMERCIAL_STATE.mindchatConnected === false) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ O MindChat está pausado no Comercial. Clique no botão de conexão para reativar antes de sincronizar.', 'warning', 4500);
+      showToast('⚠️ O MindChat está pausado no Comercial. Clique no botão de conexão para reativar.', 'warning', 3000);
     }
-    document.getElementById('btn-mindchat-commercial-toggle')?.click();
-    return;
-  }
-
-  if (!silent && typeof showToast === 'function') {
-    showToast('⚡ Conectando à API do MindChat (WhatsApp Mind17)...', 'info', 2500);
-  }
-
-  const mindchatConfig = window.CONFIG?.MINDCHAT || {
-    API_URL: "https://api.appmindchat.com.br/webhook/v1",
-    API_KEY: "ghj8mF6yaxaEmAhmqubLlVFt9wm50Oqt",
-    INSTANCE_ID: "3ea91866-13be-4a00-8d7a-84e8149e639d",
-    STAGES: {
-      AGUARDANDO_REUNIAO: "9be8049d-3e55-4261-aa63-448a0b20949a",
-      NO_SHOW: "84f5ed7e-eb5f-49b8-b5da-611aa963ba59",
-      CONTRATO_FECHADO: "2b0baf19-e8db-49f4-9da1-7bc6145457d8"
-    }
-  };
-
-  try {
-    let leads = [];
-
-    try {
-      const url = `${mindchatConfig.API_URL}/leads/list?instance_id=${mindchatConfig.INSTANCE_ID}&per_page=50&sort=last_updated_at&order=desc`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': mindchatConfig.API_KEY
-        }
-      });
-      if (response.ok) {
-        const json = await response.json();
-        if (json && json.data && Array.isArray(json.data.items)) {
-          leads = json.data.items;
-        } else if (Array.isArray(json)) {
-          leads = json;
-        }
-      }
-    } catch (apiErr) {
-      console.warn('Requisição direta ao MindChat (verificando leads já armazenados):', apiErr.message);
-    }
-
-    if (leads && leads.length > 0) {
-      let importedCount = 0;
-
-      leads.forEach((l, idx) => {
-        let clientName = (l.customer_name || '').trim();
-        if (!clientName || clientName === '.' || clientName === '-') {
-          clientName = 'Lead MindChat ' + (l.customer_phone || '');
-        }
-
-        const phone = String(l.customer_phone || '').trim();
-        
-        let area = 'Trab/Prev';
-        const tagStr = Array.isArray(l.tags) ? l.tags.map(t => t.name).join(' ') : '';
-        if (tagStr.toLowerCase().includes('cível') || tagStr.toLowerCase().includes('civil')) area = 'Cível';
-        else if (tagStr.toLowerCase().includes('prev')) area = 'Previdenciário';
-        else if (tagStr.toLowerCase().includes('trab')) area = 'Trabalhista';
-
-        let responsible = 'Augusto';
-        const assigned = l.assigned_team_member_name || '';
-        if (assigned.includes('Ana Carla')) responsible = 'Ana Carla';
-        else if (assigned.includes('Julia') || assigned.includes('Júlia')) responsible = 'Julia';
-        else if (assigned.includes('João') || assigned.includes('Joao')) responsible = 'João';
-
-        const existing = COMMERCIAL_STATE.clients.find(c => 
-          (phone && c.phone && c.phone.replace(/\D/g, '') === phone.replace(/\D/g, '')) ||
-          (c.name && c.name.toLowerCase() === clientName.toLowerCase())
-        );
-
-        if (existing) {
-          if (!existing.phone && phone) existing.phone = phone;
-          if (area !== 'Trab/Prev') existing.area = area;
-        } else {
-          COMMERCIAL_STATE.clients.unshift({
-            id: `comm-mindchat-${l.id || Date.now()}-${idx}`,
-            name: clientName,
-            phone: phone,
-            area: area,
-            status: 'Lead Novo',
-            nextStep: 'Acompanhamento do lead via WhatsApp (MindChat)',
-            notes: `Lead importado do MindChat (Mind17). Atualizado em ${new Date().toLocaleDateString('pt-BR')}`,
-            date: new Date().toISOString().split('T')[0],
-            responsible: responsible,
-            task: null
-          });
-          importedCount++;
-        }
-      });
-
-      saveCommercialData();
-      renderCommercialApp();
-
-      if (typeof showToast === 'function') {
-        showToast(`🎉 Sincronização concluída! ${importedCount > 0 ? importedCount + ' novos leads' : 'Dados'} atualizados do MindChat.`, 'success', 4500);
-      }
-    } else {
-      saveCommercialData();
-      renderCommercialApp();
-      if (!silent && typeof showToast === 'function') {
-        showToast('✅ Conexão ativa com o MindChat (Mind17)! Leads atualizados.', 'success', 3500);
-      }
-    }
-  } catch (err) {
-    console.error('Erro na sincronização do MindChat no Comercial:', err);
-    if (!silent && typeof showToast === 'function') {
-      showToast('⚠️ Erro ao sincronizar com MindChat: ' + err.message, 'danger', 4000);
+  } else {
+    if (typeof showToast === 'function') {
+      showToast('✅ Conexão ativa com o MindChat (Instância Mind17).', 'success', 3000);
     }
   }
 }
@@ -1447,25 +1346,19 @@ function renderCommercialTable(clients) {
             ${hasTask ? 'Tarefa Agendada' : 'Marcar Tarefa'}
           </button>
 
-          ${waDigits ? `
-            <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-sm" title="Conversar no WhatsApp">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.456h.005c6.554 0 11.89-5.336 11.893-11.893 0-3.177-1.237-6.164-3.488-8.417"/>
-              </svg>
-            </a>
-          ` : ''}
-
           <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
           </button>
           
           <button class="btn-icon-clean danger" onclick="deleteCommercialClient('${client.id}')" title="Excluir cliente">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
             </svg>
           </button>
         </div>
@@ -1535,15 +1428,12 @@ function renderCommercialKanban(clients) {
 
           <div class="kanban-card-footer">
             <div class="kanban-card-actions-left">
-              ${waDigits ? `
-                <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-mini" title="WhatsApp">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.456h.005c6.554 0 11.89-5.336 11.893-11.893 0-3.177-1.237-6.164-3.488-8.417"/>
-                  </svg>
-                  Zap
-                </a>
-              ` : ''}
-              <button class="btn-kanban-edit" onclick="openCommercialModal('${client.id}')" title="Editar">✏️</button>
+              <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
             </div>
             
             <div class="kanban-card-stage-buttons">
@@ -1833,11 +1723,6 @@ function setupCommercialEvents() {
 
   // Inicializar botao e modal de conexao MindChat (Verde = Conectado / Vermelho = Desconectado)
   setupCommercialMindChatToggle();
-
-  // Botao de Sincronizar Leads do MindChat
-  document.getElementById('btn-sync-mindchat-commercial')?.addEventListener('click', () => {
-    syncMindChatToCommercial(false);
-  });
 
   // Fechar modal de cliente
   document.getElementById('modal-commercial-close')?.addEventListener('click', closeCommercialModal);
