@@ -4025,6 +4025,225 @@ body.light-theme .comm-view-btn.active {
   color: #0284c7;
 }
 
+/* ======================================================== */
+/* SUBCATEGORIA: PAUTA DE TAREFAS DE 30 MIN (COMERCIAL)     */
+/* ======================================================== */
+.commercial-tasks-view {
+  margin-top: 0.5rem;
+}
+
+.comm-tasks-kpi-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.comm-task-kpi-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.comm-task-kpi-item .task-kpi-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.1;
+}
+
+.comm-task-kpi-item .task-kpi-lbl {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.comm-task-kpi-item.today .task-kpi-val { color: var(--blue-light); }
+.comm-task-kpi-item.pending .task-kpi-val { color: var(--amber); }
+.comm-task-kpi-item.done .task-kpi-val { color: var(--emerald); }
+
+.comm-task-kpi-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border-subtle);
+}
+
+.comm-tasks-slot-badge {
+  margin-left: auto;
+  font-size: 0.76rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-xs);
+  font-weight: 600;
+}
+
+.comm-tasks-table-header {
+  display: grid;
+  grid-template-columns: 145px 1.35fr 110px 120px 1.5fr 185px;
+  padding: 0.65rem 1.15rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+}
+
+body.light-theme .comm-tasks-table-header {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.comm-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.comm-task-row {
+  background: var(--bg-row);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1.15rem;
+  display: grid;
+  grid-template-columns: 145px 1.35fr 110px 120px 1.5fr 185px;
+  gap: 0.85rem;
+  align-items: center;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.comm-task-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--amber);
+  border-top-left-radius: var(--radius-sm);
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+.comm-task-row.status-done::before {
+  background: var(--emerald);
+}
+
+.comm-task-row.status-done {
+  opacity: 0.75;
+}
+
+.comm-task-row:hover {
+  background: var(--bg-row-hover);
+  border-color: var(--border-highlight);
+  box-shadow: var(--shadow-sm);
+}
+
+.col-task-time-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.task-date-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.task-time-span {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.task-duration-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+
+.task-action-main {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: block;
+}
+
+.task-notes-sub {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  display: block;
+}
+
+.btn-task-done {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #10b981;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-task-done:hover {
+  background: #10b981;
+  color: #000000;
+}
+
+.btn-task-reopen {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-task-reopen:hover {
+  background: #f59e0b;
+  color: #000000;
+}
+
+@media (max-width: 900px) {
+  .comm-tasks-table-header {
+    display: none;
+  }
+  .comm-task-row {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+}
+
 
 
 

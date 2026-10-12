@@ -1101,7 +1101,7 @@ function syncMindChatToCommercial() {
 }
 window.syncMindChatToCommercial = syncMindChatToCommercial;
 
-// Alternar sub-aba comercial ('fechar', 'leads', 'kanban')
+// Alternar sub-aba comercial ('fechar', 'leads', 'kanban', 'tarefas')
 function setCommercialSubtab(subtab) {
   if (!subtab) return;
   COMMERCIAL_STATE.subtab = subtab;
@@ -1115,8 +1115,10 @@ function setCommercialSubtab(subtab) {
   // Atualiza sub-itens do menu lateral esquerdo
   const sideFechar = document.getElementById('side-item-comercial-fechar');
   const sideLeads = document.getElementById('side-item-comercial-leads');
+  const sideTarefas = document.getElementById('side-item-comercial-tarefas');
   if (sideFechar) sideFechar.classList.toggle('active', subtab === 'fechar');
   if (sideLeads) sideLeads.classList.toggle('active', subtab === 'leads');
+  if (sideTarefas) sideTarefas.classList.toggle('active', subtab === 'tarefas');
 
   renderCommercialApp();
 }
@@ -1145,13 +1147,21 @@ function renderCommercialApp() {
   if (kpiFollowup) kpiFollowup.textContent = followupCount;
   if (kpiFechados) kpiFechados.textContent = fechadosCount;
 
-  // 2. Controlar visibilidade de Container (Tabela vs Kanban)
+  // 2. Controlar visibilidade de Containers (Tabela vs Kanban vs Tarefas)
   const isKanban = COMMERCIAL_STATE.subtab === 'kanban';
+  const isTarefas = COMMERCIAL_STATE.subtab === 'tarefas';
   const tableContainer = document.getElementById('comm-table-view-container');
   const kanbanContainer = document.getElementById('comm-kanban-view-container');
+  const tasksContainer = document.getElementById('comm-tasks-view-container');
 
-  if (tableContainer) tableContainer.style.display = isKanban ? 'none' : 'block';
+  if (tableContainer) tableContainer.style.display = (!isKanban && !isTarefas) ? 'block' : 'none';
   if (kanbanContainer) kanbanContainer.style.display = isKanban ? 'block' : 'none';
+  if (tasksContainer) tasksContainer.style.display = isTarefas ? 'block' : 'none';
+
+  if (isTarefas) {
+    renderCommercialTasksView();
+    return;
+  }
 
   // 3. Filtrar clientes para a visao de lista/tabela
   let filtered = [...clients];
@@ -1329,21 +1339,21 @@ function renderCommercialTable(clients) {
           <span class="comm-nextstep-text" title="${escapeHtml(client.nextStep || 'Acompanhamento do direito')}">${escapeHtml(client.nextStep || 'Acompanhamento do direito')}</span>
           ${hasTask ? `
             <span class="comm-task-due-pill">
-              📅 Prazo: ${formatDateDisplay(client.task.dueDate)}${client.task.dueTime ? ' às ' + client.task.dueTime : ''}
+              📅 ${formatDateDisplay(client.task.dueDate)}${client.task.dueTime ? ' às ' + client.task.dueTime + ' - ' + (client.task.endTime || calculateEndTime30m(client.task.dueTime)) + ' (30m)' : ''}
             </span>
           ` : ''}
         </div>
 
         <!-- Coluna 6: Tarefa & Ações Rápidas -->
         <div class="comm-col-actions">
-          <button class="btn-task-action ${hasTask ? 'has-task' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="Marcar ou editar tarefa para não perder o direito do cliente">
+          <button class="btn-task-action ${hasTask ? 'has-task' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="${hasTask ? `Tarefa de 30m agendada para ${formatDateDisplay(client.task.dueDate)} às ${client.task.dueTime || '10:00'}` : 'Marcar tarefa de 30 minutos na pauta'}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            ${hasTask ? 'Tarefa Agendada' : 'Marcar Tarefa'}
+            ${hasTask ? `${client.task.dueTime || '10:00'} (30m)` : 'Marcar Tarefa'}
           </button>
 
           <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
@@ -1604,7 +1614,225 @@ function handleCommercialSubmit(e) {
 }
 
 // ========================================================
-// MODAL DE MARCAR TAREFA COMERCIAL (PROXIMO PASSO)
+// FUNÇÕES AUXILIARES DE TAREFAS DE 30 MINUTOS
+// ========================================================
+function calculateEndTime30m(startTime) {
+  if (!startTime) return '10:30';
+  const parts = startTime.split(':').map(Number);
+  if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return '10:30';
+  let h = parts[0];
+  let m = parts[1] + 30;
+  if (m >= 60) {
+    m -= 60;
+    h = (h + 1) % 24;
+  }
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+window.calculateEndTime30m = calculateEndTime30m;
+
+function setTaskTimeShortcut(timeStr) {
+  const inputTime = document.getElementById('comm-task-time');
+  if (inputTime) {
+    inputTime.value = timeStr;
+    const rangeSpan = document.getElementById('comm-task-time-range');
+    if (rangeSpan) {
+      const end = calculateEndTime30m(timeStr);
+      rangeSpan.textContent = `${timeStr} às ${end} (30 min)`;
+    }
+  }
+}
+window.setTaskTimeShortcut = setTaskTimeShortcut;
+
+function toggleCommercialTaskStatus(clientId) {
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client || !client.task) return;
+
+  const currentStatus = client.task.status || 'pending';
+  const newStatus = currentStatus === 'done' ? 'pending' : 'done';
+  client.task.status = newStatus;
+  client.task.updatedAt = new Date().toISOString();
+
+  saveCommercialData();
+  renderCommercialApp();
+
+  if (typeof showToast === 'function') {
+    showToast(newStatus === 'done' ? `Tarefa de "${client.name}" marcada como concluída! 🎉` : `Tarefa de "${client.name}" reaberta como pendente.`, 'success');
+  }
+}
+window.toggleCommercialTaskStatus = toggleCommercialTaskStatus;
+
+function deleteCommercialTask(clientId) {
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client) return;
+
+  client.task = null;
+  saveCommercialData();
+  renderCommercialApp();
+
+  if (typeof showToast === 'function') {
+    showToast(`Tarefa de "${client.name}" desmarcada com sucesso.`, 'info');
+  }
+}
+window.deleteCommercialTask = deleteCommercialTask;
+
+// ========================================================
+// RENDERIZAÇÃO DA PAUTA / AGENDA DE TAREFAS DE 30 MIN
+// ========================================================
+function renderCommercialTasksView() {
+  const container = document.getElementById('comm-tasks-list');
+  if (!container) return;
+
+  const clients = COMMERCIAL_STATE.clients;
+  const clientsWithTask = clients.filter(c => c.task && c.task.action);
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const totalTasks = clientsWithTask.length;
+  const todayTasks = clientsWithTask.filter(c => c.task.dueDate === todayStr).length;
+  const pendingTasks = clientsWithTask.filter(c => c.task.status !== 'done').length;
+  const doneTasks = clientsWithTask.filter(c => c.task.status === 'done').length;
+
+  const kpiTotal = document.getElementById('comm-tasks-kpi-total');
+  const kpiToday = document.getElementById('comm-tasks-kpi-today');
+  const kpiPending = document.getElementById('comm-tasks-kpi-pending');
+  const kpiDone = document.getElementById('comm-tasks-kpi-done');
+
+  if (kpiTotal) kpiTotal.textContent = totalTasks;
+  if (kpiToday) kpiToday.textContent = todayTasks;
+  if (kpiPending) kpiPending.textContent = pendingTasks;
+  if (kpiDone) kpiDone.textContent = doneTasks;
+
+  // Filtragem por área e busca textual
+  let tasksList = [...clientsWithTask];
+  if (COMMERCIAL_STATE.area && COMMERCIAL_STATE.area !== 'all') {
+    const fAreaLower = COMMERCIAL_STATE.area.toLowerCase();
+    tasksList = tasksList.filter(c => (c.area || '').toLowerCase().includes(fAreaLower));
+  }
+  const q = (COMMERCIAL_STATE.search || '').trim().toLowerCase();
+  if (q) {
+    tasksList = tasksList.filter(c => 
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.phone || '').includes(q) ||
+      (c.task.action || '').toLowerCase().includes(q) ||
+      (c.task.notes || '').toLowerCase().includes(q)
+    );
+  }
+
+  // Ordenar cronologicamente: Data e Horário
+  tasksList.sort((a, b) => {
+    const dateA = a.task.dueDate || '9999';
+    const dateB = b.task.dueDate || '9999';
+    if (dateA !== dateB) return dateA.localeCompare(dateB);
+    const timeA = a.task.dueTime || '99:99';
+    const timeB = b.task.dueTime || '99:99';
+    return timeA.localeCompare(timeB);
+  });
+
+  if (tasksList.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="padding: 3.5rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px dashed var(--border-subtle); text-align: center;">
+        <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">⏱️</div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff;">Nenhuma tarefa de 30 minutos agendada</div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem auto 1.4rem auto; max-width: 480px; line-height: 1.4;">
+          Ao clicar no botão <strong>"Marcar Tarefa"</strong> ao lado de qualquer cliente, o sistema agenda automaticamente um compromisso de 30 minutos nesta pauta de acompanhamento.
+        </p>
+        <button type="button" class="btn-primary" onclick="setCommercialSubtab('leads')" style="font-size: 0.8rem; padding: 0.45rem 1.1rem;">
+          👥 Ver Todos os Clientes
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = tasksList.map(client => {
+    const task = client.task;
+    const isDone = task.status === 'done';
+    const isToday = task.dueDate === todayStr;
+    const startTime = task.dueTime || '10:00';
+    const endTime = task.endTime || calculateEndTime30m(startTime);
+    const dateBadge = isToday ? 'Hoje' : formatDateDisplay(task.dueDate);
+
+    return `
+      <div class="comm-task-row ${isDone ? 'status-done' : ''}" id="comm-task-row-${client.id}">
+        <!-- Coluna 1: Horário (30 Minutos) -->
+        <div class="col-task-time-box">
+          <span class="task-date-pill" style="${isToday ? 'color: #38bdf8;' : ''}">📅 ${dateBadge}</span>
+          <span class="task-time-span">
+            ${startTime} - ${endTime}
+            <span class="task-duration-tag">30m</span>
+          </span>
+        </div>
+
+        <!-- Coluna 2: Cliente & Contato -->
+        <div class="comm-col-client">
+          <span class="comm-client-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
+          <span class="comm-client-phone">${formatPhoneDisplay(client.phone)}</span>
+        </div>
+
+        <!-- Coluna 3: Comercial -->
+        <div class="comm-col-comm">
+          <span class="badge" style="background: rgba(255, 255, 255, 0.06); color: var(--text-main); font-size: 0.73rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);">
+            👤 ${escapeHtml(client.responsible || 'Augusto')}
+          </span>
+        </div>
+
+        <!-- Coluna 4: Área -->
+        <div class="comm-col-area">
+          ${getAreaBadge(client.area)}
+        </div>
+
+        <!-- Coluna 5: O que Fazer (Próximo Passo) -->
+        <div class="col-task-action-box">
+          <span class="task-action-main" style="${isDone ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">
+            🎯 ${escapeHtml(task.action)}
+          </span>
+          ${task.notes ? `
+            <span class="task-notes-sub" title="${escapeHtml(task.notes)}">
+              💬 ${escapeHtml(task.notes)}
+            </span>
+          ` : ''}
+        </div>
+
+        <!-- Coluna 6: Status & Ações Rápidas -->
+        <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.4rem;">
+          ${!isDone ? `
+            <button type="button" class="btn-task-done" onclick="toggleCommercialTaskStatus('${client.id}')" title="Marcar tarefa como concluída">
+              ✓ Concluir
+            </button>
+            <button type="button" class="btn-icon-clean" onclick="openCommercialTaskModal('${client.id}')" title="Editar horário de 30m ou detalhes da tarefa">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTask('${client.id}')" title="Remover tarefa">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          ` : `
+            <span style="font-size: 0.72rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.2rem 0.5rem; border-radius: var(--radius-xs);">
+              ✓ Concluída
+            </span>
+            <button type="button" class="btn-task-reopen" onclick="toggleCommercialTaskStatus('${client.id}')" title="Reabrir tarefa como pendente">
+              ↩ Reabrir
+            </button>
+            <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTask('${client.id}')" title="Remover tarefa">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          `}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+window.renderCommercialTasksView = renderCommercialTasksView;
+
+// ========================================================
+// MODAL DE MARCAR TAREFA COMERCIAL (PROXIMO PASSO - 30 MIN)
 // ========================================================
 function openCommercialTaskModal(clientId) {
   const modal = document.getElementById('modal-commercial-task');
@@ -1620,6 +1848,7 @@ function openCommercialTaskModal(clientId) {
   const inputDate = document.getElementById('comm-task-date');
   const inputTime = document.getElementById('comm-task-time');
   const inputNotes = document.getElementById('comm-task-notes');
+  const rangeSpan = document.getElementById('comm-task-time-range');
 
   if (inputClientId) inputClientId.value = client.id;
   if (previewName) previewName.textContent = client.name || 'Cliente';
@@ -1629,18 +1858,26 @@ function openCommercialTaskModal(clientId) {
   if (client.task) {
     if (inputAction) inputAction.value = client.task.action || client.nextStep || '';
     if (inputDate) inputDate.value = client.task.dueDate || new Date().toISOString().split('T')[0];
-    if (inputTime) inputTime.value = client.task.dueTime || '';
+    const tVal = client.task.dueTime || '10:00';
+    if (inputTime) inputTime.value = tVal;
     if (inputNotes) inputNotes.value = client.task.notes || '';
+    if (rangeSpan) {
+      const end = calculateEndTime30m(tVal);
+      rangeSpan.textContent = `${tVal} às ${end} (30 min)`;
+    }
   } else {
     // Padrão amigável: próximo passo atual ou sugestão
     if (inputAction) inputAction.value = client.nextStep || '';
     if (inputDate) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      inputDate.value = tomorrow.toISOString().split('T')[0];
+      inputDate.value = new Date().toISOString().split('T')[0];
     }
-    if (inputTime) inputTime.value = '10:00';
+    const defTime = '10:00';
+    if (inputTime) inputTime.value = defTime;
     if (inputNotes) inputNotes.value = '';
+    if (rangeSpan) {
+      const end = calculateEndTime30m(defTime);
+      rangeSpan.textContent = `${defTime} às ${end} (30 min)`;
+    }
   }
 
   modal.classList.add('active');
@@ -1654,7 +1891,7 @@ function closeCommercialTaskModal() {
 }
 window.closeCommercialTaskModal = closeCommercialTaskModal;
 
-// Salvar Tarefa do Cliente
+// Salvar Tarefa do Cliente (Compromisso de 30 minutos)
 function handleCommercialTaskSubmit(e) {
   e.preventDefault();
   const inputClientId = document.getElementById('comm-task-client-id');
@@ -1674,16 +1911,20 @@ function handleCommercialTaskSubmit(e) {
   }
 
   const dueDate = inputDate?.value || new Date().toISOString().split('T')[0];
-  const dueTime = (inputTime?.value || '').trim();
+  const dueTime = (inputTime?.value || '').trim() || '10:00';
+  const endTime = calculateEndTime30m(dueTime);
   const notes = (inputNotes?.value || '').trim();
 
-  // Atualiza proximo passo e tarefa estruturada
+  // Atualiza proximo passo e tarefa estruturada de 30 minutos
   client.nextStep = action;
   client.task = {
     action: action,
     dueDate: dueDate,
     dueTime: dueTime,
+    endTime: endTime,
+    duration: 30, // 30 minutos fixos na pauta
     notes: notes,
+    status: (client.task && client.task.status) || 'pending',
     updatedAt: new Date().toISOString()
   };
 
@@ -1692,7 +1933,7 @@ function handleCommercialTaskSubmit(e) {
   renderCommercialApp();
 
   if (typeof showToast === 'function') {
-    showToast(`Tarefa marcada para "${client.name}" com sucesso!`, 'success');
+    showToast(`⏱️ Tarefa de 30min agendada para "${client.name}" (${dueTime} às ${endTime}) com sucesso!`, 'success', 4000);
   }
 }
 
@@ -1760,8 +2001,24 @@ function setupCommercialEvents() {
   document.getElementById('comm-view-leads')?.addEventListener('click', () => setCommercialSubtab('leads'));
   document.getElementById('btn-comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
   document.getElementById('comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
+  document.getElementById('btn-comm-view-tarefas')?.addEventListener('click', () => setCommercialSubtab('tarefas'));
+  document.getElementById('comm-view-tarefas')?.addEventListener('click', () => setCommercialSubtab('tarefas'));
   document.getElementById('btn-comm-view-kanban')?.addEventListener('click', () => setCommercialSubtab('kanban'));
   document.getElementById('comm-view-kanban')?.addEventListener('click', () => setCommercialSubtab('kanban'));
+
+  // Subitem de Tarefas na Sidebar
+  document.getElementById('side-item-comercial-tarefas')?.addEventListener('click', () => setCommercialSubtab('tarefas'));
+
+  // Input de horário dinâmico no modal de tarefa (bloco de 30 minutos)
+  const taskTimeInput = document.getElementById('comm-task-time');
+  taskTimeInput?.addEventListener('input', () => {
+    const val = taskTimeInput.value || '10:00';
+    const rangeSpan = document.getElementById('comm-task-time-range');
+    if (rangeSpan) {
+      const end = calculateEndTime30m(val);
+      rangeSpan.textContent = `${val} às ${end} (30 min)`;
+    }
+  });
 
   // Campo de Busca Rapida (com debounce)
   const searchInput = document.getElementById('comm-search-input');
