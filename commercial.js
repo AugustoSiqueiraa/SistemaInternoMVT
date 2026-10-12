@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // SISTEMA INTERNO MVT ADVOGADOS - MODULO COMERCIAL & PIPELINE
 // Controle Executivo de Clientes e Prontos para Fechar
 // Baseado na Planilha do Comercial (Augusto)
@@ -1024,7 +1024,7 @@ function renderCommercialApp() {
   const kpiFechar = document.getElementById('comm-kpi-fechar');
   const kpiDocs = document.getElementById('comm-kpi-docs');
   const kpiFollowup = document.getElementById('comm-kpi-followup');
-  const kpiFechados = document.getElementById('comm-kpi-fechados');
+  const kpiFechados = document.getElementById('comm-kpi-fechados') || document.getElementById('comm-kpi-fechado');
 
   if (kpiTotal) kpiTotal.textContent = totalCount;
   if (kpiFechar) kpiFechar.textContent = fecharCount;
