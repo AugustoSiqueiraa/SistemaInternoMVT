@@ -52,97 +52,43 @@
 
         <div class="sidebar-left-divider"></div>
 
-        <!-- 2. COMERCIAL (Principal com Subcategorias) -->
-        <div class="sidebar-item-group collapsible-group" id="group-comercial">
-          <button class="sidebar-left-item main-item" data-tab="tab-comercial" id="side-item-comercial" type="button" title="Comercial">
+        <!-- 2. PLANILHAS (Item Direto sem subcategorias) -->
+        <div class="sidebar-item-group" id="group-planilhas">
+          <button class="sidebar-left-item main-item" data-tab="tab-comercial" id="side-item-comercial" type="button" title="Planilhas">
             <span class="sidebar-icon-cell">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
               </svg>
             </span>
             <div class="sidebar-text-cell">
-              <span class="sidebar-item-name">Comercial</span>
+              <span class="sidebar-item-name">Planilhas</span>
               <span class="sidebar-item-function">Gestão de clientes & vendas</span>
             </div>
-            <span class="sidebar-chevron" title="Expandir subcategorias">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </span>
           </button>
-
-          <!-- Subcategorias de Comercial: Abrem ao clicar em Comercial -->
-          <div class="sidebar-sub-branch">
-            <div class="sidebar-sub-rail"></div>
-            <!-- Subcategoria: Prontos para Fechar -->
-            <button class="sidebar-left-item sub-item" data-tab="tab-comercial" data-subtab="fechar" id="side-item-comercial-fechar" type="button" title="Prontos para Fechar">
-              <span class="sidebar-icon-cell sub">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-              </span>
-              <div class="sidebar-text-cell">
-                <span class="sidebar-item-name">Prontos para Fechar</span>
-                <span class="sidebar-item-function">Funil e contratos</span>
-              </div>
-            </button>
-
-            <!-- Subcategoria: Leads & Clientes -->
-            <button class="sidebar-left-item sub-item" data-tab="tab-comercial" data-subtab="leads" id="side-item-comercial-leads" type="button" title="Leads & Clientes">
-              <span class="sidebar-icon-cell sub">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </span>
-              <div class="sidebar-text-cell">
-                <span class="sidebar-item-name">Leads & Clientes</span>
-                <span class="sidebar-item-function">Controle e prospecção</span>
-              </div>
-            </button>
-
-            <!-- Subcategoria: Tarefas (Agenda 30m) -->
-            <button class="sidebar-left-item sub-item" data-tab="tab-comercial" data-subtab="tarefas" id="side-item-comercial-tarefas" type="button" title="Tarefas do Comercial">
-              <span class="sidebar-icon-cell sub">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                  <path d="M9 16l2 2 4-4"></path>
-                </svg>
-              </span>
-              <div class="sidebar-text-cell">
-                <span class="sidebar-item-name">Tarefas</span>
-                <span class="sidebar-item-function">Pauta 30m & Follow-ups</span>
-              </div>
-            </button>
-          </div>
         </div>
 
         <div class="sidebar-left-divider"></div>
 
-        <!-- 3. AGENDA (Principal com Subcategorias) -->
-        <div class="sidebar-item-group collapsible-group" id="group-agenda">
-          <button class="sidebar-left-item main-item" data-tab="tab-calendar" id="side-item-agenda-main" type="button" title="Agenda">
+
+
+        <!-- 3. ANTI NO-SHOW (com sub- Mensagem) -->
+        <div class="sidebar-item-group collapsible-group" id="group-anti-noshow">
+          <button class="sidebar-left-item main-item" data-tab="tab-reunioes" id="side-item-anti-noshow" type="button" title="Anti No-Show">
             <span class="sidebar-icon-cell">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M9 12h6"></path>
+                <path d="M9 16h6"></path>
               </svg>
             </span>
             <div class="sidebar-text-cell">
-              <span class="sidebar-item-name">Agenda</span>
-              <span class="sidebar-item-function">Google Agenda & Reuniões</span>
+              <span class="sidebar-item-name">Anti No-Show</span>
+              <span class="sidebar-item-function">Pauta diária & presença</span>
             </div>
             <span class="sidebar-chevron" title="Expandir subcategorias">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -151,41 +97,9 @@
             </span>
           </button>
 
-          <!-- Subcategorias de Agenda: Abrem ao clicar em Agenda -->
+          <!-- Sub-branch: Mensagem -->
           <div class="sidebar-sub-branch">
             <div class="sidebar-sub-rail"></div>
-            <!-- Subcategoria: Google Agenda -->
-            <button class="sidebar-left-item sub-item" data-tab="tab-calendar" id="side-item-agenda" type="button" title="Google Agenda">
-              <span class="sidebar-icon-cell sub">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-              </span>
-              <div class="sidebar-text-cell">
-                <span class="sidebar-item-name">Google Agenda</span>
-                <span class="sidebar-item-function">Calendário & horários</span>
-              </div>
-            </button>
-
-            <!-- Subcategoria: Reuniões / Anti No-Show -->
-            <button class="sidebar-left-item sub-item" data-tab="tab-reunioes" id="side-item-reunioes-sub" type="button" title="Pauta de Reuniões">
-              <span class="sidebar-icon-cell sub">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                  <path d="M9 12h6"></path>
-                  <path d="M9 16h6"></path>
-                </svg>
-              </span>
-              <div class="sidebar-text-cell">
-                <span class="sidebar-item-name">Reuniões / Anti No-Show</span>
-                <span class="sidebar-item-function">Pauta diária e presença</span>
-              </div>
-            </button>
-
             <!-- Subcategoria: Mensagem -->
             <button class="sidebar-left-item sub-item" data-tab="tab-templates" id="side-item-mensagem" type="button" title="Mensagem">
               <span class="sidebar-icon-cell sub">
@@ -203,6 +117,26 @@
 
         <div class="sidebar-left-divider"></div>
 
+        <!-- GOOGLE AGENDA (Item Direto sem Subcategoria) -->
+        <div class="sidebar-item-group" id="group-google-agenda">
+          <button class="sidebar-left-item main-item" data-tab="tab-calendar" id="side-item-google-agenda" type="button" title="Google Agenda">
+            <span class="sidebar-icon-cell">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </span>
+            <div class="sidebar-text-cell">
+              <span class="sidebar-item-name">Google Agenda</span>
+              <span class="sidebar-item-function">Calendário & Horários</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="sidebar-left-divider"></div>
+        
         <!-- 4. CONFIGURAÇÃO (Principal) -->
         <div class="sidebar-item-group" id="group-configuracao">
           <button class="sidebar-left-item main-item" data-tab="tab-settings" id="side-item-configuracao" type="button" title="Configuração">
@@ -362,6 +296,9 @@
                 <span class="dash-arrow">→</span>
               </div>
             </div>
+
+            <!-- Card 4: Agenda de Tarefas (30m) -->
+            
           </div>
 
           <!-- Espaço Limpo / Em Branco para Expansão Futura de Gráficos e Widgets -->
@@ -369,6 +306,42 @@
             <div class="blank-canvas-icon">📊</div>
             <div class="blank-canvas-title">Área do Dashboard Executivo</div>
             <p class="blank-canvas-text">Espaço reservado para métricas consolidadas, gráficos de fechamento e painéis executivos personalizados.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEÇÃO: DADOS (Métricas das Planilhas) -->
+      <section id="tab-dados" class="tab-pane" style="display: none;">
+        <div class="page-top-header">
+          <div class="page-title-box">
+            <h1 class="page-main-heading">Dados & Métricas</h1>
+            <p class="page-sub-heading">Métricas consolidadas, taxas de conversão e estatísticas da área das planilhas</p>
+          </div>
+          <div class="page-top-actions">
+            <button class="btn-secondary" type="button" onclick="switchTab('tab-comercial')" title="Abrir Planilha de Clientes">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;">
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+              <span>Abrir Planilha</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="dashboard-clean-welcome">
+          <div class="dashboard-blank-canvas" style="min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 1.5rem;">
+            <div class="blank-canvas-icon" style="font-size: 2.8rem; margin-bottom: 0.75rem;">📊</div>
+            <div class="blank-canvas-title" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem; color: #ffffff;">Métricas & Dados das Planilhas</div>
+            <p class="blank-canvas-text" style="font-size: 0.85rem; color: var(--text-muted); max-width: 520px; line-height: 1.5; margin: 0 auto 1.5rem auto;">
+              Espaço reservado para visualização de relatórios analíticos, gráficos de conversão do pipeline comercial, volume de leads por área e indicadores de fechamento.
+            </p>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;">
+              <button type="button" class="btn-primary" onclick="switchTab('tab-comercial')">
+                📋 Visualizar Planilha Completa
+              </button>
+              
+            </div>
           </div>
         </div>
       </section>
@@ -433,6 +406,13 @@
           </div>
         </div>
         <div class="filter-strip">
+          <div class="comm-search-box">
+            <svg class="comm-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="meetings-search-input" class="clean-input" placeholder="Buscar cliente, telefone ou observação..." autocomplete="off">
+          </div>
           <button class="btn-filter-trigger" id="btn-open-filter-modal" type="button" title="Filtrar reuniões">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
@@ -442,7 +422,7 @@
           </button>
           <div class="filter-results-counter-pill" id="filter-results-counter-pill" title="Contagem de reuniões listadas abaixo">
             <span class="results-count-dot"></span>
-            <span class="results-count-text" id="filter-results-count-text">0 reuniões</span>
+            <span class="results-count-text" id="filter-results-count-text"><strong>0</strong> reuniões</span>
           </div>
           <div class="active-filter-chips" id="active-filter-chips"></div>
         </div>
@@ -502,6 +482,27 @@
             <button class="btn-primary" id="btn-open-training-booking" type="button">➕ Nova Reunião</button>
           </div>
         </div>
+
+        <!-- Barra de Legenda de Cores: Tarefas (Roxo/Violeta) vs Reuniões (Azul/Ciano) -->
+        <div class="calendar-legend-bar">
+          <div class="legend-bar-item">
+            <span class="legend-color-chip chip-meeting"></span>
+            <span class="legend-title">Reunião com Advogado</span>
+            <span class="legend-subtitle">(Google Agenda & Anti No-Show)</span>
+          </div>
+          <div class="legend-bar-divider"></div>
+          <div class="legend-bar-item">
+            <span class="legend-color-chip chip-task"></span>
+            <span class="legend-title">Tarefa Comercial</span>
+            <span class="legend-subtitle">(Pauta Fixa 30m do Comercial)</span>
+          </div>
+          <div class="legend-bar-right">
+            <button type="button" class="btn-xs" onclick="switchTab('tab-comercial', 'tarefas')" title="Abrir relação detalhada das tarefas" style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600;">
+              <span>⏱️</span> Ver Relação de Tarefas
+            </button>
+          </div>
+        </div>
+
         <div class="calendar-grid-card">
           <div class="calendar-grid-wrapper" id="calendar-grid-container"></div>
           <div id="calendar-google-embed-container" style="display: none; width: 100%; min-height: 720px; border-radius: var(--radius-sm); overflow: hidden; background: #ffffff;">
@@ -592,18 +593,14 @@
         <!-- Título da Página: Comercial -->
         <div class="page-top-header">
           <div class="page-title-box">
-            <h1 class="page-main-heading">Comercial</h1>
-            <p class="page-sub-heading">Gestão executiva de clientes, pipeline de prospecção e fechamentos</p>
+            <h1 class="page-main-heading" id="comm-page-title">Clientes</h1>
+            <p class="page-sub-heading" id="comm-page-subtitle">Gestão de contatos, próximos passos e agendamento de tarefas comerciais</p>
           </div>
           <div class="page-top-actions" style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
             <!-- Botão de Conexão MindChat (Verde = Conectado / Vermelho = Desconectado) -->
             <button class="btn-automation-toggle active" id="btn-mindchat-commercial-toggle" type="button" title="Status da Conexão com o MindChat (WhatsApp)">
               <span class="auto-signal-dot"></span>
               <span class="auto-toggle-label" id="mindchat-commercial-label">MindChat Conectado</span>
-            </button>
-
-            <button class="btn-primary" id="btn-open-commercial-modal" type="button">
-              ➕ Novo Cliente
             </button>
           </div>
         </div>
@@ -638,44 +635,232 @@
           </div>
         </div>
 
-        <!-- Barra de Controle & Sub-Categorias do Comercial -->
-        <div class="commercial-controls-bar">
-          <!-- Alternador de Sub-Abas -->
-          <div class="commercial-view-pills">
-            <button type="button" class="comm-view-btn active" id="btn-comm-view-leads" onclick="setCommercialSubtab('leads')" data-subtab="leads" data-comm-view="leads">
-              👥 Todos os Leads & Clientes
-            </button>
-            <button type="button" class="comm-view-btn" id="btn-comm-view-fechar" onclick="setCommercialSubtab('fechar')" data-subtab="fechar" data-comm-view="fechar">
-              🎯 Prontos para Fechar
-            </button>
-            <button type="button" class="comm-view-btn" id="btn-comm-view-tarefas" onclick="setCommercialSubtab('tarefas')" data-subtab="tarefas" data-comm-view="tarefas">
-              📅 Tarefas (Agenda 30m)
-            </button>
-            <button type="button" class="comm-view-btn" id="btn-comm-view-kanban" onclick="setCommercialSubtab('kanban')" data-subtab="kanban" data-comm-view="kanban">
-              📊 Funil Kanban
-            </button>
-          </div>
-
-          <!-- Filtros e Busca Rápida -->
-          <div class="commercial-filter-tools">
-            <div class="comm-search-box">
-              <input type="text" id="comm-search-input" class="clean-input" placeholder="🔍 Buscar cliente, telefone ou observação...">
+        <!-- Bloco Retrátil de Cadastro Rápido de Clientes (Recuado por Padrão para Limpeza Visual) -->
+        <div class="comm-quick-add-accordion" id="comm-quick-add-wrapper">
+          <button type="button" class="btn-quick-add-accordion-toggle" id="btn-toggle-comm-quick-add" onclick="toggleCommercialQuickAddAccordion()" title="Clique para abrir ou recolher o formulário de novo cliente">
+            <div class="quick-add-toggle-left">
+              <span class="quick-add-toggle-icon">+</span>
+              <span class="quick-add-toggle-title">Adicionar Novo Cliente</span>
             </div>
-            <select id="comm-area-filter" class="select-clean" style="font-size: 0.8rem; padding: 0.4rem 0.65rem;">
-              <option value="all">Todas as Áreas</option>
-              <option value="Trabalhista">Trabalhista</option>
-              <option value="Estatutaria">Estatutária</option>
-              <option value="Trab/Prev">Trab/Prev</option>
-              <option value="Auxilio Acidente">Auxílio Acidente</option>
-              <option value="Aposentadoria">Aposentadoria</option>
-              <option value="Cível">Cível</option>
-            </select>
-            <div class="filter-results-counter-pill" id="comm-counter-pill">
-              <span class="results-count-dot"></span>
-              <span id="comm-counter-text">0 clientes</span>
+            <div class="quick-add-toggle-right">
+              <span class="quick-add-toggle-hint">Cadastro Rápido</span>
+              <svg class="quick-add-toggle-chevron" id="quick-add-toggle-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          <!-- Painel Deslizante de Cadastro Rápido (Abre suavemente logo abaixo) -->
+          <div class="comm-quick-add-collapse" id="comm-quick-add-collapse" style="display: none;">
+            <div class="comm-quick-add-bar" id="comm-quick-add-bar">
+              <form id="form-comm-quick-add" class="comm-quick-add-form" onsubmit="handleQuickAddCommercialClient(event)">
+                <div class="comm-quick-field field-name">
+                  <label for="comm-quick-name" class="comm-quick-label">CLIENTE</label>
+                  <input type="text" id="comm-quick-name" class="comm-quick-input" placeholder="Digite o nome do cliente..." autocomplete="off" required>
+                </div>
+
+                <div class="comm-quick-field field-area">
+                  <label for="comm-quick-area" class="comm-quick-label">ÁREA</label>
+                  <select id="comm-quick-area" class="comm-quick-select">
+                    <option value="Trabalhista" selected>Trabalhista</option>
+                    <option value="Cível">Cível</option>
+                    <option value="Previdenciário">Previdenciário</option>
+                  </select>
+                </div>
+
+                <div class="comm-quick-field field-type">
+                  <label for="comm-quick-type" class="comm-quick-label">TIPO DE ATENDIMENTO</label>
+                  <select id="comm-quick-type" class="comm-quick-select">
+                    <option value="Lead Novo" selected>Lead Novo</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Indicação">Indicação</option>
+                  </select>
+                </div>
+
+                <div class="comm-quick-field field-nextstep">
+                  <label for="comm-quick-nextstep" class="comm-quick-label">PRÓXIMO PASSO</label>
+                  <select id="comm-quick-nextstep" class="comm-quick-select">
+                    <option value="Fazer ligação" selected>Fazer ligação</option>
+                    <option value="Retornar cliente">Retornar cliente</option>
+                    <option value="Retorno para fechamento">Retorno para fechamento</option>
+                    <option value="Solicitar documentos">Solicitar documentos</option>
+                    <option value="Cobrar documentos">Cobrar documentos</option>
+                    <option value="Analisar documentos">Analisar documentos</option>
+                    <option value="Enviar contrato">Enviar contrato</option>
+                    <option value="Cobrar assinatura">Cobrar assinatura</option>
+                    <option value="Agendar reunião com advogado">Agendar reunião com advogado</option>
+                    <option value="Confirmar reunião">Confirmar reunião</option>
+                  </select>
+                </div>
+
+                <div class="comm-quick-field field-submit">
+                  <button type="submit" class="btn-comm-quick-submit" id="btn-comm-quick-submit" title="Adicionar cliente à tabela mãe (Enter)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Adicionar</span>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
+
+        <!-- Barra de Ferramentas Superior: Busca, Filtros, Contador e Exibição -->
+        <div class="commercial-controls-bar">
+          <div class="commercial-filter-tools">
+            <!-- Navegação: Apenas Ícones de Seta Minimalistas (Voltar e Avançar) -->
+            <div class="comm-history-nav" title="Navegação rápida (Voltar / Avançar)">
+              <button type="button" class="btn-comm-nav-arrow" id="btn-comm-nav-back" onclick="commercialGoBack()" title="Voltar (←)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </button>
+              <button type="button" class="btn-comm-nav-arrow" id="btn-comm-nav-forward" onclick="commercialGoForward()" title="Avançar (→)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            <div class="comm-search-box">
+              <svg class="comm-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="comm-search-input" class="clean-input" placeholder="Buscar cliente, telefone ou observação...">
+            </div>
+            <!-- Botão de Filtros e Popover (Exatamente no mesmo padrão elegante da Pauta) -->
+            <div class="comm-filter-dropdown-wrapper">
+              <button class="btn-filter-trigger" id="btn-open-comm-filter" type="button" onclick="toggleCommercialFilterDropdown(event)" title="Filtrar clientes comerciais">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>Filtros</span>
+                <span class="filter-counter-badge" id="comm-filter-counter-badge" style="display: none;">0</span>
+              </button>
+
+              <!-- Popover Flutuante de Filtros do Comercial -->
+              <div class="comm-filter-popover" id="comm-filter-menu" style="display: none;">
+                <div class="comm-filter-popover-header">
+                  <span class="comm-filter-title">Filtros de Clientes</span>
+                  <button type="button" class="btn-close-popover" onclick="closeCommercialFilterDropdown()" title="Fechar">✕</button>
+                </div>
+
+                <!-- Filtro de Área -->
+                <div class="comm-filter-section">
+                  <label class="comm-filter-label" for="comm-area-filter">Área de Atuação</label>
+                  <select id="comm-area-filter" class="clean-input" onchange="onCommercialAreaFilterChange(this.value)">
+                    <option value="all">Todas as Áreas</option>
+                    <option value="Trabalhista">Trabalhista</option>
+                    <option value="Cível">Cível</option>
+                    <option value="Previdenciário">Previdenciário</option>
+                  </select>
+                </div>
+
+                <!-- Filtro de Tipo de Atendimento / Status -->
+                <div class="comm-filter-section">
+                  <label class="comm-filter-label" for="comm-status-filter">Tipo de Atendimento</label>
+                  <select id="comm-status-filter" class="clean-input" onchange="onCommercialStatusFilterChange(this.value)">
+                    <option value="all">Todos os Tipos</option>
+                    <option value="Lead Novo">Lead Novo</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Indicação">Indicação</option>
+                    <option value="Pronto para Fechar">Pronto para Fechar</option>
+                  </select>
+                </div>
+
+                <!-- Filtro de Tarefas de 30m -->
+                <div class="comm-filter-section">
+                  <label class="comm-filter-label" for="comm-task-filter">Tarefas de 30 Minutos</label>
+                  <select id="comm-task-filter" class="clean-input" onchange="onCommercialTaskFilterChange(this.value)">
+                    <option value="all">Todas as Tarefas</option>
+                    <option value="has_task">Com Tarefa Agendada</option>
+                    <option value="overdue">Tarefas Vencidas</option>
+                    <option value="no_task">Sem Tarefa Agendada</option>
+                  </select>
+                </div>
+
+                <!-- Rodapé de Ações -->
+                <div class="comm-filter-footer">
+                  <button type="button" class="btn-clear-comm-filters" onclick="clearCommercialFilters()">Limpar Filtros</button>
+                  <button type="button" class="btn-apply-comm-filters" onclick="closeCommercialFilterDropdown()">Aplicar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contador de Resultados Idêntico ao da Pauta -->
+            <div class="filter-results-counter-pill" id="comm-counter-pill" title="Total de clientes listados">
+              <span class="results-count-dot"></span>
+              <span class="results-count-text" id="comm-counter-text"><strong>0</strong> clientes</span>
+            </div>
+
+            <!-- Chips de Filtros Ativos -->
+            <div class="active-filter-chips" id="comm-active-filter-chips"></div>
+
+            <!-- Botão Ícone de Configuração de Visualização da Tabela (Limpo e Minimalista) -->
+            <div class="comm-view-settings-dropdown-wrapper">
+              <button type="button" class="btn-table-settings-trigger" id="btn-table-view-config" onclick="toggleTableViewConfigDropdown(event)" title="Configurações de visualização da tabela (Proporção, Zoom e Panorâmica)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+                <span>Exibição</span>
+                <svg class="comm-settings-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+
+              <!-- Popover Flutuante com as Opções da Tabela -->
+              <div class="comm-view-settings-popover" id="comm-table-view-menu" style="display: none;">
+                <div class="comm-settings-popover-header">
+                  <span class="comm-settings-title">Visualização da Tabela</span>
+                  <button type="button" class="btn-close-popover" onclick="closeTableViewConfigDropdown()" title="Fechar">✕</button>
+                </div>
+
+                <div class="comm-settings-section">
+                  <span class="comm-settings-label">Proporção / Densidade</span>
+                  <div class="comm-density-switch" title="Alternar densidade da tabela">
+                    <button type="button" class="btn-comm-density" id="btn-density-compact" onclick="setCommercialTableDensity('compact')" title="Disposição Tabela Ampla (alta densidade de linhas)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                      <span>Tabela Ampla</span>
+                    </button>
+                    <button type="button" class="btn-comm-density active" id="btn-density-comfortable" onclick="setCommercialTableDensity('comfortable')" title="Disposição Confortável (espaçamento padrão)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line></svg>
+                      <span>Confortável</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="comm-settings-section">
+                  <span class="comm-settings-label">Zoom / Escala</span>
+                  <div class="comm-zoom-box" title="Ajustar zoom da tabela de clientes">
+                    <button type="button" class="btn-comm-zoom-btn" onclick="changeCommercialTableZoom(-10)" title="Reduzir zoom">−</button>
+                    <span class="comm-zoom-indicator" id="comm-zoom-display" onclick="resetCommercialTableZoom()" title="Clique para redefinir zoom para 100%">100%</span>
+                    <button type="button" class="btn-comm-zoom-btn" onclick="changeCommercialTableZoom(10)" title="Aumentar zoom">+</button>
+                  </div>
+                </div>
+
+                <div class="comm-settings-section no-border">
+                  <span class="comm-settings-label">Modo de Tela</span>
+                  <button type="button" class="btn-comm-panoramic" id="btn-comm-panoramic-toggle" onclick="toggleCommercialPanoramicView()" title="Modo Panorâmico: Ganhe altura máxima na tela recolhendo as métricas superiores">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                    <span id="comm-panoramic-text">Visão Panorâmica</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
 
         <!-- Visão Tabela / Lista Executiva -->
         <div id="comm-table-view-container" class="commercial-table-view">
@@ -684,16 +869,22 @@
             <div class="comm-col-client">CLIENTE</div>
             <div class="comm-col-area">ÁREA</div>
             <div class="comm-col-type">TIPO DE ATENDIMENTO</div>
-            <div class="comm-col-next">PRÓXIMO PASSO</div>
+            <div class="comm-col-nextstep">PRÓXIMO PASSO</div>
+            <div class="comm-col-schedule">AGENDAMENTO</div>
             <div class="comm-col-actions">TAREFA & AÇÕES</div>
+            <div class="comm-col-fechar">PRONTOS P/ FECHAR</div>
           </div>
           <div class="comm-leads-list" id="comm-leads-list"></div>
         </div>
 
-        <!-- Visão: Pauta & Agenda de Tarefas de 30 Minutos (Estilo Anti No-Show) -->
+        <!-- Visão: Pauta & Agenda de Tarefas -->
         <div id="comm-tasks-view-container" class="commercial-tasks-view" style="display: none;">
-          <!-- Barra Compacta de Indicadores das Tarefas -->
+          <!-- Barra Compacta de Indicadores das Tarefas com Alteração de Tempo à Esquerda -->
           <div class="comm-tasks-kpi-strip">
+            <button type="button" class="comm-tasks-duration-btn" id="btn-comm-tasks-duration" onclick="cycleCommercialDefaultDuration()" title="Clique para alterar a duração da pauta (15m, 30m, 45m, 60m)">
+              ⏱️ Pauta: <strong id="comm-default-duration-label">30m</strong> ▾
+            </button>
+            <div class="comm-task-kpi-divider"></div>
             <div class="comm-task-kpi-item">
               <span class="task-kpi-val" id="comm-tasks-kpi-total">0</span>
               <span class="task-kpi-lbl">Tarefas Agendadas</span>
@@ -713,15 +904,12 @@
               <span class="task-kpi-val" id="comm-tasks-kpi-done">0</span>
               <span class="task-kpi-lbl">Concluídas</span>
             </div>
-            <div class="comm-tasks-slot-badge">
-              <span>⏱️ Pauta Fixa: <strong>30 minutos</strong> por compromisso</span>
-            </div>
           </div>
 
-          <!-- Tabela Executiva de Tarefas de 30m -->
+          <!-- Tabela Executiva de Tarefas -->
           <div class="commercial-tasks-table-card">
             <div class="comm-tasks-table-header">
-              <div class="col-task-time">HORÁRIO (30 MIN)</div>
+              <div class="col-task-time">HORÁRIO</div>
               <div class="col-task-client">CLIENTE & CONTATO</div>
               <div class="col-task-comm">COMERCIAL</div>
               <div class="col-task-area">ÁREA</div>
@@ -732,51 +920,68 @@
           </div>
         </div>
 
-        <!-- Visão Funil Kanban -->
+        <!-- Visão Funil Kanban (Etapas de Próximo Passo) -->
         <div id="comm-kanban-view-container" class="commercial-kanban-view" style="display: none;">
-          <div class="kanban-board-grid">
-            <!-- Coluna 1: Leads Novos & Follow-up -->
-            <div class="kanban-column" id="kanban-col-followup">
-              <div class="kanban-column-header">
-                <span class="kanban-col-dot" style="background: #a855f7;"></span>
-                <span class="kanban-col-title">Leads & Follow-up</span>
-                <span class="kanban-col-badge" id="kanban-count-followup">0</span>
-              </div>
-              <div class="kanban-cards-wrapper" id="kanban-cards-followup"></div>
+          <div class="kanban-header-bar">
+            <div class="kanban-header-left">
+              <span class="kanban-view-title">Funil de Atendimento por Próximo Passo</span>
+              <span class="kanban-view-subtitle">Avance os clientes pelas etapas decisivas do atendimento</span>
             </div>
+            <div class="kanban-header-right">
+              <div class="kanban-mode-switcher">
+                <button type="button" class="btn-kanban-mode active" id="btn-kanban-mode-pipeline" onclick="setKanbanMode('pipeline')" title="5 fases consolidadas do pipeline">
+                  5 Fases do Pipeline
+                </button>
+                <button type="button" class="btn-kanban-mode" id="btn-kanban-mode-detailed" onclick="setKanbanMode('detailed')" title="Visualizar todas as 10 etapas detalhadas">
+                  Todas as 10 Etapas
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="kanban-board-grid" id="kanban-board-grid"></div>
+        </div>
 
-            <!-- Coluna 2: Aguardando Documentos -->
-            <div class="kanban-column" id="kanban-col-docs">
-              <div class="kanban-column-header">
-                <span class="kanban-col-dot" style="background: var(--blue-light);"></span>
-                <span class="kanban-col-title">Aguardando DOCS</span>
-                <span class="kanban-col-badge" id="kanban-count-docs">0</span>
-              </div>
-              <div class="kanban-cards-wrapper" id="kanban-cards-docs"></div>
-            </div>
+        <!-- Barra Inferior de Navegação entre Sub-Páginas do Comercial -->
+        <div class="commercial-bottom-nav-bar">
+          <div class="commercial-view-pills">
 
-            <!-- Coluna 3: Prontos para Fechar -->
-            <div class="kanban-column" id="kanban-col-fechar">
-              <div class="kanban-column-header">
-                <span class="kanban-col-dot" style="background: var(--amber);"></span>
-                <span class="kanban-col-title">🎯 Prontos para Fechar</span>
-                <span class="kanban-col-badge" id="kanban-count-fechar">0</span>
-              </div>
-              <div class="kanban-cards-wrapper" id="kanban-cards-fechar"></div>
-            </div>
-
-            <!-- Coluna 4: Contratos Fechados -->
-            <div class="kanban-column" id="kanban-col-fechado">
-              <div class="kanban-column-header">
-                <span class="kanban-col-dot" style="background: var(--emerald);"></span>
-                <span class="kanban-col-title">✅ Contratos Fechados</span>
-                <span class="kanban-col-badge" id="kanban-count-fechado">0</span>
-              </div>
-              <div class="kanban-cards-wrapper" id="kanban-cards-fechado"></div>
-            </div>
+            <button type="button" class="comm-view-btn active" id="btn-comm-view-leads" onclick="setCommercialSubtab('leads')" data-subtab="leads" data-comm-view="leads">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span>Clientes</span>
+            </button>
+            <button type="button" class="comm-view-btn comm-view-btn-fechar" id="btn-comm-view-fechar" onclick="setCommercialSubtab('fechar')" data-subtab="fechar" data-comm-view="fechar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>Prontos para Fechar</span>
+            </button>
+            <button type="button" class="comm-view-btn" id="btn-comm-view-tarefas" onclick="setCommercialSubtab('tarefas')" data-subtab="tarefas" data-comm-view="tarefas">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Tarefas</span>
+            </button>
+            <button type="button" class="comm-view-btn" id="btn-comm-view-kanban" onclick="setCommercialSubtab('kanban')" data-subtab="kanban" data-comm-view="kanban">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                <rect x="11" y="3" width="5" height="12" rx="1"></rect>
+                <rect x="19" y="3" width="5" height="15" rx="1"></rect>
+              </svg>
+              <span>Funil Kanban</span>
+            </button>
           </div>
         </div>
       </section>
+
+      
 
       <section id="tab-templates" class="tab-pane" style="display: none;">
         <!-- Título da Página: Mensagens -->
@@ -1107,6 +1312,22 @@
       </div>
     </div>
 
+    <!-- Modal Popup de Confirmação para Excluir Cliente Comercial -->
+    <div class="modal-confirm-overlay" id="modal-delete-client-confirm">
+      <div class="modal-confirm-box">
+        <div class="modal-confirm-icon" style="color: #ef4444; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3);">⚠️</div>
+        <h3 class="modal-confirm-title" id="confirm-delete-client-title">Excluir Cliente?</h3>
+        <p class="modal-confirm-desc" id="confirm-delete-client-desc">
+          Tem certeza que deseja excluir o cadastro de <strong id="confirm-delete-client-name" style="color: #ffffff;">-</strong>?<br>
+          <span style="font-size: 0.76rem; color: #94a3b8; display: block; margin-top: 0.35rem;">Essa ação removerá os dados do cliente e compromissos vinculados. (Você poderá desfazer pela seta ← no topo).</span>
+        </p>
+        <div class="modal-confirm-actions">
+          <button type="button" class="btn-secondary" id="btn-cancel-delete-client" onclick="closeDeleteClientModal()">Cancelar</button>
+          <button type="button" class="btn-primary" id="btn-confirm-delete-client" onclick="confirmExecuteDeleteClient()" style="background: #ef4444; border-color: #ef4444; font-weight: 700;">Sim, Excluir</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: Cadastro / Edição de Cliente Comercial -->
     <div class="modal-overlay" id="modal-commercial-client">
       <div class="modal-card">
@@ -1136,14 +1357,9 @@
             <div class="form-group">
               <label class="form-label" for="comm-client-area">Área</label>
               <select id="comm-client-area" class="select-clean">
-                <option value="Trab/Prev">Trab/Prev</option>
                 <option value="Trabalhista">Trabalhista</option>
-                <option value="Previdenciário">Previdenciário</option>
-                <option value="Estatutária">Estatutária</option>
-                <option value="Auxílio Acidente">Auxílio Acidente</option>
-                <option value="Aposentadoria">Aposentadoria</option>
                 <option value="Cível">Cível</option>
-                <option value="Outra">Outra</option>
+                <option value="Previdenciário">Previdenciário</option>
               </select>
             </div>
           </div>
@@ -1153,16 +1369,25 @@
             <select id="comm-client-status" class="select-clean">
               <option value="Lead Novo">Lead Novo</option>
               <option value="Follow-up">Follow-up</option>
-              <option value="Aguardando DOCS">Aguardando DOCS</option>
+              <option value="Indicação">Indicação</option>
               <option value="Pronto para Fechar">Pronto para Fechar</option>
-              <option value="Fechado">Contrato Fechado</option>
-              <option value="Desqualificado">Desqualificado</option>
             </select>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="comm-client-next-step">Próximo Passo</label>
-            <input type="text" id="comm-client-next-step" class="clean-input" placeholder="Ex: Cobrar documentos para cálculo de aposentadoria">
+            <select id="comm-client-next-step" class="select-clean">
+              <option value="Fazer ligação">Fazer ligação</option>
+              <option value="Retornar cliente">Retornar cliente</option>
+              <option value="Retorno para fechamento">Retorno para fechamento</option>
+              <option value="Solicitar documentos">Solicitar documentos</option>
+              <option value="Cobrar documentos">Cobrar documentos</option>
+              <option value="Analisar documentos">Analisar documentos</option>
+              <option value="Enviar contrato">Enviar contrato</option>
+              <option value="Cobrar assinatura">Cobrar assinatura</option>
+              <option value="Agendar reunião com advogado">Agendar reunião com advogado</option>
+              <option value="Confirmar reunião">Confirmar reunião</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -1178,83 +1403,156 @@
       </div>
     </div>
 
-    <!-- Modal Popup: Marcar Tarefa Comercial -->
+    <!-- Modal Popup: Marcar Tarefa Comercial & Histórico de Próximos Passos -->
     <div class="modal-overlay" id="modal-commercial-task">
-      <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-card" style="max-width: 560px;">
         <div class="modal-header">
           <div>
-            <h2 class="modal-title" id="modal-task-title">Marcar Tarefa Comercial</h2>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">Defina o próximo passo para o cliente avançar e não perder o direito</p>
+            <h2 class="modal-title" id="modal-task-title">Gestão de Tarefas & Próximo Passo</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">Defina o próximo passo para o cliente avançar ou consulte compromissos anteriores</p>
           </div>
           <button class="modal-close" id="modal-commercial-task-close" type="button">&times;</button>
         </div>
-        <form id="form-commercial-task">
-          <input type="hidden" id="comm-task-client-id">
 
-          <!-- Card do Cliente em Destaque -->
-          <div class="task-client-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.8rem 1rem; margin-bottom: 1.1rem;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Cliente</div>
-            <div id="comm-task-client-name" style="font-size: 1rem; font-weight: 700; color: #ffffff; margin-top: 0.15rem;">-</div>
-            <div id="comm-task-client-sub" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">Área: - | Tipo: -</div>
+        <!-- Abas do Modal: [ Tarefa ] e [ Histórico de Tarefas (X) ] -->
+        <div class="task-modal-tabs">
+          <button type="button" class="task-modal-tab-btn active" id="tab-btn-task-form" onclick="switchTaskModalTab('form')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Tarefa do Cliente</span>
+          </button>
+          <button type="button" class="task-modal-tab-btn" id="tab-btn-task-history" onclick="switchTaskModalTab('history')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16h4v-4"></path></svg>
+            <span>Histórico de Tarefas</span>
+            <span class="badge-tab-count" id="comm-task-history-count">0</span>
+          </button>
+        </div>
+
+        <!-- Card do Cliente Compacto -->
+        <div class="task-client-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.45rem 0.75rem; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+            <span id="comm-task-client-name" style="font-size: 0.95rem; font-weight: 700; color: #ffffff;">-</span>
+            <span id="comm-task-client-sub" style="font-size: 0.72rem; color: var(--text-muted);">Área: -</span>
           </div>
+          <span style="font-size: 0.66rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 2px 7px; border-radius: 4px;">Pauta 30 min</span>
+        </div>
 
-          <div class="form-group">
-            <label class="form-label" for="comm-task-action">O que precisa ser feito? (Próximo Passo) *</label>
-            <input type="text" id="comm-task-action" class="clean-input" placeholder="Ex: Cobrar documentos para cálculo de aposentadoria" required>
-            <div class="task-quick-tags" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem;">
-              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Cobrar envio de documentos')">Cobrar DOCS</button>
-              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Follow-up da proposta de honorários')">Follow-up</button>
-              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Agendar reunião de alinhamento')">Agendar Reunião</button>
-              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Enviar procuração e contrato')">Enviar Contrato</button>
+        <!-- CONTEÚDO DA ABA 1: TAREFA ATIVA OU FORMULÁRIO (Exibição Limpa e Exclusiva) -->
+        <div id="task-modal-tab-content-form">
+          <!-- MODO A: Card da Tarefa Ativa Agendada (Aparece com destaque limpo quando já existe tarefa) -->
+          <div id="comm-task-active-card" class="task-active-preview-box" style="display: none;">
+            <div class="task-active-badge-bar">
+              <span class="active-task-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Tarefa Agendada (30m)
+              </span>
+              <span id="comm-task-overdue-tag" class="task-overdue-tag" style="display: none;">Data já passou</span>
+            </div>
+
+            <div class="task-active-action-title" id="comm-task-active-action">-</div>
+            <div class="task-active-meta-row" id="comm-task-active-meta">-</div>
+            <div class="task-active-notes-row" id="comm-task-active-notes" style="display: none;"></div>
+
+            <!-- Botões de Ação Diretos e Transparentes -->
+            <div class="task-active-decision-actions">
+              <button type="button" class="btn-action-conclude-next" onclick="concludeCurrentAndOpenNext()" title="Conclui esta tarefa e salva no histórico permanente">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Concluir Tarefa</span>
+              </button>
+              <button type="button" class="btn-action-edit-current" onclick="editCurrentActiveTaskFields()" title="Alterar o que fazer, data ou horário">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <span>Editar Dados</span>
+              </button>
+              <button type="button" class="btn-action-schedule-another" onclick="scheduleAnotherTaskDirectly()" title="Manter esta no histórico e agendar um novo próximo passo">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ Novo Próximo Passo</span>
+              </button>
+              <button type="button" class="btn-action-delete-current" onclick="removeCurrentActiveTask()" title="Desmarcar da pauta ativa (o registro permanece no histórico)">
+                <span>Desmarcar</span>
+              </button>
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group" style="flex: 1.2;">
-              <label class="form-label" for="comm-task-date">Data da Tarefa *</label>
-              <input type="date" id="comm-task-date" class="clean-input" required>
-            </div>
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label" for="comm-task-time">Horário de Início *</label>
-              <input type="time" id="comm-task-time" class="clean-input" value="10:00" required>
-            </div>
-          </div>
+          <!-- MODO B: Formulário Rápido e Objetivo -->
+          <form id="form-commercial-task" style="display: none;">
+            <input type="hidden" id="comm-task-client-id">
+            <input type="hidden" id="comm-task-edit-mode" value="new">
 
-          <!-- Indicador visual do bloco de 30 minutos -->
-          <div class="task-duration-banner" style="display: flex; align-items: center; justify-content: space-between; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-xs); padding: 0.55rem 0.85rem; margin-bottom: 0.85rem;">
-            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: #38bdf8; font-weight: 600;">
-              <span>⏱️ Duração da Tarefa: <strong>30 minutos</strong></span>
+            <div id="comm-task-form-section-title" style="font-size: 0.82rem; font-weight: 700; color: #ffffff; margin-bottom: 0.65rem;">
+              Agendar Próximo Passo (30m)
             </div>
-            <div id="comm-task-time-range" style="font-size: 0.76rem; color: #ffffff; font-weight: 700; background: rgba(255, 255, 255, 0.08); padding: 0.2rem 0.55rem; border-radius: 4px;">
-              10:00 às 10:30 (30 min)
+
+            <!-- Próximo Passo / Ação com Atalhos Rápidos -->
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                <label class="form-label" for="comm-task-action" style="font-size: 0.74rem; font-weight: 700; margin: 0;">Próximo Passo / Ação *</label>
+                <span style="font-size: 0.68rem; color: var(--text-muted);">Clique para escolher rápido:</span>
+              </div>
+              <div class="task-quick-tags" style="display: flex; gap: 0.28rem; margin-bottom: 0.45rem; flex-wrap: wrap;">
+                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Fazer ligação')">Ligação</button>
+                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Retornar cliente')">Retornar</button>
+                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Retorno para fechamento')">Fechamento</button>
+                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Solicitar documentos')">Docs</button>
+                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Cobrar assinatura')">Assinatura</button>
+                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Agendar reunião com advogado')">Reunião</button>
+              </div>
+              <input type="text" id="comm-task-action" class="clean-input" placeholder="Selecione acima ou digite..." required style="height: 32px; font-size: 0.8rem;">
             </div>
-          </div>
 
-          <!-- Atalhos rápidos de prazo e horários -->
-          <div style="display: flex; gap: 0.4rem; margin-bottom: 1.1rem; align-items: center; flex-wrap: wrap;">
-            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Data:</span>
-            <button type="button" class="btn-tag-pill" onclick="setTaskDateShortcut(0)">Hoje</button>
-            <button type="button" class="btn-tag-pill" onclick="setTaskDateShortcut(1)">Amanhã</button>
-            <button type="button" class="btn-tag-pill" onclick="setTaskDateShortcut(3)">+3 dias</button>
-            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-left: 0.4rem;">Horários 30m:</span>
-            <button type="button" class="btn-tag-pill" onclick="setTaskTimeShortcut('09:00')">09:00</button>
-            <button type="button" class="btn-tag-pill" onclick="setTaskTimeShortcut('10:00')">10:00</button>
-            <button type="button" class="btn-tag-pill" onclick="setTaskTimeShortcut('11:00')">11:00</button>
-            <button type="button" class="btn-tag-pill" onclick="setTaskTimeShortcut('14:00')">14:00</button>
-            <button type="button" class="btn-tag-pill" onclick="setTaskTimeShortcut('15:00')">15:00</button>
-            <button type="button" class="btn-tag-pill" onclick="setTaskTimeShortcut('16:00')">16:00</button>
-          </div>
+            <!-- Data e Horário com Atalhos de 1 Clique -->
+            <div class="form-row" style="display: flex; gap: 0.65rem; margin-bottom: 0.75rem;">
+              <div class="form-group" style="flex: 1.15;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                  <label class="form-label" for="comm-task-date" style="font-size: 0.74rem; font-weight: 700; margin: 0;">Data *</label>
+                  <div class="quick-preset-chips" style="display: flex; gap: 0.2rem;">
+                    <button type="button" class="btn-quick-preset" onclick="setTaskDateQuick('hoje')">Hoje</button>
+                    <button type="button" class="btn-quick-preset" onclick="setTaskDateQuick('amanha')">Amanhã</button>
+                    <button type="button" class="btn-quick-preset" onclick="setTaskDateQuick('segunda')">Segunda</button>
+                  </div>
+                </div>
+                <input type="date" id="comm-task-date" class="clean-input" required style="height: 32px;">
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                  <label class="form-label" for="comm-task-time" style="font-size: 0.74rem; font-weight: 700; margin: 0;">Horário *</label>
+                  <div class="quick-preset-chips" style="display: flex; gap: 0.2rem;">
+                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('09:00')">09h</button>
+                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('10:00')">10h</button>
+                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('14:00')">14h</button>
+                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('16:00')">16h</button>
+                  </div>
+                </div>
+                <input type="time" id="comm-task-time" class="clean-input" value="10:00" required style="height: 32px;">
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label" for="comm-task-notes">Observações do Próximo Passo</label>
-            <textarea id="comm-task-notes" class="clean-textarea" rows="2" placeholder="Detalhes importantes para não perder o direito do cliente..."></textarea>
-          </div>
+            <!-- Observação Rápida -->
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <input type="text" id="comm-task-notes" class="clean-input" placeholder="Observação rápida (opcional)..." style="height: 32px; font-size: 0.78rem;">
+            </div>
 
-          <div class="modal-footer" style="margin-top: 1.25rem;">
-            <button type="button" class="btn-secondary" id="btn-cancel-commercial-task">Cancelar</button>
-            <button type="submit" class="btn-primary" id="btn-save-commercial-task">Salvar Tarefa (30m)</button>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.45rem; margin-top: 0.4rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+              <button type="button" class="btn-secondary" id="btn-cancel-commercial-task" onclick="cancelCommercialTaskEdit()" style="padding: 0.32rem 0.85rem; font-size: 0.78rem;">Cancelar</button>
+              <button type="submit" class="btn-primary" id="btn-save-commercial-task" style="padding: 0.32rem 1.15rem; font-size: 0.78rem; font-weight: 700;">Salvar Tarefa</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- CONTEÚDO DA ABA 2: HISTÓRICO DE TAREFAS ANTERIORES -->
+        <div id="task-modal-tab-content-history" style="display: none;">
+          <div class="history-timeline-container" id="comm-task-history-timeline">
+            <!-- Renderizado dinamicamente -->
           </div>
-        </form>
+          <div style="margin-top: 1.2rem; display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn-secondary" onclick="closeCommercialTaskModal()" style="font-size: 0.78rem;">Fechar</button>
+            <button type="button" class="btn-primary" onclick="prepareScheduleNewTask(false)" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Agendar Nova Tarefa</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

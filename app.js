@@ -485,10 +485,22 @@ function renderMeetingsList() {
 
   const now = getCurrentTime();
 
-  // Filtragem Multicritério com Popup Centralizado
+  // Filtragem Multicritério com Busca Rápida e Popup Centralizado
   const filtered = STATE.meetings.filter(m => {
-    // 1. Cliente / Telefone
-    const clientTerm = (STATE.filterClient || STATE.filterSearch || '').toLowerCase().trim();
+    // 0. Busca Rápida (Barra de Pesquisa da Toolbar)
+    const q = (STATE.filterSearch || '').toLowerCase().trim();
+    let matchSearch = true;
+    if (q) {
+      const name = (m.clientName || '').toLowerCase();
+      const phone = String(m.clientPhone || '').toLowerCase();
+      const notes = (m.notes || m.obs || m.observation || m.description || '').toLowerCase();
+      const lawyer = (m.lawyer || '').toLowerCase();
+      const area = (m.area || '').toLowerCase();
+      matchSearch = name.includes(q) || phone.includes(q) || notes.includes(q) || lawyer.includes(q) || area.includes(q);
+    }
+
+    // 1. Cliente / Telefone (do modal de filtros)
+    const clientTerm = (STATE.filterClient || '').toLowerCase().trim();
     const matchClient = !clientTerm || 
                         (m.clientName && m.clientName.toLowerCase().includes(clientTerm)) ||
                         (m.clientPhone && String(m.clientPhone).includes(clientTerm));
@@ -520,7 +532,7 @@ function renderMeetingsList() {
       matchStatus = !m.date || m.date === todayStr;
     } // 'all' matches all
 
-    return matchClient && matchLawyer && matchArea && matchTime && matchStatus;
+    return matchSearch && matchClient && matchLawyer && matchArea && matchTime && matchStatus;
   });
 
   if (filtered.length === 0) {
@@ -1310,27 +1322,21 @@ function updateFilterBadge() {
   renderActiveFilterChips();
 }
 
-// Atualizar contador de reuniões na barra de filtros
+// Atualizar contador de reuniões na barra de filtros (formato limpo idêntico ao comercial)
 function updateFilteredResultsCounter(filteredCount, totalCount) {
   const pill = document.getElementById('filter-results-counter-pill');
   const countText = document.getElementById('filter-results-count-text');
   if (!countText) return;
 
   const activeFilters = getActiveFilterCount();
+  const hasSearch = Boolean(STATE.filterSearch && STATE.filterSearch.trim());
 
-  if (activeFilters > 0) {
-    if (pill) pill.classList.add('is-filtered');
-    if (filteredCount === 0) {
-      countText.innerHTML = `<span style="color: var(--rose); font-weight: 600;">0 de ${totalCount} reuniões (nenhuma encontrada)</span>`;
-    } else {
-      const plural = filteredCount === 1 ? 'reunião' : 'reuniões';
-      countText.innerHTML = `<strong>${filteredCount}</strong> de ${totalCount} ${plural} (filtrado)`;
-    }
-  } else {
-    if (pill) pill.classList.remove('is-filtered');
-    const plural = filteredCount === 1 ? 'reunião' : 'reuniões';
-    countText.innerHTML = `<strong>${filteredCount}</strong> ${plural} na pauta`;
+  if (pill) {
+    pill.classList.toggle('is-filtered', activeFilters > 0 || hasSearch);
   }
+
+  const plural = filteredCount === 1 ? 'reunião' : 'reuniões';
+  countText.innerHTML = `<strong>${filteredCount}</strong> ${plural}`;
 }
 
 // Atualizar interface visual do botão de automação
@@ -1421,6 +1427,9 @@ function renderActiveFilterChips() {
   container.innerHTML = '';
 
   const chips = [];
+  if (STATE.filterSearch && STATE.filterSearch.trim() !== '') {
+    chips.push({ key: 'search', label: `Busca: "${STATE.filterSearch}"` });
+  }
   if (STATE.filterClient && STATE.filterClient.trim() !== '') {
     chips.push({ key: 'client', label: `Cliente: "${STATE.filterClient}"` });
   }
@@ -1448,6 +1457,11 @@ function renderActiveFilterChips() {
     tag.className = 'active-filter-tag';
     tag.innerHTML = `<span>${escapeHtml(c.label)}</span><button type="button" class="tag-remove-btn" title="Remover filtro">&times;</button>`;
     tag.querySelector('.tag-remove-btn').addEventListener('click', () => {
+      if (c.key === 'search') {
+        STATE.filterSearch = '';
+        const searchInput = document.getElementById('meetings-search-input');
+        if (searchInput) searchInput.value = '';
+      }
       if (c.key === 'client') STATE.filterClient = '';
       if (c.key === 'lawyer') STATE.filterLawyer = 'all';
       if (c.key === 'area') STATE.filterArea = 'all';
@@ -1518,7 +1532,7 @@ function setupFilterModal() {
 
     const count = getActiveFilterCount();
     if (count > 0) {
-      showToast(`🔍 ${count} filtro(s) ativo(s)!`, 'info', 1800);
+      showToast(`${count} filtro(s) ativo(s)!`, 'info', 1800);
     }
   });
 
@@ -1571,22 +1585,24 @@ function switchTab(tabId, subtab) {
   }
 
   // Controle inteligente de expansão de subcategorias no menu lateral:
-  const groupComercial = document.getElementById('group-comercial');
-  const groupAgenda = document.getElementById('group-agenda');
+  const groupPlanilhas = document.getElementById('group-planilhas');
+  const groupAntiNoShow = document.getElementById('group-anti-noshow');
 
-  if (tabId === 'tab-comercial') {
-    groupComercial?.classList.add('expanded');
-    groupAgenda?.classList.remove('expanded');
-  } else if (tabId === 'tab-calendar' || tabId === 'tab-reunioes' || tabId === 'tab-templates') {
-    groupAgenda?.classList.add('expanded');
-    groupComercial?.classList.remove('expanded');
+  // Planilhas e Dados
+  if (tabId === 'tab-comercial' || tabId === 'tab-dados') {
+    groupPlanilhas?.classList.add('expanded');
   } else {
-    // No Dashboard ou Configurações, recolhe subcategorias para manter visual limpo
-    groupComercial?.classList.remove('expanded');
-    groupAgenda?.classList.remove('expanded');
+    groupPlanilhas?.classList.remove('expanded');
   }
 
-  // Se a aba for o Comercial, acionar renderização ou mudar sub-aba
+  // Anti No-Show e Mensagem
+  if (tabId === 'tab-reunioes' || tabId === 'tab-templates') {
+    groupAntiNoShow?.classList.add('expanded');
+  } else {
+    groupAntiNoShow?.classList.remove('expanded');
+  }
+
+  // Se a aba for a Planilha Comercial, acionar renderização ou mudar sub-aba
   if (tabId === 'tab-comercial') {
     if (subtab && typeof window.setCommercialSubtab === 'function') {
       window.setCommercialSubtab(subtab);
@@ -1595,9 +1611,10 @@ function switchTab(tabId, subtab) {
     }
   }
 
-  // Se a aba for a Agenda, recalcular a visualização do calendário
+  // Se a aba for a Agenda de Reuniões, recalcular grade do calendário e legendas
   if (tabId === 'tab-calendar' && typeof renderCalendarGrid === 'function') {
     renderCalendarGrid();
+    updateCalendarLegendCounts();
   }
 
   // Se a aba for Reuniões / Anti No-Show, renderizar lista
@@ -1606,6 +1623,18 @@ function switchTab(tabId, subtab) {
   }
 }
 window.switchTab = switchTab;
+
+function updateCalendarLegendCounts() {
+  const meetingCountEl = document.getElementById('cal-legend-meetings-count');
+  const taskCountEl = document.getElementById('cal-legend-tasks-count');
+  if (meetingCountEl && STATE.meetings) {
+    meetingCountEl.textContent = STATE.meetings.length;
+  }
+  if (taskCountEl && typeof getCommercialCalendarTasks === 'function') {
+    taskCountEl.textContent = getCommercialCalendarTasks().length;
+  }
+}
+window.updateCalendarLegendCounts = updateCalendarLegendCounts;
 
 // Menu Lateral Esquerdo Minimalista (Recuável estilo Activity Bar / Hover / Fixo)
 function setupLeftSidebar() {
@@ -1710,6 +1739,16 @@ function setupEventListeners() {
   // Inicialização do Modal Popup de Filtros & Contador
   setupFilterModal();
   updateFilterBadge();
+
+  // Barra de Pesquisa Rápida na Aba de Reuniões / Anti No-Show
+  const meetingsSearchInput = document.getElementById('meetings-search-input');
+  if (meetingsSearchInput) {
+    meetingsSearchInput.addEventListener('input', (e) => {
+      STATE.filterSearch = e.target.value;
+      renderMeetingsList();
+      renderActiveFilterChips();
+    });
+  }
 
   // Controles de Simulação de Tempo
   document.getElementById('btn-advance-15m')?.addEventListener('click', () => {
