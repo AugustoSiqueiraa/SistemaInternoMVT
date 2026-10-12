@@ -3572,12 +3572,12 @@ body.light-theme .modal-confirm-desc {
   background: var(--bg-row);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .comm-table-header-row {
   display: grid;
-  grid-template-columns: 160px 1.4fr 120px 1.8fr 140px;
+  grid-template-columns: 110px 1.3fr 120px 165px 1.5fr 200px;
   padding: 0.75rem 1.15rem;
   background: rgba(0, 0, 0, 0.35);
   border-bottom: 1px solid var(--border-subtle);
@@ -3586,6 +3586,7 @@ body.light-theme .modal-confirm-desc {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   text-transform: uppercase;
+  min-width: 1000px;
 }
 
 .comm-leads-list {
@@ -3595,11 +3596,13 @@ body.light-theme .modal-confirm-desc {
 
 .comm-lead-row {
   display: grid;
-  grid-template-columns: 160px 1.4fr 120px 1.8fr 140px;
+  grid-template-columns: 110px 1.3fr 120px 165px 1.5fr 200px;
   padding: 0.85rem 1.15rem;
   border-bottom: 1px solid var(--border-subtle);
   align-items: center;
+  gap: 0.75rem;
   transition: background var(--transition-fast);
+  min-width: 1000px;
 }
 
 .comm-lead-row:last-child {
@@ -3610,14 +3613,89 @@ body.light-theme .modal-confirm-desc {
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* Coluna 1: Data */
+.comm-col-date {
+  display: flex;
+  align-items: center;
+}
+
+.comm-date-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Coluna 2: Cliente */
+.comm-col-client {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.comm-client-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comm-client-phone {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* Coluna 3: Área */
+.comm-col-area {
+  display: flex;
+  align-items: center;
+}
+
+.badge-area-trabprev {
+  background: rgba(217, 70, 239, 0.15);
+  color: #f0abfc;
+  border: 1px solid rgba(217, 70, 239, 0.35);
+}
+
+/* Coluna 4: Tipo de Atendimento */
+.comm-col-type {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.comm-quick-status-select {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: fit-content;
+}
+
+.comm-quick-status-select:hover,
+.comm-quick-status-select:focus {
+  border-color: var(--border-focus);
+  color: #ffffff;
+}
+
 /* Badges de Status Comercial */
 .comm-status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.55rem;
   border-radius: var(--radius-xs);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
   width: fit-content;
@@ -3648,9 +3726,9 @@ body.light-theme .modal-confirm-desc {
 }
 
 .comm-status-badge.status-novo {
-  background: rgba(100, 116, 139, 0.15);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.35);
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.35);
 }
 
 .comm-status-badge.status-desqualificado {
@@ -3659,47 +3737,75 @@ body.light-theme .modal-confirm-desc {
   border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
-.comm-client-cell {
+/* Coluna 5: Próximo Passo */
+.comm-col-nextstep {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
-.comm-client-name {
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: #ffffff;
+.comm-nextstep-text {
+  font-size: 0.82rem;
+  color: #e2e8f0;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.comm-client-phone {
+.comm-task-due-pill {
+  font-size: 0.7rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Coluna 6: Ações & Tarefa */
+.comm-col-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: nowrap;
+}
+
+.btn-task-action {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
   font-size: 0.74rem;
-  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0.32rem 0.55rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
-.comm-area-pill {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-subtle);
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  color: #cbd5e1;
-  width: fit-content;
+.btn-task-action:hover {
+  background: var(--blue-light);
+  color: var(--blue-btn-text);
+  border-color: var(--blue-light);
 }
 
-.comm-next-step-cell {
-  font-size: 0.8rem;
-  color: #cbd5e1;
-  line-height: 1.35;
+.btn-task-action.has-task {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
 }
 
-.comm-actions-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+.btn-task-action.has-task:hover {
+  background: #f59e0b;
+  color: #000000;
 }
 
 .btn-whatsapp-sm {
@@ -3708,12 +3814,12 @@ body.light-theme .modal-confirm-desc {
   color: #25d366;
   font-size: 0.74rem;
   font-weight: 600;
-  padding: 0.25rem 0.55rem;
+  padding: 0.3rem 0.5rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
   transition: all var(--transition-fast);
 }
 
@@ -3722,20 +3828,21 @@ body.light-theme .modal-confirm-desc {
   color: #000000;
 }
 
-.btn-icon-comm {
+.btn-tag-pill {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
-  padding: 0.25rem 0.45rem;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.55rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
-  font-size: 0.75rem;
   transition: all var(--transition-fast);
 }
 
-.btn-icon-comm:hover {
+.btn-tag-pill:hover {
+  background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-focus);
 }
 
 /* Funil Kanban */

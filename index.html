@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -654,11 +654,12 @@
         <!-- Visão Tabela / Lista Executiva -->
         <div id="comm-table-view-container" class="commercial-table-view">
           <div class="comm-table-header-row">
-            <div class="comm-col-status">FASE / STATUS</div>
-            <div class="comm-col-client">CLIENTE & CONTATO</div>
+            <div class="comm-col-date">DATA</div>
+            <div class="comm-col-client">CLIENTE</div>
             <div class="comm-col-area">ÁREA</div>
-            <div class="comm-col-next">PRÓXIMO PASSO / OBSERVAÇÃO</div>
-            <div class="comm-col-actions">AÇÕES RÁPIDAS</div>
+            <div class="comm-col-type">TIPO DE ATENDIMENTO</div>
+            <div class="comm-col-next">PRÓXIMO PASSO</div>
+            <div class="comm-col-actions">TAREFA & AÇÕES</div>
           </div>
           <div class="comm-leads-list" id="comm-leads-list"></div>
         </div>
@@ -1027,26 +1028,35 @@
     <div class="modal-overlay" id="modal-commercial-client">
       <div class="modal-card">
         <div class="modal-header">
-          <h2 class="modal-title" id="modal-commercial-title">➕ Novo Cliente Comercial</h2>
+          <h2 class="modal-title" id="modal-commercial-title">Novo Cliente Comercial</h2>
           <button class="modal-close" id="modal-commercial-close" type="button">&times;</button>
         </div>
         <form id="form-commercial-client">
           <input type="hidden" id="comm-client-id">
-          <div class="form-group">
-            <label class="form-label" for="comm-client-name">Nome do Cliente *</label>
-            <input type="text" id="comm-client-name" class="clean-input" placeholder="Ex: Alexandre Faganelli" required>
+          
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label" for="comm-client-date">Data *</label>
+              <input type="date" id="comm-client-date" class="clean-input" required>
+            </div>
+            <div class="form-group" style="flex: 2;">
+              <label class="form-label" for="comm-client-name">Nome do Cliente *</label>
+              <input type="text" id="comm-client-name" class="clean-input" placeholder="Ex: Alexandre Faganelli" required>
+            </div>
           </div>
+
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="comm-client-phone">WhatsApp / Telefone</label>
               <input type="tel" id="comm-client-phone" class="clean-input" placeholder="Ex: (11) 98765-4321">
             </div>
             <div class="form-group">
-              <label class="form-label" for="comm-client-area">Área Jurídica</label>
+              <label class="form-label" for="comm-client-area">Área</label>
               <select id="comm-client-area" class="select-clean">
-                <option value="Trabalhista">Trabalhista</option>
-                <option value="Estatutária">Estatutária</option>
                 <option value="Trab/Prev">Trab/Prev</option>
+                <option value="Trabalhista">Trabalhista</option>
+                <option value="Previdenciário">Previdenciário</option>
+                <option value="Estatutária">Estatutária</option>
                 <option value="Auxílio Acidente">Auxílio Acidente</option>
                 <option value="Aposentadoria">Aposentadoria</option>
                 <option value="Cível">Cível</option>
@@ -1054,28 +1064,96 @@
               </select>
             </div>
           </div>
+
           <div class="form-group">
-            <label class="form-label" for="comm-client-status">Fase / Status Comercial</label>
+            <label class="form-label" for="comm-client-status">Tipo de Atendimento</label>
             <select id="comm-client-status" class="select-clean">
-              <option value="Pronto para Fechar">🎯 Pronto para Fechar</option>
-              <option value="Aguardando DOCS">📄 Aguardando DOCS</option>
-              <option value="Follow-up">⏳ Follow-up / No tempo do cliente</option>
-              <option value="Lead Novo">🆕 Lead Novo</option>
-              <option value="Fechado">✅ Contrato Fechado</option>
-              <option value="Desqualificado">❌ Desqualificado</option>
+              <option value="Lead Novo">Lead Novo</option>
+              <option value="Follow-up">Follow-up</option>
+              <option value="Aguardando DOCS">Aguardando DOCS</option>
+              <option value="Pronto para Fechar">Pronto para Fechar</option>
+              <option value="Fechado">Contrato Fechado</option>
+              <option value="Desqualificado">Desqualificado</option>
             </select>
           </div>
+
           <div class="form-group">
-            <label class="form-label" for="comm-client-next-step">Próximo Passo / Tarefa</label>
-            <input type="text" id="comm-client-next-step" class="clean-input" placeholder="Ex: Cobrar documentos amanhã às 10h">
+            <label class="form-label" for="comm-client-next-step">Próximo Passo</label>
+            <input type="text" id="comm-client-next-step" class="clean-input" placeholder="Ex: Cobrar documentos para cálculo de aposentadoria">
           </div>
+
           <div class="form-group">
             <label class="form-label" for="comm-client-notes">Observações / Detalhes</label>
-            <textarea id="comm-client-notes" class="clean-textarea" rows="2" placeholder="Anotações comerciais sobre a negociação..."></textarea>
+            <textarea id="comm-client-notes" class="clean-textarea" rows="2" placeholder="Anotações comerciais sobre o direito do cliente..."></textarea>
           </div>
+
           <div class="modal-footer">
             <button type="button" class="btn-secondary" id="btn-cancel-commercial-modal">Cancelar</button>
-            <button type="submit" class="btn-primary" id="btn-save-commercial-client">💾 Salvar Cliente</button>
+            <button type="submit" class="btn-primary" id="btn-save-commercial-client">Salvar Cliente</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Popup: Marcar Tarefa Comercial -->
+    <div class="modal-overlay" id="modal-commercial-task">
+      <div class="modal-card" style="max-width: 520px;">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title" id="modal-task-title">Marcar Tarefa Comercial</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">Defina o próximo passo para o cliente avançar e não perder o direito</p>
+          </div>
+          <button class="modal-close" id="modal-commercial-task-close" type="button">&times;</button>
+        </div>
+        <form id="form-commercial-task">
+          <input type="hidden" id="comm-task-client-id">
+
+          <!-- Card do Cliente em Destaque -->
+          <div class="task-client-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.8rem 1rem; margin-bottom: 1.1rem;">
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Cliente</div>
+            <div id="comm-task-client-name" style="font-size: 1rem; font-weight: 700; color: #ffffff; margin-top: 0.15rem;">-</div>
+            <div id="comm-task-client-sub" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">Área: - | Tipo: -</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="comm-task-action">O que precisa ser feito? (Próximo Passo) *</label>
+            <input type="text" id="comm-task-action" class="clean-input" placeholder="Ex: Cobrar documentos para cálculo de aposentadoria" required>
+            <div class="task-quick-tags" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem;">
+              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Cobrar envio de documentos')">Cobrar DOCS</button>
+              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Follow-up da proposta de honorários')">Follow-up</button>
+              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Agendar reunião de alinhamento')">Agendar Reunião</button>
+              <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Enviar procuração e contrato')">Enviar Contrato</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 1.2;">
+              <label class="form-label" for="comm-task-date">Data / Prazo Limite *</label>
+              <input type="date" id="comm-task-date" class="clean-input" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label" for="comm-task-time">Horário (opcional)</label>
+              <input type="time" id="comm-task-time" class="clean-input">
+            </div>
+          </div>
+
+          <!-- Atalhos rápidos de prazo -->
+          <div style="display: flex; gap: 0.4rem; margin-bottom: 1.1rem; align-items: center; flex-wrap: wrap;">
+            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Prazo rápido:</span>
+            <button type="button" class="btn-tag-pill" onclick="setTaskDateShortcut(0)">Hoje</button>
+            <button type="button" class="btn-tag-pill" onclick="setTaskDateShortcut(1)">Amanhã</button>
+            <button type="button" class="btn-tag-pill" onclick="setTaskDateShortcut(3)">+3 dias</button>
+            <button type="button" class="btn-tag-pill" onclick="setTaskDateShortcut(7)">1 semana</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="comm-task-notes">Observações do Próximo Passo</label>
+            <textarea id="comm-task-notes" class="clean-textarea" rows="2" placeholder="Detalhes importantes para não perder o direito do cliente..."></textarea>
+          </div>
+
+          <div class="modal-footer" style="margin-top: 1.25rem;">
+            <button type="button" class="btn-secondary" id="btn-cancel-commercial-task">Cancelar</button>
+            <button type="submit" class="btn-primary" id="btn-save-commercial-task">Salvar Tarefa</button>
           </div>
         </form>
       </div>

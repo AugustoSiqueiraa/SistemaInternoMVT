@@ -1108,120 +1108,142 @@ function renderCommercialTable(clients) {
     return;
   }
 
+  const formatDateDisplay = (dateStr) => {
+    if (!dateStr) return '<span style="color: var(--text-muted); font-size: 0.76rem;">-</span>';
+    const parts = String(dateStr).split('T')[0].split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return escapeHtml(dateStr);
+  };
+
   const getStatusBadge = (status) => {
     switch(status) {
+      case 'Lead Novo':
+        return '<span class="comm-status-badge status-novo">Lead Novo</span>';
       case 'Pronto para Fechar':
-        return '<span class="comm-status-badge status-fechar">🎯 Pronto p/ Fechar</span>';
+        return '<span class="comm-status-badge status-fechar">Pronto p/ Fechar</span>';
       case 'Aguardando DOCS':
-        return '<span class="comm-status-badge status-docs">📄 Aguardando DOCS</span>';
+        return '<span class="comm-status-badge status-docs">Aguardando DOCS</span>';
       case 'Fechado':
-        return '<span class="comm-status-badge status-fechado">✅ Contrato Fechado</span>';
+        return '<span class="comm-status-badge status-fechado">Contrato Fechado</span>';
       case 'Desqualificado':
-        return '<span class="comm-status-badge status-desqualificado">❌ Desqualificado</span>';
+        return '<span class="comm-status-badge status-desqualificado">Desqualificado</span>';
       case 'Aguardando Reunião':
-        return '<span class="comm-status-badge status-reuniao">🗓️ Aguardando Reunião</span>';
+        return '<span class="comm-status-badge status-reuniao">Aguardando Reunião</span>';
       default:
-        return '<span class="comm-status-badge status-followup">⏳ Follow-up</span>';
+        return '<span class="comm-status-badge status-followup">Follow-up</span>';
     }
   };
 
   const getAreaBadge = (area) => {
     const areaLower = (area || '').toLowerCase();
     let cls = 'badge-area-trabalhista';
-    if (areaLower.includes('prev') || areaLower.includes('aposentadoria')) cls = 'badge-area-previdenciario';
+    if (areaLower.includes('trab/prev') || (areaLower.includes('trab') && areaLower.includes('prev'))) cls = 'badge-area-trabprev';
+    else if (areaLower.includes('prev') || areaLower.includes('aposentadoria')) cls = 'badge-area-previdenciario';
     else if (areaLower.includes('aux')) cls = 'badge-area-auxacidente';
     else if (areaLower.includes('estatut')) cls = 'badge-area-estatutaria';
     else if (areaLower.includes('cível') || areaLower.includes('civil')) cls = 'badge-area-civel';
-    return `<span class="area-badge ${cls}">${area || 'Geral'}</span>`;
+    return `<span class="area-badge ${cls}">${escapeHtml(area || 'Geral')}</span>`;
   };
 
   const cleanPhoneForWa = (phone) => {
     if (!phone) return '';
-    let digits = phone.replace(/\\D/g, '');
+    let digits = phone.replace(/\D/g, '');
     if (digits.length === 10 || digits.length === 11) digits = '55' + digits;
     return digits;
   };
 
   const formatPhoneDisplay = (phone) => {
-    if (!phone) return '<span style="color: var(--text-muted); font-size: 0.8rem; font-style: italic;">Sem telefone</span>';
-    const digits = phone.replace(/\\D/g, '');
+    if (!phone) return '<span style="color: var(--text-muted); font-size: 0.74rem; font-style: italic;">Sem contato</span>';
+    const digits = phone.replace(/\D/g, '');
     if (digits.length === 13 && digits.startsWith('55')) {
       return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
     }
     if (digits.length === 11) {
       return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
     }
-    return phone;
+    if (digits.length === 10) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+    return escapeHtml(phone);
   };
 
   container.innerHTML = clients.map(client => {
     const waDigits = cleanPhoneForWa(client.phone);
     const waLink = waDigits ? `https://wa.me/${waDigits}?text=${encodeURIComponent(`Olá, ${client.name}! Tudo bem? Augusto da MVT Advogados por aqui.`)}` : '';
-    const initial = (client.name || 'C').trim().charAt(0).toUpperCase();
+    const hasTask = Boolean(client.task && client.task.dueDate);
 
     return `
       <div class="comm-lead-row" id="comm-row-${client.id}">
-        <!-- Coluna 1: Avatar e Identificacao -->
-        <div class="comm-col-client">
-          <div class="comm-avatar">${initial}</div>
-          <div class="comm-client-info">
-            <span class="comm-client-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-            <div class="comm-client-subline">
-              ${getAreaBadge(client.area)}
-              ${client.responsible ? `<span class="comm-responsible-tag">👤 ${escapeHtml(client.responsible)}</span>` : ''}
-            </div>
-          </div>
+        <!-- Coluna 1: Data -->
+        <div class="comm-col-date">
+          <span class="comm-date-badge">${formatDateDisplay(client.date)}</span>
         </div>
 
-        <!-- Coluna 2: Status Comercial com Seletor Rapido -->
-        <div class="comm-col-status">
+        <!-- Coluna 2: Cliente -->
+        <div class="comm-col-client">
+          <span class="comm-client-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
+          <span class="comm-client-phone">${formatPhoneDisplay(client.phone)}</span>
+        </div>
+
+        <!-- Coluna 3: Área -->
+        <div class="comm-col-area">
+          ${getAreaBadge(client.area)}
+        </div>
+
+        <!-- Coluna 4: Tipo de Atendimento -->
+        <div class="comm-col-type">
           ${getStatusBadge(client.status)}
-          <select class="comm-quick-status-select" onchange="changeCommercialStatus('${client.id}', this.value)" title="Alterar fase comercial">
-            <option value="Pronto para Fechar" ${client.status === 'Pronto para Fechar' ? 'selected' : ''}>🎯 Pronto para Fechar</option>
-            <option value="Aguardando DOCS" ${client.status === 'Aguardando DOCS' ? 'selected' : ''}>📄 Aguardando DOCS</option>
-            <option value="Follow-up" ${client.status === 'Follow-up' ? 'selected' : ''}>⏳ Follow-up</option>
-            <option value="Aguardando Reunião" ${client.status === 'Aguardando Reunião' ? 'selected' : ''}>🗓️ Aguardando Reunião</option>
-            <option value="Fechado" ${client.status === 'Fechado' ? 'selected' : ''}>✅ Contrato Fechado</option>
-            <option value="Desqualificado" ${client.status === 'Desqualificado' ? 'selected' : ''}>❌ Desqualificado</option>
+          <select class="comm-quick-status-select" onchange="changeCommercialStatus('${client.id}', this.value)" title="Alterar tipo de atendimento">
+            <option value="Lead Novo" ${client.status === 'Lead Novo' ? 'selected' : ''}>Lead Novo</option>
+            <option value="Follow-up" ${client.status === 'Follow-up' ? 'selected' : ''}>Follow-up</option>
+            <option value="Aguardando DOCS" ${client.status === 'Aguardando DOCS' ? 'selected' : ''}>Aguardando DOCS</option>
+            <option value="Pronto para Fechar" ${client.status === 'Pronto para Fechar' ? 'selected' : ''}>Pronto para Fechar</option>
+            <option value="Fechado" ${client.status === 'Fechado' ? 'selected' : ''}>Contrato Fechado</option>
+            <option value="Desqualificado" ${client.status === 'Desqualificado' ? 'selected' : ''}>Desqualificado</option>
           </select>
         </div>
 
-        <!-- Coluna 3: WhatsApp e Contato -->
-        <div class="comm-col-contact">
-          <span class="comm-phone-text">${formatPhoneDisplay(client.phone)}</span>
+        <!-- Coluna 5: Próximo Passo -->
+        <div class="comm-col-nextstep">
+          <span class="comm-nextstep-text" title="${escapeHtml(client.nextStep || 'Acompanhamento do direito')}">${escapeHtml(client.nextStep || 'Acompanhamento do direito')}</span>
+          ${hasTask ? `
+            <span class="comm-task-due-pill">
+              📅 Prazo: ${formatDateDisplay(client.task.dueDate)}${client.task.dueTime ? ' às ' + client.task.dueTime : ''}
+            </span>
+          ` : ''}
+        </div>
+
+        <!-- Coluna 6: Tarefa & Ações Rápidas -->
+        <div class="comm-col-actions">
+          <button class="btn-task-action ${hasTask ? 'has-task' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="Marcar ou editar tarefa para não perder o direito do cliente">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            ${hasTask ? 'Tarefa Agendada' : 'Marcar Tarefa'}
+          </button>
+
           ${waDigits ? `
             <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-sm" title="Conversar no WhatsApp">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.456h.005c6.554 0 11.89-5.336 11.893-11.893 0-3.177-1.237-6.164-3.488-8.417"/>
               </svg>
-              WhatsApp
             </a>
           ` : ''}
-        </div>
 
-        <!-- Coluna 4: Proximo Passo & Tarefa -->
-        <div class="comm-col-nextstep">
-          <span class="comm-nextstep-label">🎯 Próximo Passo:</span>
-          <span class="comm-nextstep-value" title="${escapeHtml(client.nextStep || 'Acompanhamento')}">${escapeHtml(client.nextStep || 'Acompanhamento')}</span>
-        </div>
-
-        <!-- Coluna 5: Observacoes / Anotacoes -->
-        <div class="comm-col-notes">
-          <span class="comm-notes-preview" title="${escapeHtml(client.notes || '')}">
-            ${client.notes ? escapeHtml(client.notes) : '<span style="color: var(--text-muted); font-style: italic;">Sem anotações</span>'}
-          </span>
-        </div>
-
-        <!-- Coluna 6: Acoes Rapidas -->
-        <div class="comm-col-actions">
-          <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar cliente">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 20h9"></path>
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
             </svg>
           </button>
+          
           <button class="btn-icon-clean danger" onclick="deleteCommercialClient('${client.id}')" title="Excluir cliente">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
@@ -1367,6 +1389,7 @@ function openCommercialModal(clientId = null) {
   const form = document.getElementById('form-commercial-client');
   const title = document.getElementById('modal-commercial-title');
   const inputId = document.getElementById('comm-client-id');
+  const inputDate = document.getElementById('comm-client-date');
   const inputName = document.getElementById('comm-client-name');
   const inputPhone = document.getElementById('comm-client-phone');
   const inputArea = document.getElementById('comm-client-area');
@@ -1374,25 +1397,29 @@ function openCommercialModal(clientId = null) {
   const inputNextStep = document.getElementById('comm-client-next-step');
   const inputNotes = document.getElementById('comm-client-notes');
 
+  const todayIso = new Date().toISOString().split('T')[0];
+
   if (clientId) {
     const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
     if (client) {
-      if (title) title.textContent = '✏️ Editar Cliente Comercial';
+      if (title) title.textContent = 'Editar Cliente Comercial';
       if (inputId) inputId.value = client.id;
+      if (inputDate) inputDate.value = client.date || todayIso;
       if (inputName) inputName.value = client.name || '';
       if (inputPhone) inputPhone.value = client.phone || '';
-      if (inputArea) inputArea.value = client.area || 'Trabalhista';
-      if (inputStatus) inputStatus.value = client.status || 'Pronto para Fechar';
+      if (inputArea) inputArea.value = client.area || 'Trab/Prev';
+      if (inputStatus) inputStatus.value = client.status || 'Follow-up';
       if (inputNextStep) inputNextStep.value = client.nextStep || '';
       if (inputNotes) inputNotes.value = client.notes || '';
     }
   } else {
-    if (title) title.textContent = '➕ Novo Cliente Comercial';
+    if (title) title.textContent = 'Novo Cliente Comercial';
     if (form) form.reset();
     if (inputId) inputId.value = '';
+    if (inputDate) inputDate.value = todayIso;
     // Status padrao inteligente: se estiver na aba "fechar", ja vem "Pronto para Fechar"
     if (inputStatus) {
-      inputStatus.value = COMMERCIAL_STATE.subtab === 'fechar' ? 'Pronto para Fechar' : 'Follow-up';
+      inputStatus.value = COMMERCIAL_STATE.subtab === 'fechar' ? 'Pronto para Fechar' : 'Lead Novo';
     }
   }
 
@@ -1411,6 +1438,7 @@ window.closeCommercialModal = closeCommercialModal;
 function handleCommercialSubmit(e) {
   e.preventDefault();
   const inputId = document.getElementById('comm-client-id');
+  const inputDate = document.getElementById('comm-client-date');
   const inputName = document.getElementById('comm-client-name');
   const inputPhone = document.getElementById('comm-client-phone');
   const inputArea = document.getElementById('comm-client-area');
@@ -1424,15 +1452,17 @@ function handleCommercialSubmit(e) {
     return;
   }
 
+  const dateVal = inputDate?.value || new Date().toISOString().split('T')[0];
   const id = inputId?.value;
   const isEditing = Boolean(id);
 
   if (isEditing) {
     const client = COMMERCIAL_STATE.clients.find(c => c.id === id);
     if (client) {
+      client.date = dateVal;
       client.name = name;
       client.phone = (inputPhone?.value || '').trim();
-      client.area = inputArea?.value || 'Trabalhista';
+      client.area = inputArea?.value || 'Trab/Prev';
       client.status = inputStatus?.value || 'Pronto para Fechar';
       client.nextStep = (inputNextStep?.value || '').trim();
       client.notes = (inputNotes?.value || '').trim();
@@ -1440,16 +1470,17 @@ function handleCommercialSubmit(e) {
   } else {
     const newClient = {
       id: `comm-user-${Date.now()}`,
+      date: dateVal,
       name: name,
       phone: (inputPhone?.value || '').trim(),
-      area: inputArea?.value || 'Trabalhista',
-      status: inputStatus?.value || 'Pronto para Fechar',
-      nextStep: (inputNextStep?.value || '').trim() || 'Acompanhamento comercial',
+      area: inputArea?.value || 'Trab/Prev',
+      status: inputStatus?.value || 'Lead Novo',
+      nextStep: (inputNextStep?.value || '').trim() || 'Acompanhamento do direito',
       notes: (inputNotes?.value || '').trim(),
-      date: new Date().toISOString().split('T')[0],
-      responsible: 'Augusto'
+      responsible: 'Augusto',
+      task: null
     };
-    // Adiciona no topo da lista para ficar visivel na hora
+    // Adiciona no topo da lista para ficar visivel imediatamente
     COMMERCIAL_STATE.clients.unshift(newClient);
   }
 
@@ -1458,20 +1489,133 @@ function handleCommercialSubmit(e) {
   renderCommercialApp();
 
   if (typeof showToast === 'function') {
-    showToast(isEditing ? `Cliente "${name}" atualizado!` : `🎉 Novo cliente "${name}" adicionado com sucesso!`, 'success');
+    showToast(isEditing ? `Cliente "${name}" atualizado!` : `Novo cliente "${name}" adicionado com sucesso!`, 'success');
   }
 }
+
+// ========================================================
+// MODAL DE MARCAR TAREFA COMERCIAL (PROXIMO PASSO)
+// ========================================================
+function openCommercialTaskModal(clientId) {
+  const modal = document.getElementById('modal-commercial-task');
+  if (!modal) return;
+
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client) return;
+
+  const inputClientId = document.getElementById('comm-task-client-id');
+  const previewName = document.getElementById('comm-task-client-name');
+  const previewSub = document.getElementById('comm-task-client-sub');
+  const inputAction = document.getElementById('comm-task-action');
+  const inputDate = document.getElementById('comm-task-date');
+  const inputTime = document.getElementById('comm-task-time');
+  const inputNotes = document.getElementById('comm-task-notes');
+
+  if (inputClientId) inputClientId.value = client.id;
+  if (previewName) previewName.textContent = client.name || 'Cliente';
+  if (previewSub) previewSub.textContent = `Área: ${client.area || 'Geral'}  •  Fase: ${client.status || 'Follow-up'}`;
+
+  // Se o cliente ja tiver uma tarefa registrada
+  if (client.task) {
+    if (inputAction) inputAction.value = client.task.action || client.nextStep || '';
+    if (inputDate) inputDate.value = client.task.dueDate || new Date().toISOString().split('T')[0];
+    if (inputTime) inputTime.value = client.task.dueTime || '';
+    if (inputNotes) inputNotes.value = client.task.notes || '';
+  } else {
+    // Padrão amigável: próximo passo atual ou sugestão
+    if (inputAction) inputAction.value = client.nextStep || '';
+    if (inputDate) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      inputDate.value = tomorrow.toISOString().split('T')[0];
+    }
+    if (inputTime) inputTime.value = '10:00';
+    if (inputNotes) inputNotes.value = '';
+  }
+
+  modal.classList.add('active');
+  setTimeout(() => inputAction?.focus(), 100);
+}
+window.openCommercialTaskModal = openCommercialTaskModal;
+
+function closeCommercialTaskModal() {
+  const modal = document.getElementById('modal-commercial-task');
+  if (modal) modal.classList.remove('active');
+}
+window.closeCommercialTaskModal = closeCommercialTaskModal;
+
+// Salvar Tarefa do Cliente
+function handleCommercialTaskSubmit(e) {
+  e.preventDefault();
+  const inputClientId = document.getElementById('comm-task-client-id');
+  const inputAction = document.getElementById('comm-task-action');
+  const inputDate = document.getElementById('comm-task-date');
+  const inputTime = document.getElementById('comm-task-time');
+  const inputNotes = document.getElementById('comm-task-notes');
+
+  const clientId = inputClientId?.value;
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client) return;
+
+  const action = (inputAction?.value || '').trim();
+  if (!action) {
+    if (typeof showToast === 'function') showToast('Por favor, informe o que precisa ser feito.', 'warning');
+    return;
+  }
+
+  const dueDate = inputDate?.value || new Date().toISOString().split('T')[0];
+  const dueTime = (inputTime?.value || '').trim();
+  const notes = (inputNotes?.value || '').trim();
+
+  // Atualiza proximo passo e tarefa estruturada
+  client.nextStep = action;
+  client.task = {
+    action: action,
+    dueDate: dueDate,
+    dueTime: dueTime,
+    notes: notes,
+    updatedAt: new Date().toISOString()
+  };
+
+  saveCommercialData();
+  closeCommercialTaskModal();
+  renderCommercialApp();
+
+  if (typeof showToast === 'function') {
+    showToast(`Tarefa marcada para "${client.name}" com sucesso!`, 'success');
+  }
+}
+
+// Atalho para preencher sugestao rapida no modal de tarefa
+function setTaskActionSuggestion(text) {
+  const inputAction = document.getElementById('comm-task-action');
+  if (inputAction) {
+    inputAction.value = text;
+    inputAction.focus();
+  }
+}
+window.setTaskActionSuggestion = setTaskActionSuggestion;
+
+// Atalho para definir data relativa no modal de tarefa
+function setTaskDateShortcut(daysToAdd) {
+  const inputDate = document.getElementById('comm-task-date');
+  if (!inputDate) return;
+  const target = new Date();
+  target.setDate(target.getDate() + daysToAdd);
+  inputDate.value = target.toISOString().split('T')[0];
+}
+window.setTaskDateShortcut = setTaskDateShortcut;
 
 // Configurar todos os eventos do Comercial
 function setupCommercialEvents() {
   // Botao "+ Novo Cliente Comercial"
   document.getElementById('btn-open-commercial-modal')?.addEventListener('click', () => openCommercialModal());
 
-  // Fechar modal
+  // Fechar modal de cliente
   document.getElementById('modal-commercial-close')?.addEventListener('click', closeCommercialModal);
   document.getElementById('btn-cancel-commercial-modal')?.addEventListener('click', closeCommercialModal);
   
-  // Clique fora do modal fecha
+  // Clique fora do modal de cliente fecha
   const modal = document.getElementById('modal-commercial-client');
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) closeCommercialModal();
@@ -1479,6 +1623,17 @@ function setupCommercialEvents() {
 
   // Submit do formulario de cliente
   document.getElementById('form-commercial-client')?.addEventListener('submit', handleCommercialSubmit);
+
+  // Eventos do Modal de Marcar Tarefa
+  document.getElementById('modal-commercial-task-close')?.addEventListener('click', closeCommercialTaskModal);
+  document.getElementById('btn-cancel-commercial-task')?.addEventListener('click', closeCommercialTaskModal);
+
+  const taskModal = document.getElementById('modal-commercial-task');
+  taskModal?.addEventListener('click', (e) => {
+    if (e.target === taskModal) closeCommercialTaskModal();
+  });
+
+  document.getElementById('form-commercial-task')?.addEventListener('submit', handleCommercialTaskSubmit);
 
   // Botoes de alternancia das sub-abas internas
   document.getElementById('btn-comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
@@ -1496,8 +1651,9 @@ function setupCommercialEvents() {
     }, 180);
   });
 
-  // Filtro de Area
-  document.getElementById('comm-filter-area')?.addEventListener('change', (e) => {
+  // Filtro de Area (suporta tanto comm-area-filter quanto comm-filter-area)
+  const areaFilter = document.getElementById('comm-area-filter') || document.getElementById('comm-filter-area');
+  areaFilter?.addEventListener('change', (e) => {
     COMMERCIAL_STATE.area = e.target.value;
     renderCommercialApp();
   });
