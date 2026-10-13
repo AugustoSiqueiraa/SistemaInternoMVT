@@ -46,7 +46,10 @@ const STATE = {
   calendarTeamFilter: 'all',
 
   // Controle Geral da Automação Anti No-Show (WhatsApp)
-  automationEnabled: localStorage.getItem('mvt_automation_enabled') !== 'false'
+  automationEnabled: localStorage.getItem('mvt_automation_enabled') !== 'false',
+
+  // Controle Geral de Conexão com a API MindChat (Instância Mind17)
+  mindchatConnected: localStorage.getItem('mvt_global_mindchat_connected') !== 'false'
 };
 
 // Pauta de Reuniões Integrada do Escritório (Leads Reais do MindChat)
@@ -347,6 +350,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Inicializar controles de visualização/exibição da tabela Anti No-Show (Proporção, Zoom e Tela)
   updateNoShowDisplayControlsUi();
+
+  // Inicializar botão e controle geral de conexão com o MindChat
+  updateGlobalMindChatButtonUi();
   
   showToast('🛡️ Modo Seguro Ativado: Monitoramento automático em tempo real.', 'info', 6000);
 });
@@ -1858,6 +1864,61 @@ function setupAutomationToggle() {
   }
 }
 
+// ========================================================
+// CONTROLE GLOBAL DE CONEXÃO COM O MINDCHAT (WHATSAPP)
+// ========================================================
+function updateGlobalMindChatButtonUi() {
+  const isConnected = STATE.mindchatConnected !== false;
+
+  // Botão no Dashboard Principal
+  const btnDash = document.getElementById('btn-global-mindchat-toggle');
+  const lblDash = document.getElementById('global-mindchat-label');
+  if (btnDash) {
+    btnDash.className = `btn-automation-toggle ${isConnected ? 'active' : 'inactive'}`;
+    btnDash.title = isConnected 
+      ? 'MindChat conectado (Instância Mind17 ativa). Clique para desconectar a API geral.' 
+      : 'MindChat desconectado (Instância Mind17 pausada). Clique para reconectar a API geral.';
+  }
+  if (lblDash) lblDash.textContent = isConnected ? 'MindChat Conectado' : 'MindChat Desconectado';
+
+  // Botão na Pauta Anti No-Show
+  const btnNoShow = document.getElementById('btn-noshow-mindchat-toggle');
+  const lblNoShow = document.getElementById('noshow-mindchat-label');
+  if (btnNoShow) {
+    btnNoShow.className = `btn-automation-toggle ${isConnected ? 'active' : 'inactive'}`;
+    btnNoShow.title = isConnected 
+      ? 'MindChat conectado. Clique para desconectar a API geral.' 
+      : 'MindChat desconectado. Clique para reconectar a API geral.';
+  }
+  if (lblNoShow) lblNoShow.textContent = isConnected ? 'MindChat Conectado' : 'MindChat Desconectado';
+
+  // Sincroniza com o botão do módulo Comercial se existente
+  if (typeof COMMERCIAL_STATE !== 'undefined') {
+    COMMERCIAL_STATE.mindchatConnected = isConnected;
+    if (typeof updateCommercialMindChatButtonUi === 'function') {
+      updateCommercialMindChatButtonUi();
+    }
+  }
+}
+window.updateGlobalMindChatButtonUi = updateGlobalMindChatButtonUi;
+
+function toggleGlobalMindChatConnection() {
+  const isConnected = STATE.mindchatConnected !== false;
+  const nextState = !isConnected;
+  STATE.mindchatConnected = nextState;
+  localStorage.setItem('mvt_global_mindchat_connected', nextState ? 'true' : 'false');
+  localStorage.setItem('mvt_commercial_mindchat_connected', nextState ? 'true' : 'false');
+
+  updateGlobalMindChatButtonUi();
+
+  if (nextState) {
+    showToast('🟢 MindChat Reconectado! Sincronização e integração com a instância Mind17 reativadas.', 'success', 3500);
+  } else {
+    showToast('🛑 MindChat Desconectado Geralmente! Toda sincronização de WhatsApp e CRM com a API foi pausada.', 'warning', 4500);
+  }
+}
+window.toggleGlobalMindChatConnection = toggleGlobalMindChatConnection;
+
 function renderActiveFilterChips() {
   const container = document.getElementById('active-filter-chips');
   if (!container) return;
@@ -2177,13 +2238,17 @@ function setupEventListeners() {
   setupFilterModal();
   updateFilterBadge();
 
-  // Barra de Pesquisa Rápida na Aba de Reuniões / Anti No-Show
+  // Barra de Pesquisa Rápida na Aba de Reuniões / Anti No-Show (com debounce para digitação instantânea)
   const meetingsSearchInput = document.getElementById('meetings-search-input');
+  let meetingsSearchTimeout = null;
   if (meetingsSearchInput) {
     meetingsSearchInput.addEventListener('input', (e) => {
       STATE.filterSearch = e.target.value;
-      renderMeetingsList();
-      renderActiveFilterChips();
+      clearTimeout(meetingsSearchTimeout);
+      meetingsSearchTimeout = setTimeout(() => {
+        renderMeetingsList();
+        renderActiveFilterChips();
+      }, 120);
     });
   }
 
@@ -2398,6 +2463,10 @@ function setupEventListeners() {
 
 // Sincronização Inteligente com MindChat (WhatsApp)
 async function syncMindChatLeads(silent = false) {
+  if (STATE.mindchatConnected === false) {
+    if (!silent) showToast('🛑 MindChat está desconectado. Clique no botão de conexão no Dashboard para reconectar antes de sincronizar.', 'warning', 4000);
+    return;
+  }
   if (!silent) showToast('⚡ Conectando com a API MindChat (Instância Mind17)...', 'info', 2500);
 
   try {

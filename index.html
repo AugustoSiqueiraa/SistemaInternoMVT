@@ -216,6 +216,11 @@
             <p class="page-sub-heading">Painel geral executivo, visão estratégica e atalhos operacionais</p>
           </div>
           <div class="page-top-actions">
+            <!-- Botão de Desconexão Geral do MindChat -->
+            <button class="btn-automation-toggle active" id="btn-global-mindchat-toggle" type="button" onclick="toggleGlobalMindChatConnection()" title="Clique para desconectar ou reconectar a integração do MindChat (WhatsApp) em todo o sistema">
+              <span class="auto-signal-dot"></span>
+              <span class="auto-toggle-label" id="global-mindchat-label">MindChat Conectado</span>
+            </button>
             <div class="dashboard-status-chip">
               <span class="status-dot green"></span>
               <span>Sistema Operacional & Nuvem Conectada</span>
@@ -355,6 +360,11 @@
             <p class="page-sub-heading">Pauta diária de atendimentos, confirmações e régua anti no-show</p>
           </div>
           <div class="page-top-actions">
+            <!-- Botão de Conexão Geral do MindChat -->
+            <button class="btn-automation-toggle active" id="btn-noshow-mindchat-toggle" type="button" onclick="toggleGlobalMindChatConnection()" title="Clique para desconectar ou reconectar a integração do MindChat (WhatsApp)">
+              <span class="auto-signal-dot"></span>
+              <span class="auto-toggle-label" id="noshow-mindchat-label">MindChat Conectado</span>
+            </button>
             <!-- Botão de Parada/Ativação da Automação Anti No-Show -->
             <button class="btn-automation-toggle active" id="btn-automation-toggle" type="button" title="Clique para pausar ou reativar o disparo automático de WhatsApp">
               <span class="auto-signal-dot"></span>

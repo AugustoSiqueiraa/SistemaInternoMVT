@@ -1381,6 +1381,14 @@ function setupCommercialMindChatToggle() {
     const nextState = !isCurrentlyConnected;
     COMMERCIAL_STATE.mindchatConnected = nextState;
     localStorage.setItem('mvt_commercial_mindchat_connected', nextState ? 'true' : 'false');
+    localStorage.setItem('mvt_global_mindchat_connected', nextState ? 'true' : 'false');
+
+    if (typeof STATE !== 'undefined') {
+      STATE.mindchatConnected = nextState;
+      if (typeof updateGlobalMindChatButtonUi === 'function') {
+        updateGlobalMindChatButtonUi();
+      }
+    }
 
     updateCommercialMindChatButtonUi();
     closeModal();
