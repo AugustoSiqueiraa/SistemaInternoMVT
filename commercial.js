@@ -1881,7 +1881,21 @@ function renderCommercialApp() {
   const subtitleEl = document.getElementById('comm-page-subtitle');
   if (titleEl && subtitleEl) {
     if (COMMERCIAL_STATE.subtab === 'fechar') {
-      titleEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e5b966" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:7px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>Prontos para Fechar</span>`;
+      titleEl.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; flex-wrap:wrap; gap:0.6rem;">
+          <div style="display:flex; align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e5b966" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:7px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>Prontos para Fechar</span>
+          </div>
+          <button type="button" class="btn-back-to-leads" onclick="setCommercialSubtab('leads')" title="Voltar para a Tabela Geral de Clientes">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Voltar para Todos os Clientes</span>
+          </button>
+        </div>
+      `;
       subtitleEl.textContent = 'Clientes qualificados em fase decisiva e prontos para fechamento de contrato';
     } else if (COMMERCIAL_STATE.subtab === 'tarefas') {
       titleEl.innerHTML = 'Tarefas';
@@ -2265,13 +2279,22 @@ function renderCommercialTable(clients) {
             ? 'Não há nenhum cliente marcado como "Pronto para Fechar" no filtro atual. Clique em "Todos os Leads & Clientes" ou cadastre um novo.' 
             : 'Tente alterar os termos da busca ou filtre por outra área.'}
         </p>
-        <button class="btn-primary" onclick="openCommercialModal()" style="margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.45rem;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <span>Cadastrar Novo Cliente Agora</span>
-        </button>
+        ${COMMERCIAL_STATE.subtab === 'fechar'
+          ? `<button class="btn-primary" onclick="setCommercialSubtab('leads')" style="margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.45rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>Voltar para a Tabela Geral de Clientes</span>
+            </button>`
+          : `<button class="btn-primary" onclick="openCommercialModal()" style="margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.45rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Cadastrar Novo Cliente Agora</span>
+            </button>`
+        }
       </div>
     `;
     return;
@@ -2397,7 +2420,7 @@ function getCommercialFecharButton(client) {
   const isFechar = Boolean(client.prontoParaFechar || client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar');
   if (isFechar) {
     return `
-      <button type="button" class="btn-table-fechar active" onclick="handleTableFecharClick('${client.id}')" title="Cliente marcado como Pronto para Fechar! Clique para ver na aba Prontos para Fechar">
+      <button type="button" class="btn-table-fechar active" onclick="handleTableFecharClick('${client.id}')" title="Marcado como Pronto para Fechar! Clique para desmarcar">
         <svg class="fechar-star-icon" width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
         </svg>
@@ -2410,13 +2433,13 @@ function getCommercialFecharButton(client) {
       <svg class="fechar-star-icon" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
       </svg>
-      <span class="fechar-btn-text">Pronto p/ Fechar</span>
+      <span class="fechar-btn-text">+ Pronto p/ Fechar</span>
     </button>
   `;
 }
 window.getCommercialFecharButton = getCommercialFecharButton;
 
-// Handler do clique em Pronto para Fechar na tabela
+// Handler do clique em Pronto para Fechar na tabela (Alternância / Toggle direta)
 function handleTableFecharClick(clientId) {
   const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
   if (!client) return;
@@ -2424,25 +2447,23 @@ function handleTableFecharClick(clientId) {
   const isAlreadyFechar = Boolean(client.prontoParaFechar || client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar');
 
   if (isAlreadyFechar) {
-    if (COMMERCIAL_STATE.subtab === 'fechar') {
-      if (confirm(`Deseja remover "${client.name}" de "Pronto para Fechar"?`)) {
-        recordCommercialUndo(`Remover "${client.name}" de Pronto para Fechar`);
-        client.prontoParaFechar = false;
-        client.status = client.originalStatus || client.tipoAtendimento || 'Follow-up';
-        saveCommercialData();
-        renderCommercialApp();
-        if (typeof showToast === 'function') {
-          showToast(`Cliente "${client.name}" removido de Prontos para Fechar.`, 'info', 2500);
-        }
-      }
-    } else {
-      // Se clicou na tabela mãe e já está pronto para fechar: navega para a aba 'fechar'
-      setCommercialSubtab('fechar');
-      if (typeof showToast === 'function') {
-        showToast(`Exibindo "${client.name}" na aba de Prontos para Fechar!`, 'success', 2500);
-      }
+    // DESMARCAR: remove imediatamente sem bloqueio por popup
+    recordCommercialUndo(`Remover "${client.name}" de Pronto para Fechar`);
+    client.prontoParaFechar = false;
+    
+    // Restaura o status original de atendimento ou 'Follow-up'
+    if (client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar') {
+      client.status = client.originalStatus || client.tipoAtendimento || 'Follow-up';
+    }
+
+    saveCommercialData();
+    renderCommercialApp();
+
+    if (typeof showToast === 'function') {
+      showToast(`⭐ Cliente "${client.name}" desmarcado de Prontos para Fechar.`, 'info', 2500);
     }
   } else {
+    // MARCAR: Adiciona a Prontos para Fechar e mantém o usuário na tela atual
     recordCommercialUndo(`Marcar "${client.name}" como Pronto para Fechar`);
     client.prontoParaFechar = true;
     if (client.status !== 'Pronto para Fechar' && client.status !== 'Prontos para Fechar') {
@@ -2450,9 +2471,10 @@ function handleTableFecharClick(clientId) {
     }
     client.status = 'Pronto para Fechar';
     saveCommercialData();
-    setCommercialSubtab('fechar');
+    renderCommercialApp();
+
     if (typeof showToast === 'function') {
-      showToast(`⭐ "${client.name}" marcado como Pronto para Fechar e aberto na aba de fechamento!`, 'success', 3200);
+      showToast(`⭐ "${client.name}" marcado como Pronto para Fechar!`, 'success', 2500);
     }
   }
 }

@@ -3737,6 +3737,38 @@ body.light-theme .comm-realtime-badge {
   color: #059669;
 }
 
+.btn-back-to-leads {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back-to-leads:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+body.light-theme .btn-back-to-leads {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+
+body.light-theme .btn-back-to-leads:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+
 
 /* ========================================================
    BOTÃO DE CONTROLE DA AUTOMAÇÃO ANTI NO-SHOW
