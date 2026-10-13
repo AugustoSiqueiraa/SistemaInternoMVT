@@ -1042,14 +1042,127 @@ function loadCommercialData() {
   saveCommercialData();
 }
 
-// Salvar dados no localStorage
-function saveCommercialData() {
+// Converte um objeto de cliente do COMMERCIAL_STATE para a linha da tabela Supabase
+function _commercialClientToRow(c) {
+  const today = new Date().toISOString().split('T')[0];
+  return {
+    id: String(c.id || ('comm-' + Date.now())),
+    name: String(c.name || 'Cliente Sem Nome'),
+    phone: String(c.phone || ''),
+    area: String(c.area || 'Trabalhista'),
+    status: String(c.status || 'Lead Novo'),
+    next_step: String(c.nextStep || 'Acompanhamento'),
+    notes: String(c.notes || ''),
+    date: c.date || today,
+    responsible: String(c.responsible || 'Augusto'),
+    pronto_para_fechar: Boolean(c.prontoParaFechar || c.status === 'Pronto para Fechar'),
+    task: c.task ? c.task : null,
+    task_history: Array.isArray(c.taskHistory) ? c.taskHistory : [],
+    updated_at: new Date().toISOString()
+  };
+}
+
+// Converte uma linha do banco Supabase para o formato do COMMERCIAL_STATE
+function _rowToCommercialClient(row) {
+  const client = {
+    id: String(row.id),
+    name: String(row.name || ''),
+    phone: String(row.phone || ''),
+    area: String(row.area || 'Trabalhista'),
+    status: String(row.status || 'Lead Novo'),
+    nextStep: String(row.next_step || 'Acompanhamento'),
+    notes: String(row.notes || ''),
+    date: row.date ? String(row.date) : new Date().toISOString().split('T')[0],
+    responsible: String(row.responsible || 'Augusto'),
+    prontoParaFechar: Boolean(row.pronto_para_fechar),
+    task: row.task || null,
+    taskHistory: Array.isArray(row.task_history) ? row.task_history : []
+  };
+  return sanitizeCommercialClient(client);
+}
+
+let _saveCommercialSupabaseTimeout = null;
+
+// Salvar dados no localStorage e sincronizar em nuvem no Supabase
+function saveCommercialData(skipCloud = false) {
   try {
     localStorage.setItem('mvt_commercial_clients', JSON.stringify(COMMERCIAL_STATE.clients));
   } catch (e) {
-    console.warn('Erro ao salvar clientes comerciais:', e);
+    console.warn('Erro ao salvar clientes comerciais no localStorage:', e);
   }
+
+  if (skipCloud) return;
+
+  // Sincronização em nuvem assíncrona com debounce
+  if (_saveCommercialSupabaseTimeout) {
+    clearTimeout(_saveCommercialSupabaseTimeout);
+  }
+  _saveCommercialSupabaseTimeout = setTimeout(async () => {
+    try {
+      const getSb = window.getSupabaseClient;
+      const sb = typeof getSb === 'function' ? getSb() : null;
+      if (!sb) return;
+
+      const rows = COMMERCIAL_STATE.clients.map(_commercialClientToRow);
+      if (rows.length > 0) {
+        const { error } = await sb.from('clientes_comercial').upsert(rows, { onConflict: 'id' });
+        if (error) {
+          console.warn('⚠️ Erro ao persistir clientes no Supabase:', error.message);
+        } else {
+          console.log(`☁️ ${rows.length} clientes da Planilha Comercial sincronizados na nuvem Supabase!`);
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Falha ao salvar comercial no Supabase (não bloqueante):', err);
+    }
+  }, 400);
 }
+
+// Sincronizar clientes da Planilha Comercial com a nuvem Supabase
+async function syncCommercialWithSupabase() {
+  const getSb = window.getSupabaseClient;
+  const sb = typeof getSb === 'function' ? getSb() : null;
+  if (!sb) return false;
+
+  try {
+    const { data, error } = await sb
+      .from('clientes_comercial')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      const cloudClients = data.map(_rowToCommercialClient);
+      
+      // Preserva quaisquer novos clientes locais criados offline
+      const cloudIds = new Set(cloudClients.map(c => c.id));
+      const localUnsynced = (COMMERCIAL_STATE.clients || []).filter(c => c && c.id && !cloudIds.has(c.id));
+      
+      COMMERCIAL_STATE.clients = [...localUnsynced, ...cloudClients];
+      localStorage.setItem('mvt_commercial_clients', JSON.stringify(COMMERCIAL_STATE.clients));
+      
+      if (typeof renderCommercialApp === 'function') {
+        renderCommercialApp();
+      }
+      console.log(`☁️ ${COMMERCIAL_STATE.clients.length} clientes carregados e sincronizados com a nuvem Supabase!`);
+      return true;
+    } else {
+      // Se a tabela na nuvem estiver vazia pela primeira vez, sobe a base existente
+      if (COMMERCIAL_STATE.clients && COMMERCIAL_STATE.clients.length > 0) {
+        console.log('☁️ Base comercial do Supabase vazia. Enviando clientes atuais para a nuvem...');
+        const rows = COMMERCIAL_STATE.clients.map(_commercialClientToRow);
+        await sb.from('clientes_comercial').upsert(rows, { onConflict: 'id' });
+        console.log('✅ Clientes da planilha comercial inicializados na nuvem Supabase!');
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Não foi possível sincronizar comercial com Supabase (offline/modo local):', err);
+  }
+  return false;
+}
+window.syncCommercialWithSupabase = syncCommercialWithSupabase;
+
 
 // ========================================================
 // CONTROLES DE DISPOSIÇÃO & ZOOM DA TABELA COMERCIAL
@@ -2489,6 +2602,21 @@ function confirmExecuteDeleteClient() {
   recordCommercialUndo(`Exclusão do cliente "${client.name}"`);
   COMMERCIAL_STATE.clients = COMMERCIAL_STATE.clients.filter(c => c.id !== client.id);
   saveCommercialData();
+
+  // Excluir também na nuvem Supabase
+  try {
+    const getSb = window.getSupabaseClient;
+    const sb = typeof getSb === 'function' ? getSb() : null;
+    if (sb && client.id) {
+      sb.from('clientes_comercial').delete().eq('id', client.id).then(({ error }) => {
+        if (error) console.warn('Erro ao deletar cliente comercial do Supabase:', error);
+        else console.log(`☁️ Cliente ${client.id} (${client.name}) removido da nuvem Supabase.`);
+      });
+    }
+  } catch (err) {
+    console.warn('Erro ao disparar exclusão no Supabase:', err);
+  }
+
   closeDeleteClientModal();
   renderCommercialApp();
 

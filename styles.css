@@ -4494,7 +4494,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-table-header-row {
   display: grid;
-  grid-template-columns: 74px minmax(110px, 1.15fr) 98px 110px minmax(130px, 1.25fr) 130px 145px 128px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 110px minmax(135px, 1.25fr) 135px 225px 130px;
   gap: 0.45rem;
   padding: 0.7rem 0.85rem;
   background: rgba(0, 0, 0, 0.35);
@@ -4504,7 +4504,7 @@ body.light-theme .comm-quick-add-title {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   text-transform: uppercase;
-  min-width: 930px;
+  min-width: 1045px;
   align-items: center;
   box-sizing: border-box;
 }
@@ -4516,13 +4516,13 @@ body.light-theme .comm-quick-add-title {
 
 .comm-lead-row {
   display: grid;
-  grid-template-columns: 74px minmax(110px, 1.15fr) 98px 110px minmax(130px, 1.25fr) 130px 145px 128px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 110px minmax(135px, 1.25fr) 135px 225px 130px;
   gap: 0.45rem;
   padding: 0.8rem 0.85rem;
   border-bottom: 1px solid var(--border-subtle);
   align-items: center;
   transition: background var(--transition-fast);
-  min-width: 930px;
+  min-width: 1045px;
   box-sizing: border-box;
 }
 

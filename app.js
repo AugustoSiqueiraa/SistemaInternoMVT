@@ -154,6 +154,7 @@ function getSupabaseClient() {
   }
   return null;
 }
+window.getSupabaseClient = getSupabaseClient;
 
 // Converte um objeto de reunião do STATE para o formato da tabela Supabase
 function _meetingToRow(m) {
@@ -353,6 +354,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Inicializar botão e controle geral de conexão com o MindChat
   updateGlobalMindChatButtonUi();
+
+  // Sincronizar clientes da Planilha Comercial com a nuvem Supabase
+  if (typeof syncCommercialWithSupabase === 'function') {
+    syncCommercialWithSupabase();
+  }
   
   showToast('🛡️ Modo Seguro Ativado: Monitoramento automático em tempo real.', 'info', 6000);
 });
@@ -371,7 +377,18 @@ function setupSupabaseRealtime() {
         showToast('⚡ Painel atualizado em tempo real!', 'info', 2500);
       })
       .subscribe();
-    console.log('⚡ Canal em tempo real do Supabase conectado!');
+    console.log('⚡ Canal em tempo real de reuniões conectado!');
+
+    client
+      .channel('comercial-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes_comercial' }, async (payload) => {
+        console.log('⚡ Atualização da Planilha Comercial recebida do Supabase:', payload);
+        if (typeof syncCommercialWithSupabase === 'function') {
+          await syncCommercialWithSupabase();
+        }
+      })
+      .subscribe();
+    console.log('⚡ Canal em tempo real da Planilha Comercial conectado!');
   } catch (err) {
     console.warn('Realtime subscription error:', err);
   }
