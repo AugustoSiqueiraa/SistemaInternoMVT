@@ -3701,6 +3701,43 @@ body.light-theme .filter-results-counter-pill.is-filtered {
   color: #0284c7;
 }
 
+.comm-realtime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.38rem 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #10b981;
+  user-select: none;
+  transition: all 0.25s ease;
+}
+
+.realtime-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+  animation: pulse-live-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-live-dot {
+  0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.18); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+body.light-theme .comm-realtime-badge {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #059669;
+}
+
+
 /* ========================================================
    BOTÃO DE CONTROLE DA AUTOMAÇÃO ANTI NO-SHOW
    ======================================================== */

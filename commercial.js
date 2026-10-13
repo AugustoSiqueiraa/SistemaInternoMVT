@@ -1102,6 +1102,8 @@ function mergeCommercialClients(localClients, cloudClients) {
 }
 
 let _saveCommercialSupabaseTimeout = null;
+let _lastCommercialSnapshotId = null;
+let _commercialSyncInterval = null;
 
 // Salvar dados no localStorage e sincronizar em nuvem no Supabase
 function saveCommercialData(skipCloud = false) {
@@ -1113,7 +1115,7 @@ function saveCommercialData(skipCloud = false) {
 
   if (skipCloud) return;
 
-  // Sincronização em nuvem assíncrona com debounce (400ms)
+  // Sincronização em nuvem assíncrona com debounce (350ms)
   if (_saveCommercialSupabaseTimeout) {
     clearTimeout(_saveCommercialSupabaseTimeout);
   }
@@ -1152,6 +1154,9 @@ function saveCommercialData(skipCloud = false) {
         if (insertErr) {
           console.warn('⚠️ Falha ao salvar snapshot comercial no Supabase:', insertErr.message);
         } else {
+          if (inserted && inserted[0]?.id) {
+            _lastCommercialSnapshotId = inserted[0].id;
+          }
           console.log(`☁️ Planilha Comercial sincronizada em nuvem via Supabase (${COMMERCIAL_STATE.clients.length} clientes)!`);
           // Limpa snapshots antigos para manter a tabela leve
           if (inserted && inserted[0]?.id) {
@@ -1166,11 +1171,11 @@ function saveCommercialData(skipCloud = false) {
     } catch (err) {
       console.warn('⚠️ Falha ao salvar comercial no Supabase (não bloqueante):', err);
     }
-  }, 400);
+  }, 350);
 }
 
-// Sincronizar clientes da Planilha Comercial com a nuvem Supabase
-async function syncCommercialWithSupabase() {
+// Sincronizar clientes da Planilha Comercial com a nuvem Supabase (Tempo Real)
+async function syncCommercialWithSupabase(force = false) {
   const getSb = window.getSupabaseClient;
   const sb = typeof getSb === 'function' ? getSb() : null;
   if (!sb) return false;
@@ -1200,10 +1205,18 @@ async function syncCommercialWithSupabase() {
         .limit(1);
 
       if (!eventErr && eventData && eventData.length > 0 && eventData[0].descricao) {
+        const foundId = eventData[0].id;
+
+        // Se já estamos com o snapshot mais recente na tela e não é chamada forçada, encerra sem reprocessamento
+        if (!force && _lastCommercialSnapshotId && _lastCommercialSnapshotId === foundId) {
+          return true;
+        }
+
         try {
           const parsed = JSON.parse(eventData[0].descricao);
           if (Array.isArray(parsed) && parsed.length > 0) {
             cloudLoadedClients = parsed.map(sanitizeCommercialClient);
+            _lastCommercialSnapshotId = foundId;
           }
         } catch (pe) {
           console.warn('Erro ao decodificar JSON do snapshot comercial:', pe);
@@ -1234,6 +1247,27 @@ async function syncCommercialWithSupabase() {
   return false;
 }
 window.syncCommercialWithSupabase = syncCommercialWithSupabase;
+
+// Inicia escuta contínua para sincronização automática em tempo real entre todos os computadores/navegadores
+function startCommercialRealtimeMonitoring() {
+  if (_commercialSyncInterval) clearInterval(_commercialSyncInterval);
+
+  // Monitora alterações a cada 3.5 segundos em segundo plano (ultra leve)
+  _commercialSyncInterval = setInterval(() => {
+    syncCommercialWithSupabase(false);
+  }, 3500);
+
+  // Atualização instantânea ao clicar na tela, alternar ou focar a janela
+  window.addEventListener('focus', () => {
+    syncCommercialWithSupabase(true);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      syncCommercialWithSupabase(true);
+    }
+  });
+}
+window.startCommercialRealtimeMonitoring = startCommercialRealtimeMonitoring;
 
 
 // ========================================================
@@ -3950,4 +3984,5 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCommercialEvents();
   updateCommercialMindChatButtonUi();
   renderCommercialApp();
+  startCommercialRealtimeMonitoring();
 });
