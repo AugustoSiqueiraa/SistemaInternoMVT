@@ -1084,9 +1084,9 @@
             </div>
             <div class="cadence-timeline-connector"></div>
             <div class="cadence-timeline-step" id="timeline-step-4">
-              <span class="cadence-time-tag emerald" id="tag-cadence-step4">No Horário</span>
+              <span class="cadence-time-tag emerald" id="tag-cadence-step4">10m antes</span>
               <span class="cadence-dot emerald"></span>
-              <span class="cadence-desc">4º: Google Meet</span>
+              <span class="cadence-desc">4º: Pré-Sala & Meet</span>
             </div>
             <div class="cadence-timeline-connector"></div>
             <div class="cadence-timeline-step" id="timeline-step-5">
@@ -1131,7 +1131,7 @@
                 <span class="step-badge amber">2</span>
                 <div>
                   <h4 class="cadence-card-title">2º Disparo (Reforço)</h4>
-                  <span class="cadence-card-hint">Dispara se ainda não confirmou</span>
+                  <span class="cadence-card-hint">Opcional: dispara se ainda não confirmou</span>
                 </div>
               </div>
               <div class="cadence-field-row">
@@ -1144,7 +1144,7 @@
               </div>
               <div class="cadence-toggle-row">
                 <label class="theme-switch" style="width:36px; height:20px;">
-                  <input type="checkbox" id="cadence-enable-step2" checked>
+                  <input type="checkbox" id="cadence-enable-step2">
                   <span class="theme-switch-slider"></span>
                 </label>
                 <span class="cadence-toggle-text">Disparo Ativo</span>
@@ -1157,7 +1157,7 @@
                 <span class="step-badge rose">3</span>
                 <div>
                   <h4 class="cadence-card-title">3º Disparo (Última Chamada)</h4>
-                  <span class="cadence-card-hint">Aviso imediato pré-sala</span>
+                  <span class="cadence-card-hint">Opcional: aviso de urgência se pendente</span>
                 </div>
               </div>
               <div class="cadence-field-row">
@@ -1171,7 +1171,7 @@
               </div>
               <div class="cadence-toggle-row">
                 <label class="theme-switch" style="width:36px; height:20px;">
-                  <input type="checkbox" id="cadence-enable-step3" checked>
+                  <input type="checkbox" id="cadence-enable-step3">
                   <span class="theme-switch-slider"></span>
                 </label>
                 <span class="cadence-toggle-text">Disparo Ativo</span>
@@ -1183,16 +1183,17 @@
               <div class="cadence-card-header">
                 <span class="step-badge emerald">4</span>
                 <div>
-                  <h4 class="cadence-card-title">4º Disparo (Google Meet)</h4>
-                  <span class="cadence-card-hint">Link oficial de entrada na reunião</span>
+                  <h4 class="cadence-card-title">4º Disparo (Pré-Sala & Google Meet)</h4>
+                  <span class="cadence-card-hint">Link oficial antecipado para teste de áudio</span>
                 </div>
               </div>
               <div class="cadence-field-row">
                 <label class="cadence-field-label" for="cadence-interval-step4">Momento:</label>
                 <select id="cadence-interval-step4" class="clean-select cadence-select">
-                  <option value="0" selected>No Horário Exato (0 min) - Padrão</option>
-                  <option value="2">2 Minutos antes</option>
+                  <option value="10" selected>10 Minutos antes (Recomendado)</option>
+                  <option value="15">15 Minutos antes</option>
                   <option value="5">5 Minutos antes</option>
+                  <option value="0">No Horário Exato (0 min)</option>
                 </select>
               </div>
               <div class="cadence-toggle-row">
@@ -1247,20 +1248,24 @@
               <textarea id="template-alert-60m" class="clean-textarea" rows="3"></textarea>
             </div>
             <div class="template-box">
-              <div class="template-header"><span class="step-badge amber">2</span><strong>Faltando 30 Minutos (Reforço)</strong></div>
+              <div class="template-header"><span class="step-badge amber">2</span><strong>Faltando 30 Minutos (Reforço Opcional)</strong></div>
               <textarea id="template-alert-30m" class="clean-textarea" rows="3"></textarea>
             </div>
             <div class="template-box">
-              <div class="template-header"><span class="step-badge rose">3</span><strong>Faltando 15 Minutos (Última Chamada)</strong></div>
+              <div class="template-header"><span class="step-badge rose">3</span><strong>Faltando 15 Minutos (Última Chamada Opcional)</strong></div>
               <textarea id="template-alert-15m" class="clean-textarea" rows="3"></textarea>
             </div>
             <div class="template-box">
-              <div class="template-header"><span class="step-badge emerald">4</span><strong>No Horário — Link do Google Meet</strong></div>
+              <div class="template-header"><span class="step-badge emerald">4</span><strong>Faltando 10 Minutos — Pré-Sala & Google Meet</strong></div>
               <textarea id="template-alert-0m" class="clean-textarea" rows="3"></textarea>
             </div>
-            <div class="template-box full-width">
+            <div class="template-box">
+              <div class="template-header"><span class="step-badge amber">⚡</span><strong>Agendamento Imediato (<45m de Antecedência)</strong></div>
+              <textarea id="template-alert-imediato" class="clean-textarea" rows="3"></textarea>
+            </div>
+            <div class="template-box">
               <div class="template-header"><span class="step-badge rose">⚠️</span><strong>Pós-Reunião: 1h Após Falta (NO-SHOW)</strong></div>
-              <textarea id="template-noshow-1h" class="clean-textarea" rows="2"></textarea>
+              <textarea id="template-noshow-1h" class="clean-textarea" rows="3"></textarea>
             </div>
           </div>
         </div>

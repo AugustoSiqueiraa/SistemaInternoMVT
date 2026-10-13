@@ -20,10 +20,11 @@ window.CONFIG = {
 
   // Templates de Mensagens Pré-estabelecidos
   MESSAGE_TEMPLATES: {
-    ALERT_60M: "Olá, {cliente}! Aqui é da equipe do MVT Advogados. Passando para lembrar que sua reunião com {advogado} está agendada para hoje às {horario}. Por gentileza, responda esta mensagem confirmando sua presença.",
+    ALERT_60M: "Olá, {cliente}! Aqui é da equipe do MVT Advogados. Passando para lembrar que sua reunião com {advogado} está agendada para hoje às {horario}. O advogado já separou a análise prévia do seu caso. Por gentileza, responda esta mensagem confirmando sua presença.",
     ALERT_30M: "Olá, {cliente}! Faltam 30 minutos para sua reunião com {advogado} às {horario}. Já estamos organizando seu atendimento.",
     ALERT_15M: "Olá, {cliente}! Em 15 minutos daremos início ao seu atendimento com {advogado}. Esteja pronto(a)!",
-    ALERT_0M: "Olá, {cliente}! Chegou o horário da sua reunião com {advogado}.\n\n🔗 Segue o link de acesso ao Google Meet:\n{meet_link}\n\nO advogado já está aguardando você na sala!",
+    ALERT_0M: "Olá, {cliente}! Faltam 10 minutos para sua reunião com {advogado} às {horario}.\n\n🔗 Segue seu link de acesso à sala do Google Meet:\n{meet_link}\n\nVocê já pode entrar para testar câmera e áudio. O advogado entrará pontualmente às {horario}!",
+    ALERT_IMEDIATO: "Olá, {cliente}! Seu atendimento com {advogado} está confirmado para hoje às {horario}.\n\n🔗 Como nosso horário está próximo, segue diretamente o link de acesso ao Google Meet:\n{meet_link}\n\nO advogado aguarda você na sala!",
     NO_SHOW_1H: "Olá, {cliente}. Notamos que você não conseguiu comparecer à reunião agendada para hoje às {horario}. Nossa equipe comercial entrará em contato para verificar se deseja reagendar um novo horário com a nossa equipe."
   },
 

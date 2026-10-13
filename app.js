@@ -435,10 +435,12 @@ function loadStoredData() {
   const savedTemplates = localStorage.getItem('mvt_templates');
   if (savedTemplates) {
     try {
-      STATE.templates = JSON.parse(savedTemplates);
+      STATE.templates = { ...CONFIG.MESSAGE_TEMPLATES, ...JSON.parse(savedTemplates) };
     } catch {
       STATE.templates = { ...CONFIG.MESSAGE_TEMPLATES };
     }
+  } else {
+    STATE.templates = { ...CONFIG.MESSAGE_TEMPLATES };
   }
 }
 
@@ -600,6 +602,8 @@ function renderMeetingsList() {
   // Ordena por horário
   filtered.sort((a, b) => a.time.localeCompare(b.time));
 
+  const cadence = getCadenceConfig();
+
   filtered.forEach(meeting => {
     const row = document.createElement('div');
     row.className = `meeting-row status-${meeting.status}`;
@@ -627,8 +631,9 @@ function renderMeetingsList() {
       countdownPillHtml = `<span class="countdown-pill"><span class="pill-dot dot-muted"></span>Encerrada</span>`;
     }
 
-    const p = meeting.pipeline;
+    const p = meeting.pipeline || { alert60m: {}, alert30m: {}, alert15m: {}, alert0m: {} };
     const isConfirmed = meeting.status === 'confirmed';
+    const isImmediate = Boolean(p.alertImmediate?.sent);
 
     row.innerHTML = `
       <!-- Coluna 1: Horário -->
@@ -666,10 +671,17 @@ function renderMeetingsList() {
 
       <!-- Coluna 5: Régua Anti No-Show (Mini Passos) -->
       <div class="pipeline-cell">
-        <div class="pipe-step ${p.alert60m.sent ? 'sent' : ''}" title="Alerta 1h">1h</div>
-        <div class="pipe-step ${isConfirmed ? 'skipped' : (p.alert30m.sent ? 'sent' : '')}" title="Alerta 30m">30m</div>
-        <div class="pipe-step ${isConfirmed ? 'skipped' : (p.alert15m.sent ? 'sent' : '')}" title="Alerta 15m">15m</div>
-        <div class="pipe-step ${p.alert0m.sent ? 'confirmed' : ''}" title="Google Meet">Meet</div>
+        ${isImmediate ? `
+          <div class="pipe-step sent" title="Agendamento Imediato (<45m)">Imed</div>
+          <div class="pipe-step skipped" title="Passo intermediário dispensado">—</div>
+          <div class="pipe-step skipped" title="Passo intermediário dispensado">—</div>
+          <div class="pipe-step confirmed" title="Link do Google Meet Entregue">Meet</div>
+        ` : `
+          <div class="pipe-step ${p.alert60m?.sent ? 'sent' : ''}" title="Alerta 1h (Confirmação)">1h</div>
+          <div class="pipe-step ${isConfirmed || !cadence.step2.enabled ? 'skipped' : (p.alert30m?.sent ? 'sent' : '')}" title="${!cadence.step2.enabled ? 'Dispensado na cadência' : 'Alerta 30m'}">${!cadence.step2.enabled ? '—' : '30m'}</div>
+          <div class="pipe-step ${isConfirmed || !cadence.step3.enabled ? 'skipped' : (p.alert15m?.sent ? 'sent' : '')}" title="${!cadence.step3.enabled ? 'Dispensado na cadência' : 'Alerta 15m'}">${!cadence.step3.enabled ? '—' : '15m'}</div>
+          <div class="pipe-step ${p.alert0m?.sent ? 'confirmed' : ''}" title="${cadence.step4.interval > 0 ? `Pré-sala & Meet (${cadence.step4.interval}m antes)` : 'Google Meet'}">Meet</div>
+        `}
       </div>
 
       <!-- Coluna 6: Vídeo Chamada (Coluna Dedicada com Link do Google Meet) -->
@@ -1486,11 +1498,13 @@ function openPreviewModal(meeting) {
 
 // Atualização dos Campos da Aba Templates
 function populateTemplateFields() {
-  document.getElementById('template-alert-60m').value = STATE.templates.ALERT_60M;
-  document.getElementById('template-alert-30m').value = STATE.templates.ALERT_30M;
-  document.getElementById('template-alert-15m').value = STATE.templates.ALERT_15M;
-  document.getElementById('template-alert-0m').value = STATE.templates.ALERT_0M;
-  document.getElementById('template-noshow-1h').value = STATE.templates.NO_SHOW_1H;
+  document.getElementById('template-alert-60m').value = STATE.templates.ALERT_60M || '';
+  document.getElementById('template-alert-30m').value = STATE.templates.ALERT_30M || '';
+  document.getElementById('template-alert-15m').value = STATE.templates.ALERT_15M || '';
+  document.getElementById('template-alert-0m').value = STATE.templates.ALERT_0M || '';
+  const im = document.getElementById('template-alert-imediato');
+  if (im) im.value = STATE.templates.ALERT_IMEDIATO || CONFIG.MESSAGE_TEMPLATES.ALERT_IMEDIATO || '';
+  document.getElementById('template-noshow-1h').value = STATE.templates.NO_SHOW_1H || '';
 }
 
 // Atualização dos Campos da Aba Integração
@@ -1523,17 +1537,24 @@ function setupSimulationClock() {
 // CONTROLE DE CADÊNCIA DE HORÁRIOS (RÉGUA ANTI NO-SHOW)
 // ========================================================
 const DEFAULT_CADENCE_CONFIG = {
-  step1: { interval: 60, enabled: true },
-  step2: { interval: 30, enabled: true },
-  step3: { interval: 15, enabled: true },
-  step4: { interval: 0, enabled: true },
-  step5: { interval: 60, enabled: true }
+  step1: { interval: 60, enabled: true },   // 1º: Confirmação ativa (1h antes)
+  step2: { interval: 30, enabled: false },  // 2º: Reforço (desativado por padrão para evitar spam)
+  step3: { interval: 15, enabled: false },  // 3º: Urgência (desativado por padrão para evitar spam)
+  step4: { interval: 10, enabled: true },   // 4º: Pré-Sala & Google Meet (10m antes - Recomendado!)
+  step5: { interval: 60, enabled: true }    // 5º: Tolerância No-Show (60m após)
 };
 
 function getCadenceConfig() {
   try {
     const saved = localStorage.getItem('mvt_cadence_settings');
-    if (saved) return { ...DEFAULT_CADENCE_CONFIG, ...JSON.parse(saved) };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Migração suave: se a configuração ainda tinha 0min na etapa 4, eleva para o padrão de pré-sala (10m)
+      if (parsed.step4 && parsed.step4.interval === 0) {
+        parsed.step4.interval = 10;
+      }
+      return { ...DEFAULT_CADENCE_CONFIG, ...parsed };
+    }
   } catch (e) {}
   return { ...DEFAULT_CADENCE_CONFIG };
 }
@@ -1551,8 +1572,8 @@ function updateCadenceTimelineUi(cfg) {
   const t5 = document.getElementById('tag-cadence-step5');
 
   if (t1) t1.textContent = cfg.step1.enabled ? `${cfg.step1.interval}m antes` : 'Pausado';
-  if (t2) t2.textContent = cfg.step2.enabled ? `${cfg.step2.interval}m antes` : 'Pausado';
-  if (t3) t3.textContent = cfg.step3.enabled ? `${cfg.step3.interval}m antes` : 'Pausado';
+  if (t2) t2.textContent = cfg.step2.enabled ? `${cfg.step2.interval}m antes` : 'Dispensado';
+  if (t3) t3.textContent = cfg.step3.enabled ? `${cfg.step3.interval}m antes` : 'Dispensado';
   if (t4) t4.textContent = cfg.step4.enabled ? (cfg.step4.interval === 0 ? 'No Horário' : `${cfg.step4.interval}m antes`) : 'Pausado';
   if (t5) t5.textContent = cfg.step5.enabled ? `${cfg.step5.interval}m após` : 'Pausado';
 }
@@ -1588,7 +1609,7 @@ function setupCadenceControls() {
     step1: { interval: Number(s1?.value || 60), enabled: Boolean(e1?.checked) },
     step2: { interval: Number(s2?.value || 30), enabled: Boolean(e2?.checked) },
     step3: { interval: Number(s3?.value || 15), enabled: Boolean(e3?.checked) },
-    step4: { interval: Number(s4?.value || 0), enabled: Boolean(e4?.checked) },
+    step4: { interval: Number(s4?.value || 10), enabled: Boolean(e4?.checked) },
     step5: { interval: Number(s5?.value || 60), enabled: Boolean(e5?.checked) }
   });
 
@@ -1620,51 +1641,93 @@ function checkAutomatedTriggers(now) {
   STATE.meetings.forEach(meeting => {
     if (meeting.status === 'noshow') return;
 
+    if (!meeting.pipeline) {
+      meeting.pipeline = {
+        alert60m: { sent: false, sentAt: null },
+        alert30m: { sent: false, sentAt: null },
+        alert15m: { sent: false, sentAt: null },
+        alert0m: { sent: false, sentAt: null },
+        alertImmediate: { sent: false, sentAt: null },
+        noShowAlert: { sent: false, sentAt: null }
+      };
+    }
+
     const [mH, mM] = meeting.time.split(':').map(Number);
     const meetingDate = new Date(now);
     meetingDate.setHours(mH, mM, 0, 0);
 
     const diffMinutes = Math.round((meetingDate - now) / 60000);
 
-    // 1º Disparo (Confirmação)
-    if (cadence.step1.enabled && diffMinutes <= cadence.step1.interval && diffMinutes > cadence.step2.interval && !meeting.pipeline.alert60m.sent) {
+    // 0. AGENDAMENTO IMEDIATO / CURTA DURAÇÃO (< 45 minutos da reunião)
+    // Se a reunião foi criada/agendada para daqui a menos de 45 minutos e ainda não teve disparo:
+    // Dispara notificação imediata contendo confirmação e o link do Meet direto!
+    const isShortNotice = diffMinutes <= 45 && diffMinutes > 0;
+    const hasSentAnyAlert = Boolean(meeting.pipeline?.alertImmediate?.sent || meeting.pipeline?.alert60m?.sent || meeting.pipeline?.alert0m?.sent);
+
+    if (isShortNotice && !hasSentAnyAlert) {
+      const nowTimeStr = new Date().toLocaleTimeString().slice(0, 5);
+      meeting.pipeline.alertImmediate = { sent: true, sentAt: nowTimeStr };
+      meeting.pipeline.alert60m = { sent: true, sentAt: nowTimeStr };
+      meeting.pipeline.alert0m = { sent: true, sentAt: nowTimeStr };
+      saveSingleMeeting(meeting);
+      logEvent('AGENDAMENTO_IMEDIATO', meeting, `Agendamento de última hora (${diffMinutes}m restantes): Confirmação e link do Google Meet entregues.`);
+      showToast(`⚡ Agendamento Imediato: Link da sala e confirmação enviados para ${meeting.clientName}!`, 'success', 5000);
+      renderApp();
+      return;
+    }
+
+    // 1º Disparo (Confirmação 1h antes)
+    const meetInterval = cadence.step4.enabled ? cadence.step4.interval : 0;
+    if (cadence.step1.enabled && !meeting.pipeline.alert60m?.sent && diffMinutes <= cadence.step1.interval && diffMinutes > meetInterval) {
       meeting.pipeline.alert60m.sent = true;
-      meeting.pipeline.alert60m.sentAt = meeting.time;
-      saveMeetings();
-      showToast(`🟡 Alerta de ${cadence.step1.interval}m disparado para ${meeting.clientName}!`, 'warning');
+      meeting.pipeline.alert60m.sentAt = new Date().toLocaleTimeString().slice(0, 5);
+      saveSingleMeeting(meeting);
+      logEvent('ALERTA_60M', meeting, `Pedido de confirmação de presença (${cadence.step1.interval}m antes) disparado`);
+      showToast(`🟡 Confirmação (${cadence.step1.interval}m antes) disparada para ${meeting.clientName}!`, 'warning', 3500);
+      renderMeetingsList();
     }
 
-    // 2º Disparo (Reforço se não confirmado)
-    if (cadence.step2.enabled && diffMinutes <= cadence.step2.interval && diffMinutes > cadence.step3.interval && !meeting.pipeline.alert30m.sent && meeting.status !== 'confirmed') {
+    // 2º Disparo (Reforço se habilitado e não confirmado)
+    const nextLimit2 = cadence.step3.enabled ? cadence.step3.interval : meetInterval;
+    if (cadence.step2.enabled && meeting.status !== 'confirmed' && !meeting.pipeline.alert30m?.sent && diffMinutes <= cadence.step2.interval && diffMinutes > nextLimit2) {
       meeting.pipeline.alert30m.sent = true;
-      meeting.pipeline.alert30m.sentAt = meeting.time;
-      saveMeetings();
-      showToast(`🟠 Reforço de ${cadence.step2.interval}m disparado para ${meeting.clientName}!`, 'warning');
+      meeting.pipeline.alert30m.sentAt = new Date().toLocaleTimeString().slice(0, 5);
+      saveSingleMeeting(meeting);
+      logEvent('ALERTA_30M', meeting, `Lembrete de reforço (${cadence.step2.interval}m antes) disparado`);
+      showToast(`🟠 Reforço de ${cadence.step2.interval}m disparado para ${meeting.clientName}!`, 'warning', 3000);
+      renderMeetingsList();
     }
 
-    // 3º Disparo (Última Chamada se não confirmado)
-    if (cadence.step3.enabled && diffMinutes <= cadence.step3.interval && diffMinutes > 0 && !meeting.pipeline.alert15m.sent && meeting.status !== 'confirmed') {
+    // 3º Disparo (Última Chamada se habilitada e não confirmada)
+    if (cadence.step3.enabled && meeting.status !== 'confirmed' && !meeting.pipeline.alert15m?.sent && diffMinutes <= cadence.step3.interval && diffMinutes > meetInterval) {
       meeting.pipeline.alert15m.sent = true;
-      meeting.pipeline.alert15m.sentAt = meeting.time;
-      saveMeetings();
-      showToast(`🔴 Última chamada de ${cadence.step3.interval}m disparada para ${meeting.clientName}!`, 'danger');
+      meeting.pipeline.alert15m.sentAt = new Date().toLocaleTimeString().slice(0, 5);
+      saveSingleMeeting(meeting);
+      logEvent('ALERTA_15M', meeting, `Última chamada (${cadence.step3.interval}m antes) disparada`);
+      showToast(`🔴 Última chamada de ${cadence.step3.interval}m disparada para ${meeting.clientName}!`, 'danger', 3000);
+      renderMeetingsList();
     }
 
-    // 4º Disparo (Link do Google Meet)
-    if (cadence.step4.enabled && diffMinutes <= cadence.step4.interval && diffMinutes > -30 && !meeting.pipeline.alert0m.sent) {
+    // 4º Disparo (Pré-Sala & Google Meet — 10m antes por padrão!)
+    if (cadence.step4.enabled && !meeting.pipeline.alert0m?.sent && diffMinutes <= cadence.step4.interval && diffMinutes > -20) {
       meeting.pipeline.alert0m.sent = true;
-      meeting.pipeline.alert0m.sentAt = meeting.time;
-      saveMeetings();
-      showToast(`🚀 Horário da Reunião! Link do Meet enviado para ${meeting.clientName}!`, 'success');
+      meeting.pipeline.alert0m.sentAt = new Date().toLocaleTimeString().slice(0, 5);
+      saveSingleMeeting(meeting);
+      logEvent('ENVIO_MEET', meeting, `Pré-sala liberada: Link do Google Meet enviado ${cadence.step4.interval}m antes`);
+      showToast(`🚀 Pré-Sala Liberada! Link do Meet enviado para ${meeting.clientName} (${cadence.step4.interval}m antes)!`, 'success', 4500);
+      renderMeetingsList();
     }
 
     // 5º Disparo (Tolerância pós-falta / NO SHOW automático)
     if (cadence.step5.enabled && diffMinutes <= -cadence.step5.interval && meeting.status !== 'confirmed' && meeting.status !== 'noshow') {
       meeting.status = 'noshow';
       meeting.pipeline.noShowAlert.sent = true;
-      saveMeetings();
+      meeting.pipeline.noShowAlert.sentAt = new Date().toLocaleTimeString().slice(0, 5);
+      saveSingleMeeting(meeting);
+      logEvent('NO_SHOW_AUTOMATICO', meeting, `Tolerância de ${cadence.step5.interval}m esgotada. Declarado No-Show.`);
       showToast(`⚠️ NO-SHOW DETECTADO: ${meeting.clientName} não compareceu após ${cadence.step5.interval}m. Movido para NO SHOW no CRM.`, 'danger', 6000);
       renderApp();
+      simulateCrmMove(meeting);
     }
   });
 }
@@ -2252,6 +2315,8 @@ function setupEventListeners() {
     STATE.templates.ALERT_30M = document.getElementById('template-alert-30m').value;
     STATE.templates.ALERT_15M = document.getElementById('template-alert-15m').value;
     STATE.templates.ALERT_0M = document.getElementById('template-alert-0m').value;
+    const im = document.getElementById('template-alert-imediato');
+    if (im) STATE.templates.ALERT_IMEDIATO = im.value;
     STATE.templates.NO_SHOW_1H = document.getElementById('template-noshow-1h').value;
 
     saveTemplates();
