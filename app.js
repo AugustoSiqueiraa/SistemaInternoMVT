@@ -387,6 +387,21 @@ function setupSupabaseRealtime() {
           await syncCommercialWithSupabase();
         }
       })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'historico_eventos', filter: 'tipo_evento=eq.ESTADO_PLANILHA_COMERCIAL' }, async (payload) => {
+        console.log('⚡ Snapshot da Planilha Comercial recebido em tempo real:', payload);
+        if (payload?.new?.descricao) {
+          try {
+            const parsed = JSON.parse(payload.new.descricao);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              COMMERCIAL_STATE.clients = parsed.map(sanitizeCommercialClient);
+              localStorage.setItem('mvt_commercial_clients', JSON.stringify(COMMERCIAL_STATE.clients));
+              if (typeof renderCommercialApp === 'function') {
+                renderCommercialApp();
+              }
+            }
+          } catch (e) {}
+        }
+      })
       .subscribe();
     console.log('⚡ Canal em tempo real da Planilha Comercial conectado!');
   } catch (err) {
