@@ -326,6 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   setupSimulationClock();
   renderApp();
+  switchTab('tab-comercial');
 
   // Tenta carregar do Supabase em background (sobrescreve o localStorage)
   const loadedFromCloud = await loadMeetingsFromSupabase();
@@ -1189,14 +1190,6 @@ function renderCalendarWeek(container) {
           ].join('-');
           const isToday = dStr === todayStr;
 
-          const slotMeetings = STATE.meetings.filter(m => {
-            const mDateStr = getMeetingDateStr(m);
-            if (mDateStr !== dStr) return false;
-            if (!meetingMatchesTeamFilter(m)) return false;
-            const [mH] = m.time.split(':').map(Number);
-            return mH === slotHour;
-          });
-
           const slotTasks = getCommercialCalendarTasks().filter(t => {
             if (t.date !== dStr) return false;
             if (!meetingMatchesTeamFilter({ lawyer: t.lawyer })) return false;
@@ -1206,15 +1199,6 @@ function renderCalendarWeek(container) {
 
           return `
             <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
-              ${slotMeetings.map(m => `
-                <div class="cal-meeting-block ${m.status}" data-id="${m.id}" title="Reunião: ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
-                  <div class="cal-meeting-title">👤 ${escapeHtml(m.clientName)}</div>
-                  <div class="cal-meeting-meta">
-                    <span>🕒 ${m.time}</span>
-                    <span style="font-weight: 600; color: var(--blue-light);">${escapeHtml(m.lawyer ? m.lawyer.split(' ')[0] : '')}</span>
-                  </div>
-                </div>
-              `).join('')}
               ${slotTasks.map(t => `
                 <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
                   <div class="cal-meeting-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
@@ -1288,17 +1272,6 @@ function renderCalendarDay(container) {
       <div class="cal-time-row" style="grid-template-columns: 80px repeat(${colCount}, 1fr);">
         <div class="cal-time-label">${slot}</div>
         ${membersToDisplay.map(member => {
-          const slotMeetings = STATE.meetings.filter(m => {
-            const mDateStr = getMeetingDateStr(m);
-            if (mDateStr !== dayStr) return false;
-            const [mH] = m.time.split(':').map(Number);
-            if (mH !== slotHour) return false;
-
-            const mLawyer = (m.lawyer || '').toLowerCase();
-            const memName = member.name.toLowerCase();
-            return mLawyer.includes(memName) || memName.includes(mLawyer);
-          });
-
           const slotTasks = getCommercialCalendarTasks().filter(t => {
             if (t.date !== dayStr) return false;
             const [tH] = t.time.split(':').map(Number);
@@ -1311,15 +1284,6 @@ function renderCalendarDay(container) {
 
           return `
             <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
-              ${slotMeetings.map(m => `
-                <div class="cal-meeting-block ${m.status}" data-id="${m.id}" title="Reunião: ${escapeHtml(m.clientName)}">
-                  <div class="cal-meeting-title">👤 ${escapeHtml(m.clientName)}</div>
-                  <div class="cal-meeting-meta">
-                    <span>🕒 ${m.time}</span>
-                    <span>${m.status === 'confirmed' ? '✓ Confirmado' : (m.status === 'noshow' ? '🚫 No-Show' : '⏳ Aguardando')}</span>
-                  </div>
-                </div>
-              `).join('')}
               ${slotTasks.map(t => `
                 <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
                   <div class="cal-meeting-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
@@ -1386,17 +1350,11 @@ function renderCalendarMonth(container) {
       String(prevDate.getDate()).padStart(2, '0')
     ].join('-');
 
-    const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === prevDateStr && meetingMatchesTeamFilter(m));
     const tasksThisDay = getCommercialCalendarTasks().filter(t => t.date === prevDateStr && meetingMatchesTeamFilter({ lawyer: t.lawyer }));
 
     html += `
       <div class="cal-month-cell other-month">
         <div class="cal-month-date">${dayNum}</div>
-        ${meetingsThisDay.map(m => `
-          <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
-            ${m.time} ${escapeHtml(m.clientName)}
-          </div>
-        `).join('')}
         ${tasksThisDay.map(t => `
           <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
             ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
@@ -1416,17 +1374,11 @@ function renderCalendarMonth(container) {
     ].join('-');
     const isToday = thisDateStr === todayStr;
 
-    const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === thisDateStr && meetingMatchesTeamFilter(m));
     const tasksThisDay = getCommercialCalendarTasks().filter(t => t.date === thisDateStr && meetingMatchesTeamFilter({ lawyer: t.lawyer }));
 
     html += `
       <div class="cal-month-cell ${isToday ? 'today-cell' : ''}">
         <div class="cal-month-date" style="${isToday ? 'color: var(--blue-light); font-weight: 800;' : ''}">${day}</div>
-        ${meetingsThisDay.map(m => `
-          <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
-            ${m.time} ${escapeHtml(m.clientName)}
-          </div>
-        `).join('')}
         ${tasksThisDay.map(t => `
           <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
             ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
@@ -1447,17 +1399,11 @@ function renderCalendarMonth(container) {
       String(nextDate.getDate()).padStart(2, '0')
     ].join('-');
 
-    const meetingsThisDay = STATE.meetings.filter(m => getMeetingDateStr(m) === nextDateStr && meetingMatchesTeamFilter(m));
     const tasksThisDay = getCommercialCalendarTasks().filter(t => t.date === nextDateStr && meetingMatchesTeamFilter({ lawyer: t.lawyer }));
 
     html += `
       <div class="cal-month-cell other-month">
         <div class="cal-month-date">${nextDay}</div>
-        ${meetingsThisDay.map(m => `
-          <div class="cal-month-pill ${m.status}" data-id="${m.id}" title="${m.time} - ${escapeHtml(m.clientName)} (${escapeHtml(m.lawyer)})">
-            ${m.time} ${escapeHtml(m.clientName)}
-          </div>
-        `).join('')}
         ${tasksThisDay.map(t => `
           <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
             ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)

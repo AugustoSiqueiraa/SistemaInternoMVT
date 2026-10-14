@@ -4743,6 +4743,19 @@ body.light-theme .comm-quick-add-title {
   border: 1px solid rgba(217, 70, 239, 0.35);
 }
 
+/* Área Personalizada / Nova Área Dinâmica */
+.comm-area-pill-select.area-custom,
+.area-badge.badge-area-custom {
+  background: rgba(16, 185, 129, 0.05);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+.comm-area-pill-select.area-custom:hover,
+.comm-area-pill-select.area-custom:focus {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
 /* Coluna 4: Tipo de Atendimento (Badge Interativo com Seleção Direta) */
 .comm-col-type {
   display: flex;
@@ -5078,21 +5091,40 @@ body.light-theme .comm-status-pill-select option {
   color: #ffffff;
 }
 
-/* Coluna 7: Ações & Tarefa (com Mini Divisória Vertical) */
+/* Coluna 7: Ações & Tarefa (com Mini Divisória Vertical e Ações Fixas na Direita) */
 .comm-col-actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.3rem;
   flex-wrap: nowrap;
   border-left: 1px solid rgba(255, 255, 255, 0.12);
   padding-left: 0.55rem;
+  padding-right: 0.35rem;
   min-width: 0;
-  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.comm-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.comm-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .comm-table-header-row .comm-col-actions {
   border-left: 1px solid rgba(255, 255, 255, 0.12);
   padding-left: 0.55rem;
+  justify-content: flex-start;
 }
 
 .btn-task-action {

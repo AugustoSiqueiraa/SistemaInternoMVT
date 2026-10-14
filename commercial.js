@@ -968,17 +968,90 @@ const COMMERCIAL_STATE = {
 };
 window.COMMERCIAL_STATE = COMMERCIAL_STATE;
 
+// Gestão de Áreas Personalizadas do Comercial (Armazenamento Local)
+function getCommercialCustomAreas() {
+  try {
+    const raw = localStorage.getItem('mvt_commercial_custom_areas');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(s => (s || '').trim()).filter(Boolean);
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+window.getCommercialCustomAreas = getCommercialCustomAreas;
+
+function saveCommercialCustomArea(areaName) {
+  if (!areaName || typeof areaName !== 'string') return;
+  const clean = areaName.trim();
+  if (!clean) return;
+  const list = getCommercialCustomAreas();
+  const exists = list.some(a => a.toLowerCase() === clean.toLowerCase()) ||
+                 ['trabalhista', 'cível', 'civel', 'previdenciário', 'previdenciario'].includes(clean.toLowerCase());
+  if (!exists) {
+    list.push(clean);
+    localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(list));
+  }
+  syncCommercialAreaDropdowns();
+}
+window.saveCommercialCustomArea = saveCommercialCustomArea;
+
+function syncCommercialAreaDropdowns() {
+  const customAreas = getCommercialCustomAreas();
+  const defaultAreas = ['Trabalhista', 'Cível', 'Previdenciário'];
+  const allAreas = [...defaultAreas];
+  customAreas.forEach(ca => {
+    if (!allAreas.some(a => a.toLowerCase() === ca.toLowerCase())) {
+      allAreas.push(ca);
+    }
+  });
+
+  // 1. Popover de Filtro de Área (#comm-area-filter)
+  const filterSelect = document.getElementById('comm-area-filter');
+  if (filterSelect) {
+    const currentVal = filterSelect.value || 'all';
+    filterSelect.innerHTML = `
+      <option value="all">Todas as Áreas</option>
+      ${allAreas.map(a => `<option value="${escapeHtml(a)}" ${a === currentVal ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('')}
+    `;
+  }
+
+  // 2. Quick Add Bar (#comm-quick-area)
+  const quickSelect = document.getElementById('comm-quick-area');
+  if (quickSelect) {
+    const currentVal = quickSelect.value || 'Trabalhista';
+    quickSelect.innerHTML = allAreas.map(a => `<option value="${escapeHtml(a)}" ${a === currentVal ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('');
+  }
+
+  // 3. Modal de Edição de Cliente (#comm-client-area)
+  const modalSelect = document.getElementById('comm-client-area');
+  if (modalSelect) {
+    const currentVal = modalSelect.value || 'Trabalhista';
+    modalSelect.innerHTML = allAreas.map(a => `<option value="${escapeHtml(a)}" ${a === currentVal ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('');
+  }
+}
+window.syncCommercialAreaDropdowns = syncCommercialAreaDropdowns;
+
 // Função auxiliar para higienizar dados de clientes e garantir histórico de tarefas
 function sanitizeCommercialClient(c) {
   if (!c) return c;
   if (!Array.isArray(c.taskHistory)) c.taskHistory = [];
 
-  // Normalização estrita para as 3 Áreas solicitadas: Trabalhista (Amarela), Cível (Azul), Previdenciário (Roxo)
-  const aLower = (c.area || '').toLowerCase();
+  // Normalização para Áreas (Trabalhista, Cível, Previdenciário ou Área Dinâmica Personalizada)
+  const aTrimmed = (c.area || '').trim();
+  const aLower = aTrimmed.toLowerCase();
   if (aLower.includes('cív') || aLower.includes('civ')) {
     c.area = 'Cível';
   } else if (aLower.includes('prev') || aLower.includes('aposent') || aLower.includes('aux')) {
     c.area = 'Previdenciário';
+  } else if (aLower.includes('trab')) {
+    c.area = 'Trabalhista';
+  } else if (aTrimmed) {
+    // Preserva área personalizada criada dinamicamente pelo usuário
+    c.area = aTrimmed;
+    saveCommercialCustomArea(aTrimmed);
   } else {
     c.area = 'Trabalhista';
   }
@@ -1855,6 +1928,7 @@ window.getTodayYmd = getTodayYmd;
 
 // Renderizacao geral do modulo comercial
 function renderCommercialApp() {
+  syncCommercialAreaDropdowns();
   const clients = COMMERCIAL_STATE.clients;
 
   // 1. Atualizar KPIs no banner superior
@@ -2105,29 +2179,43 @@ function getCommercialStatusSelect(client) {
 }
 window.getCommercialStatusSelect = getCommercialStatusSelect;
 
-// Badge Interativo com Select Embutido: Área (Trabalhista [Amarela], Cível [Azul], Previdenciário [Roxo])
+// Badge Interativo com Select Embutido: Área (Trabalhista [Amarela], Cível [Azul], Previdenciário [Roxo] ou Personalizada)
 function getCommercialAreaSelect(client) {
-  const rawArea = (client.area || '').toLowerCase();
-  let area = 'Trabalhista';
+  const currentArea = (client.area || 'Trabalhista').trim();
+  const rawArea = currentArea.toLowerCase();
   let areaClass = 'trabalhista';
 
   if (rawArea.includes('cív') || rawArea.includes('civ')) {
-    area = 'Cível';
     areaClass = 'civel';
   } else if (rawArea.includes('prev') || rawArea.includes('aposent') || rawArea.includes('aux')) {
-    area = 'Previdenciário';
     areaClass = 'previdenciario';
-  } else {
-    area = 'Trabalhista';
+  } else if (rawArea.includes('trab')) {
     areaClass = 'trabalhista';
+  } else {
+    areaClass = 'custom';
   }
+
+  const defaultAreas = ['Trabalhista', 'Cível', 'Previdenciário'];
+  const customAreas = getCommercialCustomAreas();
+  const allAreas = [...defaultAreas];
+  customAreas.forEach(ca => {
+    if (!allAreas.some(a => a.toLowerCase() === ca.toLowerCase())) {
+      allAreas.push(ca);
+    }
+  });
+  if (currentArea && !allAreas.some(a => a.toLowerCase() === currentArea.toLowerCase())) {
+    allAreas.push(currentArea);
+  }
+
+  const optionsHtml = allAreas.map(a => `
+    <option value="${escapeHtml(a)}" ${a.toLowerCase() === currentArea.toLowerCase() ? 'selected' : ''}>${escapeHtml(a)}</option>
+  `).join('');
 
   return `
     <div class="comm-area-badge-container">
-      <select class="comm-area-pill-select area-${areaClass}" onchange="changeCommercialArea('${client.id}', this.value)" title="Clique para alterar a área">
-        <option value="Trabalhista" ${area === 'Trabalhista' ? 'selected' : ''}>Trabalhista</option>
-        <option value="Cível" ${area === 'Cível' ? 'selected' : ''}>Cível</option>
-        <option value="Previdenciário" ${area === 'Previdenciário' ? 'selected' : ''}>Previdenciário</option>
+      <select class="comm-area-pill-select area-${areaClass}" onchange="changeCommercialArea('${client.id}', this.value)" title="Clique para alterar a área ou adicionar uma nova">
+        ${optionsHtml}
+        <option value="__NEW_AREA__">➕ Adicionar nova área...</option>
       </select>
       <svg class="comm-status-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -2140,6 +2228,25 @@ window.getCommercialAreaSelect = getCommercialAreaSelect;
 function changeCommercialArea(clientId, newArea) {
   const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
   if (!client) return;
+
+  if (newArea === '__NEW_AREA__') {
+    const areaName = prompt('Digite o nome da nova área que deseja adicionar (Ex: Tributário, Família, Imobiliário, etc.):');
+    if (!areaName || !areaName.trim()) {
+      renderCommercialApp();
+      return;
+    }
+    const cleanAreaName = areaName.trim();
+    saveCommercialCustomArea(cleanAreaName);
+    recordCommercialUndo(`Área de ${client.name} para "${cleanAreaName}"`);
+    client.area = cleanAreaName;
+    saveCommercialData();
+    renderCommercialApp();
+    if (typeof showToast === 'function') {
+      showToast(`Nova área "${cleanAreaName}" criada e vinculada com sucesso!`, 'success', 2500);
+    }
+    return;
+  }
+
   recordCommercialUndo(`Área de ${client.name} para "${newArea}"`);
   client.area = newArea;
   saveCommercialData();
@@ -2197,18 +2304,22 @@ function changeCommercialNextStep(clientId, newStep) {
 window.changeCommercialNextStep = changeCommercialNextStep;
 
 function getAreaBadge(area) {
-  const areaLower = (area || '').toLowerCase();
+  const cleanArea = (area || 'Trabalhista').trim();
+  const areaLower = cleanArea.toLowerCase();
   let cls = 'badge-area-trabalhista';
-  let label = 'Trabalhista';
+  let label = cleanArea;
   if (areaLower.includes('cív') || areaLower.includes('civ')) {
     cls = 'badge-area-civel';
     label = 'Cível';
   } else if (areaLower.includes('prev') || areaLower.includes('aposent') || areaLower.includes('aux')) {
     cls = 'badge-area-previdenciario';
     label = 'Previdenciário';
-  } else {
+  } else if (areaLower.includes('trab')) {
     cls = 'badge-area-trabalhista';
     label = 'Trabalhista';
+  } else {
+    cls = 'badge-area-custom';
+    label = cleanArea;
   }
   return `<span class="area-badge ${cls}">${escapeHtml(label)}</span>`;
 }
@@ -2340,21 +2451,18 @@ function renderCommercialTable(clients) {
             <span class="comm-task-due-pill ${isOverdue ? 'overdue' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="Reunião/Tarefa agendada para ${formatDateDisplay(client.task.dueDate)}${client.task.dueTime ? ' das ' + client.task.dueTime + ' às ' + (client.task.endTime || calculateEndTime30m(client.task.dueTime)) + ' (30m)' : ''}. Clique para gerenciar.">
               📅 ${formatDateDisplay(client.task.dueDate)}${client.task.dueTime ? ' às ' + client.task.dueTime : ''}${isOverdue ? ' • Vencida' : ''}
             </span>
-          ` : (historyCount > 0 ? `
-            <span class="comm-task-done-pill" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Clique para ver o histórico de tarefas">
-              ✓ ${historyCount} tarefa${historyCount > 1 ? 's' : ''} no histórico
-            </span>
           ` : `
             <button type="button" class="btn-schedule-shortcut" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Clique para agendar data e horário para este próximo passo">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <span>+ Agendar data</span>
+              <span>+ Agendar Tarefa</span>
             </button>
-          `)}
+          `}
         </div>
 
-        <!-- Coluna 7: Tarefa & Ações Rápidas (com Mini Divisória à Esquerda) -->
+        <!-- Coluna 7: Tarefa & Ações Rápidas (com Mini Divisória à Esquerda e Ações Fixas na Direita) -->
         <div class="comm-col-actions">
-          ${hasTask ? `
+          <div class="comm-actions-left">
+            ${hasTask ? `
             <button class="btn-task-action has-task ${isOverdue ? 'overdue' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="${isOverdue ? `Atenção: Tarefa de 30m vencida em ${formatDateDisplay(client.task.dueDate)}. Clique para gerenciar.` : `Tarefa de 30m agendada para ${formatDateDisplay(client.task.dueDate)} às ${client.task.dueTime || '10:00'}. Clique para gerenciar.`}">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -2369,9 +2477,6 @@ function renderCommercialTable(clients) {
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M12 8v4l3 3"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16h4v-4"></path></svg>${historyCount}
               </button>
             ` : ''}
-            <button type="button" class="btn-icon-clean btn-add-next-step" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Agendar outro próximo passo / nova tarefa">
-              +
-            </button>
           ` : `
             <button class="btn-task-action" onclick="openCommercialTaskModal('${client.id}')" title="Marcar tarefa de 30 minutos na pauta">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2388,8 +2493,10 @@ function renderCommercialTable(clients) {
               </button>
             ` : ''}
           `}
+          </div>
 
-          <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
+          <div class="comm-actions-right">
+            <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -2404,6 +2511,7 @@ function renderCommercialTable(clients) {
               <line x1="14" y1="11" x2="14" y2="17"></line>
             </svg>
           </button>
+          </div>
         </div>
 
         <!-- Coluna 8: Pronto para Fechar (Ação Rápida com Envio Direto para a Aba) -->
