@@ -1066,11 +1066,18 @@ function getCommercialCalendarTasks() {
         }
       })();
 
+  const now = new Date();
+  const nowTs = now.getTime();
+
   return clients
     .filter(c => c && c.task && c.task.dueDate)
     .map(c => {
       const startTime = c.task.dueTime || '10:00';
       const endTime = c.task.endTime || (typeof window.calculateEndTime30m === 'function' ? window.calculateEndTime30m(startTime) : '10:30');
+      const dt = new Date(`${c.task.dueDate}T${startTime}:00`);
+      const taskTs = isNaN(dt.getTime()) ? 0 : dt.getTime();
+      const isExpired = taskTs < nowTs && c.task.status !== 'done';
+
       return {
         id: 'task-' + c.id,
         clientId: c.id,
@@ -1081,6 +1088,8 @@ function getCommercialCalendarTasks() {
         endTime: endTime,
         action: c.task.action || 'Compromisso Comercial',
         notes: c.task.notes || '',
+        color: c.task.color || '#a855f7',
+        isExpired: isExpired,
         status: c.task.status || 'pending',
         lawyer: c.responsible || 'Augusto',
         area: c.area || 'Comercial',
@@ -1199,18 +1208,25 @@ function renderCalendarWeek(container) {
 
           return `
             <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
-              ${slotTasks.map(t => `
-                <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+              ${slotTasks.map(t => {
+                const expiredCls = t.isExpired ? 'task-expired-gray' : '';
+                const taskColor = t.color || '#a855f7';
+                const customStyle = !t.isExpired ? `background: ${taskColor}1a; border-color: ${taskColor}55; border-left-color: ${taskColor};` : '';
+                const tagStyle = !t.isExpired ? `background: ${taskColor}33; color: ${taskColor};` : '';
+                const metaColor = !t.isExpired ? taskColor : '#64748b';
+
+                return `
+                <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''} ${expiredCls}" style="${customStyle}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}${t.isExpired ? ' (Prazo vencido)' : ''}">
                   <div class="cal-meeting-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎯 ${escapeHtml(t.clientName)}</span>
-                    <span class="cal-task-tag-30m">30m</span>
+                    <span class="cal-task-tag-30m" style="${tagStyle}">30m</span>
                   </div>
                   <div class="cal-meeting-meta">
                     <span>🕒 ${t.time} - ${t.endTime}</span>
-                    <span style="font-weight: 600; color: #c084fc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px;" title="${escapeHtml(t.action)}">${escapeHtml(t.action)}</span>
+                    <span style="font-weight: 600; color: ${metaColor}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px;" title="${escapeHtml(t.action)}">${escapeHtml(t.action)}</span>
                   </div>
                 </div>
-              `).join('')}
+              `;}).join('')}
             </div>
           `;
         }).join('')}
@@ -1284,18 +1300,25 @@ function renderCalendarDay(container) {
 
           return `
             <div class="cal-slot-cell ${isToday ? 'cal-col-is-today' : ''}">
-              ${slotTasks.map(t => `
-                <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+              ${slotTasks.map(t => {
+                const expiredCls = t.isExpired ? 'task-expired-gray' : '';
+                const taskColor = t.color || '#a855f7';
+                const customStyle = !t.isExpired ? `background: ${taskColor}1a; border-color: ${taskColor}55; border-left-color: ${taskColor};` : '';
+                const tagStyle = !t.isExpired ? `background: ${taskColor}33; color: ${taskColor};` : '';
+                const metaColor = !t.isExpired ? taskColor : '#64748b';
+
+                return `
+                <div class="cal-meeting-block task-block ${t.status === 'done' ? 'task-done' : ''} ${expiredCls}" style="${customStyle}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial (30m): ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}${t.isExpired ? ' (Prazo vencido)' : ''}">
                   <div class="cal-meeting-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">🎯 ${escapeHtml(t.clientName)}</span>
-                    <span class="cal-task-tag-30m">30m</span>
+                    <span class="cal-task-tag-30m" style="${tagStyle}">30m</span>
                   </div>
                   <div class="cal-meeting-meta">
                     <span>🕒 ${t.time} - ${t.endTime}</span>
-                    <span style="color: #c084fc; font-weight: 600;">${t.status === 'done' ? '✓ Concluída' : '⏱️ 30 min'}</span>
+                    <span style="color: ${metaColor}; font-weight: 600;">${t.status === 'done' ? '✓ Concluída' : (t.isExpired ? 'Prazo Esgotado' : '⏱️ 30 min')}</span>
                   </div>
                 </div>
-              `).join('')}
+              `;}).join('')}
             </div>
           `;
         }).join('')}
@@ -1355,11 +1378,15 @@ function renderCalendarMonth(container) {
     html += `
       <div class="cal-month-cell other-month">
         <div class="cal-month-date">${dayNum}</div>
-        ${tasksThisDay.map(t => `
-          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+        ${tasksThisDay.map(t => {
+          const expiredCls = t.isExpired ? 'task-expired-gray' : '';
+          const taskColor = t.color || '#a855f7';
+          const customStyle = !t.isExpired ? `background: ${taskColor}24; border-left-color: ${taskColor}; color: ${taskColor};` : '';
+          return `
+          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''} ${expiredCls}" style="${customStyle}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}${t.isExpired ? ' (Prazo vencido)' : ''}">
             ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
           </div>
-        `).join('')}
+        `;}).join('')}
       </div>
     `;
   }
@@ -1379,11 +1406,15 @@ function renderCalendarMonth(container) {
     html += `
       <div class="cal-month-cell ${isToday ? 'today-cell' : ''}">
         <div class="cal-month-date" style="${isToday ? 'color: var(--blue-light); font-weight: 800;' : ''}">${day}</div>
-        ${tasksThisDay.map(t => `
-          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+        ${tasksThisDay.map(t => {
+          const expiredCls = t.isExpired ? 'task-expired-gray' : '';
+          const taskColor = t.color || '#a855f7';
+          const customStyle = !t.isExpired ? `background: ${taskColor}24; border-left-color: ${taskColor}; color: ${taskColor};` : '';
+          return `
+          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''} ${expiredCls}" style="${customStyle}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}${t.isExpired ? ' (Prazo vencido)' : ''}">
             ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
           </div>
-        `).join('')}
+        `;}).join('')}
       </div>
     `;
   }
@@ -1404,11 +1435,15 @@ function renderCalendarMonth(container) {
     html += `
       <div class="cal-month-cell other-month">
         <div class="cal-month-date">${nextDay}</div>
-        ${tasksThisDay.map(t => `
-          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}">
+        ${tasksThisDay.map(t => {
+          const expiredCls = t.isExpired ? 'task-expired-gray' : '';
+          const taskColor = t.color || '#a855f7';
+          const customStyle = !t.isExpired ? `background: ${taskColor}24; border-left-color: ${taskColor}; color: ${taskColor};` : '';
+          return `
+          <div class="cal-month-pill task-commercial-pill ${t.status === 'done' ? 'task-done' : ''} ${expiredCls}" style="${customStyle}" data-task-id="${t.clientId}" title="⏱️ Tarefa Comercial: ${escapeHtml(t.clientName)} - ${escapeHtml(t.action)}${t.isExpired ? ' (Prazo vencido)' : ''}">
             ⏱️ ${t.time} ${escapeHtml(t.clientName)} (30m)
           </div>
-        `).join('')}
+        `;}).join('')}
       </div>
     `;
   }

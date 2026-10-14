@@ -968,14 +968,27 @@ const COMMERCIAL_STATE = {
 };
 window.COMMERCIAL_STATE = COMMERCIAL_STATE;
 
-// Gestão de Áreas Personalizadas do Comercial (Armazenamento Local)
+// ========================================================
+// GESTÃO DE OPÇÕES PERSONALIZADAS (NOME E COR)
+// Para: Área, Tipo de Atendimento e Próximo Passo
+// ========================================================
+
+// 1. ÁREAS PERSONALIZADAS
 function getCommercialCustomAreas() {
   try {
     const raw = localStorage.getItem('mvt_commercial_custom_areas');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.map(s => (s || '').trim()).filter(Boolean);
+        return parsed.map(item => {
+          if (typeof item === 'string') {
+            return { name: item.trim(), color: '#38bdf8' };
+          }
+          if (item && item.name) {
+            return { name: String(item.name).trim(), color: item.color || '#38bdf8' };
+          }
+          return null;
+        }).filter(Boolean);
       }
     }
   } catch (e) {}
@@ -983,28 +996,358 @@ function getCommercialCustomAreas() {
 }
 window.getCommercialCustomAreas = getCommercialCustomAreas;
 
-function saveCommercialCustomArea(areaName) {
+function saveCommercialCustomArea(areaName, color = '#38bdf8') {
   if (!areaName || typeof areaName !== 'string') return;
   const clean = areaName.trim();
   if (!clean) return;
   const list = getCommercialCustomAreas();
-  const exists = list.some(a => a.toLowerCase() === clean.toLowerCase()) ||
-                 ['trabalhista', 'cível', 'civel', 'previdenciário', 'previdenciario'].includes(clean.toLowerCase());
-  if (!exists) {
-    list.push(clean);
-    localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(list));
+  const idx = list.findIndex(a => a.name.toLowerCase() === clean.toLowerCase());
+  if (idx >= 0) {
+    list[idx].color = color;
+  } else {
+    list.push({ name: clean, color: color || '#38bdf8' });
   }
+  localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(list));
   syncCommercialAreaDropdowns();
 }
 window.saveCommercialCustomArea = saveCommercialCustomArea;
+
+// 2. TIPOS DE ATENDIMENTO PERSONALIZADOS
+function getCommercialCustomTypes() {
+  try {
+    const raw = localStorage.getItem('mvt_commercial_custom_types');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(item => {
+          if (typeof item === 'string') {
+            return { name: item.trim(), color: '#38bdf8' };
+          }
+          if (item && item.name) {
+            return { name: String(item.name).trim(), color: item.color || '#38bdf8' };
+          }
+          return null;
+        }).filter(Boolean);
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+window.getCommercialCustomTypes = getCommercialCustomTypes;
+
+function saveCommercialCustomType(typeName, color = '#38bdf8') {
+  if (!typeName || typeof typeName !== 'string') return;
+  const clean = typeName.trim();
+  if (!clean) return;
+  const list = getCommercialCustomTypes();
+  const idx = list.findIndex(t => t.name.toLowerCase() === clean.toLowerCase());
+  if (idx >= 0) {
+    list[idx].color = color;
+  } else {
+    list.push({ name: clean, color: color || '#38bdf8' });
+  }
+  localStorage.setItem('mvt_commercial_custom_types', JSON.stringify(list));
+}
+window.saveCommercialCustomType = saveCommercialCustomType;
+
+// 3. PRÓXIMOS PASSOS PERSONALIZADOS
+function getCommercialCustomNextSteps() {
+  try {
+    const raw = localStorage.getItem('mvt_commercial_custom_nextsteps');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(item => {
+          if (typeof item === 'string') {
+            return { name: item.trim(), color: '#38bdf8' };
+          }
+          if (item && item.name) {
+            return { name: String(item.name).trim(), color: item.color || '#38bdf8' };
+          }
+          return null;
+        }).filter(Boolean);
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+window.getCommercialCustomNextSteps = getCommercialCustomNextSteps;
+
+function saveCommercialCustomNextStep(stepName, color = '#38bdf8') {
+  if (!stepName || typeof stepName !== 'string') return;
+  const clean = stepName.trim();
+  if (!clean) return;
+  const list = getCommercialCustomNextSteps();
+  const idx = list.findIndex(s => s.name.toLowerCase() === clean.toLowerCase());
+  if (idx >= 0) {
+    list[idx].color = color;
+  } else {
+    list.push({ name: clean, color: color || '#38bdf8' });
+  }
+  localStorage.setItem('mvt_commercial_custom_nextsteps', JSON.stringify(list));
+}
+window.saveCommercialCustomNextStep = saveCommercialCustomNextStep;
+
+// 4. MODAL POPUP PARA CRIAR OPÇÃO COM NOME E COR
+function openCreateCustomOptionModal(type, clientId) {
+  const modal = document.getElementById('modal-create-custom-option');
+  if (!modal) return;
+
+  const typeInput = document.getElementById('custom-option-type');
+  const clientInput = document.getElementById('custom-option-client-id');
+  const title = document.getElementById('custom-option-modal-title');
+  const subtitle = document.getElementById('custom-option-modal-subtitle');
+  const nameInput = document.getElementById('custom-option-name');
+  const nameLabel = document.getElementById('custom-option-name-label');
+
+  if (typeInput) typeInput.value = type;
+  if (clientInput) clientInput.value = clientId || '';
+  if (nameInput) {
+    nameInput.value = '';
+  }
+
+  if (type === 'area') {
+    if (title) title.textContent = 'Criar Nova Área';
+    if (subtitle) subtitle.textContent = 'Defina o nome e a cor para destacar esta área de atuação';
+    if (nameLabel) nameLabel.textContent = 'Nome da Área *';
+    if (nameInput) nameInput.placeholder = 'Ex: Tributário, Família, Imobiliário...';
+  } else if (type === 'type') {
+    if (title) title.textContent = 'Criar Novo Tipo de Atendimento';
+    if (subtitle) subtitle.textContent = 'Defina o nome e a cor para esta categoria de atendimento';
+    if (nameLabel) nameLabel.textContent = 'Nome do Tipo de Atendimento *';
+    if (nameInput) nameInput.placeholder = 'Ex: Parceria, Retorno Urgente, Assessoria...';
+  } else if (type === 'nextstep') {
+    if (title) title.textContent = 'Criar Novo Próximo Passo';
+    if (subtitle) subtitle.textContent = 'Defina o nome e a cor para este próximo passo comercial';
+    if (nameLabel) nameLabel.textContent = 'Nome do Próximo Passo *';
+    if (nameInput) nameInput.placeholder = 'Ex: Apresentar proposta, Enviar procuração...';
+  }
+
+  selectCustomOptionColor('#38bdf8');
+  updateCustomOptionPreview();
+
+  modal.classList.add('active');
+  setTimeout(() => nameInput?.focus(), 150);
+}
+window.openCreateCustomOptionModal = openCreateCustomOptionModal;
+
+function closeCreateCustomOptionModal() {
+  const modal = document.getElementById('modal-create-custom-option');
+  if (modal) modal.classList.remove('active');
+}
+window.closeCreateCustomOptionModal = closeCreateCustomOptionModal;
+
+function selectCustomOptionColor(color, btnElement) {
+  const hiddenInput = document.getElementById('custom-option-color-val');
+  const colorInput = document.getElementById('custom-option-color-input');
+  if (hiddenInput) hiddenInput.value = color;
+  if (colorInput) colorInput.value = color;
+
+  document.querySelectorAll('#custom-option-swatches .color-swatch-circle').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color === color || btn === btnElement);
+  });
+
+  updateCustomOptionPreview();
+}
+window.selectCustomOptionColor = selectCustomOptionColor;
+
+function updateCustomOptionPreview() {
+  const nameInput = document.getElementById('custom-option-name');
+  const hiddenInput = document.getElementById('custom-option-color-val');
+  const previewBadge = document.getElementById('custom-option-preview-badge');
+  if (!previewBadge) return;
+
+  const name = (nameInput?.value || '').trim() || 'Nome da Opção';
+  const color = hiddenInput?.value || '#38bdf8';
+
+  previewBadge.textContent = name;
+  previewBadge.style.color = color;
+  previewBadge.style.borderColor = color + '55';
+  previewBadge.style.background = color + '1a';
+}
+window.updateCustomOptionPreview = updateCustomOptionPreview;
+
+function handleSaveCustomOption(event) {
+  if (event) event.preventDefault();
+
+  const type = document.getElementById('custom-option-type')?.value || 'area';
+  const clientId = document.getElementById('custom-option-client-id')?.value || '';
+  const nameInput = document.getElementById('custom-option-name');
+  const colorVal = document.getElementById('custom-option-color-val')?.value || '#38bdf8';
+
+  const name = (nameInput?.value || '').trim();
+  if (!name) {
+    if (nameInput) nameInput.focus();
+    return;
+  }
+
+  const client = clientId ? COMMERCIAL_STATE.clients.find(c => c.id === clientId) : null;
+
+  if (type === 'area') {
+    saveCommercialCustomArea(name, colorVal);
+    if (client) {
+      recordCommercialUndo(`Área de ${client.name} para "${name}"`);
+      client.area = name;
+      saveCommercialData();
+    }
+    if (typeof showToast === 'function') {
+      showToast(`Área "${name}" criada com sucesso!`, 'success', 2500);
+    }
+  } else if (type === 'type') {
+    saveCommercialCustomType(name, colorVal);
+    if (client) {
+      recordCommercialUndo(`Tipo de atendimento de ${client.name} para "${name}"`);
+      client.tipoAtendimento = name;
+      client.status = name;
+      saveCommercialData();
+    }
+    if (typeof showToast === 'function') {
+      showToast(`Tipo de atendimento "${name}" criado com sucesso!`, 'success', 2500);
+    }
+  } else if (type === 'nextstep') {
+    saveCommercialCustomNextStep(name, colorVal);
+    if (client) {
+      recordCommercialUndo(`Próximo passo de ${client.name} para "${name}"`);
+      client.nextStep = name;
+      if (client.task) client.task.action = name;
+      saveCommercialData();
+    }
+    if (typeof showToast === 'function') {
+      showToast(`Próximo passo "${name}" criado com sucesso!`, 'success', 2500);
+    }
+  }
+
+  closeCreateCustomOptionModal();
+  renderCommercialApp();
+}
+window.handleSaveCustomOption = handleSaveCustomOption;
+
+// Seletor de cor no modal de agendamento de tarefa comercial
+function selectCommercialTaskColor(color, btnElement) {
+  const hiddenInput = document.getElementById('comm-task-color');
+  const customInput = document.getElementById('comm-task-custom-color');
+  if (hiddenInput) hiddenInput.value = color;
+  if (customInput) customInput.value = color;
+
+  document.querySelectorAll('#comm-task-color-swatches .color-swatch-circle').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color === color || btn === btnElement);
+  });
+}
+window.selectCommercialTaskColor = selectCommercialTaskColor;
+
+// Quantidade de reuniões / tarefas agendadas do cliente (somente com números)
+function getClientAppointmentsCount(client) {
+  if (!client) return 0;
+  let count = 0;
+  if (client.task && client.task.dueDate) count++;
+  if (Array.isArray(client.taskHistory)) count += client.taskHistory.length;
+  if (window.STATE && Array.isArray(window.STATE.meetings)) {
+    const cName = (client.name || '').trim().toLowerCase();
+    const cPhone = cleanPhoneForWa(client.phone);
+    window.STATE.meetings.forEach(m => {
+      const mName = (m.clientName || '').trim().toLowerCase();
+      const mPhone = cleanPhoneForWa(m.clientPhone);
+      if ((cName && (mName === cName || mName.includes(cName) || cName.includes(mName))) || (cPhone && mPhone && cPhone === mPhone)) {
+        count++;
+      }
+    });
+  }
+  return count;
+}
+window.getClientAppointmentsCount = getClientAppointmentsCount;
+
+// Último agendamento do cliente com verificação de prazo (Vermelho se fora do prazo, Azul Claro se dentro)
+function getClientLatestAppointment(client) {
+  if (!client) return null;
+  const list = [];
+
+  if (client.task && client.task.dueDate) {
+    list.push({
+      date: client.task.dueDate,
+      time: client.task.dueTime || '10:00',
+      action: client.task.action || 'Compromisso',
+      status: client.task.status || 'pending',
+      color: client.task.color || null,
+      source: 'active'
+    });
+  }
+
+  if (Array.isArray(client.taskHistory)) {
+    client.taskHistory.forEach(h => {
+      if (h && h.dueDate) {
+        list.push({
+          date: h.dueDate,
+          time: h.dueTime || '10:00',
+          action: h.action || 'Compromisso',
+          status: h.status || 'done',
+          color: h.color || null,
+          source: 'history'
+        });
+      }
+    });
+  }
+
+  if (window.STATE && Array.isArray(window.STATE.meetings)) {
+    const cName = (client.name || '').trim().toLowerCase();
+    const cPhone = cleanPhoneForWa(client.phone);
+    const todayStr = new Date().toISOString().split('T')[0];
+    window.STATE.meetings.forEach(m => {
+      const mName = (m.clientName || '').trim().toLowerCase();
+      const mPhone = cleanPhoneForWa(m.clientPhone);
+      if ((cName && (mName === cName || mName.includes(cName) || cName.includes(mName))) || (cPhone && mPhone && cPhone === mPhone)) {
+        list.push({
+          date: m.date || m.meeting_date || todayStr,
+          time: m.time || '10:00',
+          action: m.action || 'Reunião com Advogado',
+          status: m.status || 'pending',
+          color: null,
+          source: 'meeting'
+        });
+      }
+    });
+  }
+
+  if (list.length === 0) return null;
+
+  const now = new Date();
+  const nowTs = now.getTime();
+
+  list.forEach(apt => {
+    const dt = new Date(`${apt.date}T${apt.time || '00:00'}:00`);
+    apt.timestamp = isNaN(dt.getTime()) ? 0 : dt.getTime();
+    apt.isOverdue = apt.timestamp < nowTs;
+  });
+
+  // Se o cliente tem tarefa ativa definida em client.task, prioriza-a
+  const activeTask = list.find(item => item.source === 'active');
+  if (activeTask) {
+    return activeTask;
+  }
+
+  list.sort((a, b) => b.timestamp - a.timestamp);
+  return list[0];
+}
+window.getClientLatestAppointment = getClientLatestAppointment;
+
+function formatDateTimeShort(dateStr, timeStr) {
+  if (!dateStr) return '';
+  const parts = String(dateStr).split('T')[0].split('-');
+  let d = dateStr;
+  if (parts.length === 3) {
+    d = `${parts[2]}/${parts[1]}`;
+  }
+  return timeStr ? `${d} às ${timeStr}` : d;
+}
+window.formatDateTimeShort = formatDateTimeShort;
 
 function syncCommercialAreaDropdowns() {
   const customAreas = getCommercialCustomAreas();
   const defaultAreas = ['Trabalhista', 'Cível', 'Previdenciário'];
   const allAreas = [...defaultAreas];
   customAreas.forEach(ca => {
-    if (!allAreas.some(a => a.toLowerCase() === ca.toLowerCase())) {
-      allAreas.push(ca);
+    const name = ca.name || ca;
+    if (!allAreas.some(a => a.toLowerCase() === name.toLowerCase())) {
+      allAreas.push(name);
     }
   });
 
@@ -1056,16 +1399,30 @@ function sanitizeCommercialClient(c) {
     c.area = 'Trabalhista';
   }
 
-  // Normalização para os Tipos de Atendimento: Lead Novo, Follow-up, Indicação, Pronto para Fechar
-  const sLower = (c.status || '').toLowerCase();
-  if (sLower.includes('fechar') || sLower.includes('pronto')) {
+  // Normalização para os Tipos de Atendimento: Lead Novo, Follow-up, Indicação, Pronto para Fechar ou Personalizado
+  const sTrimmed = (c.tipoAtendimento || c.status || '').trim();
+  const sLower = sTrimmed.toLowerCase();
+  const customTypes = getCommercialCustomTypes();
+  const matchCustomType = customTypes.find(ct => (ct.name || ct).toLowerCase() === sLower);
+  if (matchCustomType) {
+    c.status = matchCustomType.name || matchCustomType;
+    c.tipoAtendimento = c.status;
+  } else if (sLower.includes('fechar') || sLower.includes('pronto')) {
     c.status = 'Pronto para Fechar';
+    c.tipoAtendimento = 'Pronto para Fechar';
   } else if (sLower.includes('novo') || sLower.includes('lead')) {
     c.status = 'Lead Novo';
+    c.tipoAtendimento = 'Lead Novo';
   } else if (sLower.includes('indica')) {
     c.status = 'Indicação';
+    c.tipoAtendimento = 'Indicação';
+  } else if (sTrimmed && sTrimmed !== 'Follow-up') {
+    c.status = sTrimmed;
+    c.tipoAtendimento = sTrimmed;
+    saveCommercialCustomType(sTrimmed);
   } else {
     c.status = 'Follow-up';
+    c.tipoAtendimento = 'Follow-up';
   }
 
   // Se o cliente possui uma tarefa ativa, assegura que ela esteja registrada no histórico permanente
@@ -1154,20 +1511,32 @@ function _rowToCommercialClient(row) {
   return sanitizeCommercialClient(client);
 }
 
-// Mescla clientes locais com a nuvem sem perder registros recentes
+// Mescla clientes locais com a nuvem preservando tarefas e históricos locais para nunca perder agendamentos
 function mergeCommercialClients(localClients, cloudClients) {
   if (!Array.isArray(cloudClients) || cloudClients.length === 0) return localClients || [];
   if (!Array.isArray(localClients) || localClients.length === 0) return cloudClients || [];
 
   const map = new Map();
-  // 1. Prioriza os dados recebidos da nuvem
+  // 1. Inicia com dados recebidos da nuvem
   cloudClients.forEach(c => {
-    if (c && c.id) map.set(c.id, c);
+    if (c && c.id) map.set(c.id, { ...c });
   });
-  // 2. Preserva clientes locais criados offline ou recentemente
+
+  // 2. Preserva clientes locais e NUNCA sobrescreve tarefas ou históricos válidos
   localClients.forEach(c => {
-    if (c && c.id && !map.has(c.id)) {
+    if (!c || !c.id) return;
+    if (!map.has(c.id)) {
       map.set(c.id, c);
+    } else {
+      const merged = map.get(c.id);
+      // Se cliente local possui tarefa agendada e a nuvem não tem, preserva a tarefa local
+      if (c.task && c.task.dueDate && (!merged.task || !merged.task.dueDate)) {
+        merged.task = c.task;
+      }
+      // Se cliente local possui histórico e a nuvem não tem ou tem menos itens, preserva histórico local
+      if (Array.isArray(c.taskHistory) && c.taskHistory.length > (Array.isArray(merged.taskHistory) ? merged.taskHistory.length : 0)) {
+        merged.taskHistory = c.taskHistory;
+      }
     }
   });
 
@@ -2146,15 +2515,24 @@ const NEXT_STEP_OPTIONS = [
 ];
 window.NEXT_STEP_OPTIONS = NEXT_STEP_OPTIONS;
 
-// Badge Interativo com Select Embutido: Tipo de Atendimento (Exclusivamente: Lead Novo, Follow-up, Indicação)
+// Badge Interativo com Select Embutido: Tipo de Atendimento (Com opção de criar novo com cor)
 function getCommercialStatusSelect(client) {
   let status = client.tipoAtendimento || client.status || 'Follow-up';
   if (status === 'Pronto para Fechar' || status === 'Prontos para Fechar') {
     status = client.originalStatus || client.tipoAtendimento || 'Lead Novo';
   }
 
+  const defaultTypes = ['Lead Novo', 'Follow-up', 'Indicação'];
+  const customTypes = getCommercialCustomTypes();
+  const matchedCustom = customTypes.find(t => t.name.toLowerCase() === status.toLowerCase());
+
   let statusClass = 'status-followup';
-  if (status === 'Lead Novo') {
+  let customStyle = '';
+
+  if (matchedCustom) {
+    statusClass = 'status-custom';
+    customStyle = `color: ${matchedCustom.color}; border-color: ${matchedCustom.color}55; background: ${matchedCustom.color}18;`;
+  } else if (status === 'Lead Novo') {
     statusClass = 'status-novo';
   } else if (status === 'Indicação' || status === 'Indicacao') {
     status = 'Indicação';
@@ -2164,12 +2542,25 @@ function getCommercialStatusSelect(client) {
     statusClass = 'status-followup';
   }
 
+  const allTypes = [...defaultTypes];
+  customTypes.forEach(ct => {
+    if (!allTypes.some(t => t.toLowerCase() === ct.name.toLowerCase())) {
+      allTypes.push(ct.name);
+    }
+  });
+  if (status && !allTypes.some(t => t.toLowerCase() === status.toLowerCase())) {
+    allTypes.push(status);
+  }
+
+  const optionsHtml = allTypes.map(t => `
+    <option value="${escapeHtml(t)}" ${t.toLowerCase() === status.toLowerCase() ? 'selected' : ''}>${escapeHtml(t)}</option>
+  `).join('');
+
   return `
     <div class="comm-status-badge-container">
-      <select class="comm-status-pill-select ${statusClass}" onchange="changeCommercialStatus('${client.id}', this.value)" title="Tipo de Atendimento: Lead Novo, Follow-up ou Indicação">
-        <option value="Lead Novo" ${status === 'Lead Novo' ? 'selected' : ''}>Lead Novo</option>
-        <option value="Follow-up" ${status === 'Follow-up' ? 'selected' : ''}>Follow-up</option>
-        <option value="Indicação" ${status === 'Indicação' ? 'selected' : ''}>Indicação</option>
+      <select class="comm-status-pill-select ${statusClass}" style="${customStyle}" onchange="changeCommercialStatus('${client.id}', this.value)" title="Tipo de Atendimento: escolha uma opção ou crie uma nova com cor personalizada">
+        ${optionsHtml}
+        <option value="__CREATE_TYPE__">➕ Criar Tipo de Atendimento...</option>
       </select>
       <svg class="comm-status-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -2179,13 +2570,42 @@ function getCommercialStatusSelect(client) {
 }
 window.getCommercialStatusSelect = getCommercialStatusSelect;
 
-// Badge Interativo com Select Embutido: Área (Trabalhista [Amarela], Cível [Azul], Previdenciário [Roxo] ou Personalizada)
+function changeCommercialStatus(clientId, newStatus) {
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client) return;
+
+  if (newStatus === '__CREATE_TYPE__') {
+    openCreateCustomOptionModal('type', clientId);
+    renderCommercialApp();
+    return;
+  }
+
+  recordCommercialUndo(`Tipo de atendimento de ${client.name} para "${newStatus}"`);
+  client.tipoAtendimento = newStatus;
+  client.status = newStatus;
+  saveCommercialData();
+  renderCommercialApp();
+  if (typeof showToast === 'function') {
+    showToast(`Tipo de atendimento de ${client.name} alterado para "${newStatus}".`, 'success', 2200);
+  }
+}
+window.changeCommercialStatus = changeCommercialStatus;
+
+// Badge Interativo com Select Embutido: Área (Trabalhista [Amarela], Cível [Azul], Previdenciário [Roxo] ou Personalizada com Cor)
 function getCommercialAreaSelect(client) {
   const currentArea = (client.area || 'Trabalhista').trim();
   const rawArea = currentArea.toLowerCase();
-  let areaClass = 'trabalhista';
+  const defaultAreas = ['Trabalhista', 'Cível', 'Previdenciário'];
+  const customAreas = getCommercialCustomAreas();
+  const matchedCustom = customAreas.find(ca => ca.name.toLowerCase() === rawArea);
 
-  if (rawArea.includes('cív') || rawArea.includes('civ')) {
+  let areaClass = 'trabalhista';
+  let customStyle = '';
+
+  if (matchedCustom) {
+    areaClass = 'custom';
+    customStyle = `color: ${matchedCustom.color}; border-color: ${matchedCustom.color}55; background: ${matchedCustom.color}18;`;
+  } else if (rawArea.includes('cív') || rawArea.includes('civ')) {
     areaClass = 'civel';
   } else if (rawArea.includes('prev') || rawArea.includes('aposent') || rawArea.includes('aux')) {
     areaClass = 'previdenciario';
@@ -2195,12 +2615,11 @@ function getCommercialAreaSelect(client) {
     areaClass = 'custom';
   }
 
-  const defaultAreas = ['Trabalhista', 'Cível', 'Previdenciário'];
-  const customAreas = getCommercialCustomAreas();
   const allAreas = [...defaultAreas];
   customAreas.forEach(ca => {
-    if (!allAreas.some(a => a.toLowerCase() === ca.toLowerCase())) {
-      allAreas.push(ca);
+    const aName = ca.name || ca;
+    if (!allAreas.some(a => a.toLowerCase() === aName.toLowerCase())) {
+      allAreas.push(aName);
     }
   });
   if (currentArea && !allAreas.some(a => a.toLowerCase() === currentArea.toLowerCase())) {
@@ -2213,9 +2632,9 @@ function getCommercialAreaSelect(client) {
 
   return `
     <div class="comm-area-badge-container">
-      <select class="comm-area-pill-select area-${areaClass}" onchange="changeCommercialArea('${client.id}', this.value)" title="Clique para alterar a área ou adicionar uma nova">
+      <select class="comm-area-pill-select area-${areaClass}" style="${customStyle}" onchange="changeCommercialArea('${client.id}', this.value)" title="Clique para alterar a área ou criar uma nova área com cor personalizada">
         ${optionsHtml}
-        <option value="__NEW_AREA__">➕ Adicionar nova área...</option>
+        <option value="__CREATE_AREA__">➕ Criar Área...</option>
       </select>
       <svg class="comm-status-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -2229,21 +2648,9 @@ function changeCommercialArea(clientId, newArea) {
   const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
   if (!client) return;
 
-  if (newArea === '__NEW_AREA__') {
-    const areaName = prompt('Digite o nome da nova área que deseja adicionar (Ex: Tributário, Família, Imobiliário, etc.):');
-    if (!areaName || !areaName.trim()) {
-      renderCommercialApp();
-      return;
-    }
-    const cleanAreaName = areaName.trim();
-    saveCommercialCustomArea(cleanAreaName);
-    recordCommercialUndo(`Área de ${client.name} para "${cleanAreaName}"`);
-    client.area = cleanAreaName;
-    saveCommercialData();
+  if (newArea === '__CREATE_AREA__') {
+    openCreateCustomOptionModal('area', clientId);
     renderCommercialApp();
-    if (typeof showToast === 'function') {
-      showToast(`Nova área "${cleanAreaName}" criada e vinculada com sucesso!`, 'success', 2500);
-    }
     return;
   }
 
@@ -2257,21 +2664,36 @@ function changeCommercialArea(clientId, newArea) {
 }
 window.changeCommercialArea = changeCommercialArea;
 
-// Badge Interativo com Select Embutido: Próximo Passo (10 Opções Rápidas)
+// Badge Interativo com Select Embutido: Próximo Passo (10 Opções Rápidas + Opções com Cor Personalizada)
 function getCommercialNextStepSelect(client) {
   const currentStep = (client.nextStep || (client.task ? client.task.action : '') || 'Fazer ligação').trim();
-  const isPredefined = NEXT_STEP_OPTIONS.includes(currentStep);
+  const customSteps = getCommercialCustomNextSteps();
+  const matchedCustom = customSteps.find(cs => cs.name.toLowerCase() === currentStep.toLowerCase());
 
-  const optionsHtml = NEXT_STEP_OPTIONS.map(opt => `
-    <option value="${escapeHtml(opt)}" ${opt === currentStep ? 'selected' : ''}>${escapeHtml(opt)}</option>
+  let customStyle = '';
+  if (matchedCustom) {
+    customStyle = `color: ${matchedCustom.color}; border-color: ${matchedCustom.color}55; background: ${matchedCustom.color}18;`;
+  }
+
+  const allSteps = [...NEXT_STEP_OPTIONS];
+  customSteps.forEach(cs => {
+    if (!allSteps.some(s => s.toLowerCase() === cs.name.toLowerCase())) {
+      allSteps.push(cs.name);
+    }
+  });
+  if (currentStep && !allSteps.some(s => s.toLowerCase() === currentStep.toLowerCase())) {
+    allSteps.push(currentStep);
+  }
+
+  const optionsHtml = allSteps.map(opt => `
+    <option value="${escapeHtml(opt)}" ${opt.toLowerCase() === currentStep.toLowerCase() ? 'selected' : ''}>${escapeHtml(opt)}</option>
   `).join('');
 
   return `
     <div class="comm-nextstep-badge-container">
-      <select class="comm-nextstep-pill-select" onchange="changeCommercialNextStep('${client.id}', this.value)" title="Clique para alterar o próximo passo">
+      <select class="comm-nextstep-pill-select" style="${customStyle}" onchange="changeCommercialNextStep('${client.id}', this.value)" title="Clique para alterar o próximo passo ou criar um novo com cor personalizada">
         ${optionsHtml}
-        ${!isPredefined && currentStep ? `<option value="${escapeHtml(currentStep)}" selected>${escapeHtml(currentStep)}</option>` : ''}
-        <option value="__custom__">Outro (digitar)...</option>
+        <option value="__CREATE_NEXTSTEP__">➕ Criar Próximo Passo...</option>
       </select>
       <svg class="comm-status-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -2285,8 +2707,9 @@ function changeCommercialNextStep(clientId, newStep) {
   const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
   if (!client) return;
 
-  if (newStep === '__custom__') {
-    openCommercialTaskModal(clientId, 'form', false);
+  if (newStep === '__CREATE_NEXTSTEP__') {
+    openCreateCustomOptionModal('nextstep', clientId);
+    renderCommercialApp();
     return;
   }
 
@@ -2445,25 +2868,32 @@ function renderCommercialTable(clients) {
           ${getCommercialNextStepSelect(client)}
         </div>
 
-        <!-- Coluna 6: Agendamento de Tarefa (Horário & Data) -->
+        <!-- Coluna 6: Agendamento de Tarefa (Horário & Data: Vermelho se fora do prazo, Azul Claro se dentro) -->
         <div class="comm-col-schedule">
-          ${hasTask ? `
-            <span class="comm-task-due-pill ${isOverdue ? 'overdue' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="Reunião/Tarefa agendada para ${formatDateDisplay(client.task.dueDate)}${client.task.dueTime ? ' das ' + client.task.dueTime + ' às ' + (client.task.endTime || calculateEndTime30m(client.task.dueTime)) + ' (30m)' : ''}. Clique para gerenciar.">
-              📅 ${formatDateDisplay(client.task.dueDate)}${client.task.dueTime ? ' às ' + client.task.dueTime : ''}${isOverdue ? ' • Vencida' : ''}
-            </span>
-          ` : `
-            <button type="button" class="btn-schedule-shortcut" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Clique para agendar data e horário para este próximo passo">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <span>+ Agendar Tarefa</span>
-            </button>
-          `}
+          ${(() => {
+            const latestApt = getClientLatestAppointment(client);
+            if (latestApt) {
+              const pillClass = latestApt.isOverdue ? 'overdue' : 'active-deadline';
+              const shortDt = formatDateTimeShort(latestApt.date, latestApt.time);
+              return `
+                <span class="comm-task-due-pill ${pillClass}" onclick="openCommercialTaskModal('${client.id}')" title="Reunião/Tarefa: ${escapeHtml(latestApt.action)} em ${formatDateDisplay(latestApt.date)} às ${latestApt.time || '10:00'}${latestApt.isOverdue ? ' (Fora do prazo)' : ' (Dentro do prazo)'}. Clique para gerenciar.">
+                  📅 ${shortDt}
+                </span>
+              `;
+            }
+            return `
+              <button type="button" class="btn-schedule-shortcut" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Clique para agendar data e horário para este próximo passo">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>+ Agendar Tarefa</span>
+              </button>
+            `;
+          })()}
         </div>
 
-        <!-- Coluna 7: Tarefa & Ações Rápidas (com Mini Divisória à Esquerda e Ações Fixas na Direita) -->
+        <!-- Coluna 7: Tarefa & Ações Rápidas (com contador numérico após Marcar Tarefa e Ações Fixas na Direita) -->
         <div class="comm-col-actions">
           <div class="comm-actions-left">
-            ${hasTask ? `
-            <button class="btn-task-action has-task ${isOverdue ? 'overdue' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="${isOverdue ? `Atenção: Tarefa de 30m vencida em ${formatDateDisplay(client.task.dueDate)}. Clique para gerenciar.` : `Tarefa de 30m agendada para ${formatDateDisplay(client.task.dueDate)} às ${client.task.dueTime || '10:00'}. Clique para gerenciar.`}">
+            <button class="btn-task-action ${hasTask ? 'has-task' : ''} ${isOverdue ? 'overdue' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="Marcar ou gerenciar tarefa de 30 minutos na pauta">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -2472,27 +2902,17 @@ function renderCommercialTable(clients) {
               </svg>
               Marcar Tarefa
             </button>
-            ${historyCount > 0 ? `
-              <button type="button" class="btn-task-history-pill" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Ver histórico de ${historyCount} tarefas anteriores deste cliente">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M12 8v4l3 3"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16h4v-4"></path></svg>${historyCount}
-              </button>
-            ` : ''}
-          ` : `
-            <button class="btn-task-action" onclick="openCommercialTaskModal('${client.id}')" title="Marcar tarefa de 30 minutos na pauta">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              Marcar Tarefa
-            </button>
-            ${historyCount > 0 ? `
-              <button type="button" class="btn-task-history-pill done-count" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Ver histórico de ${historyCount} tarefas agendadas deste cliente">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M12 8v4l3 3"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16h4v-4"></path></svg>${historyCount}
-              </button>
-            ` : ''}
-          `}
+            ${(() => {
+              const aptCount = getClientAppointmentsCount(client);
+              if (aptCount > 0) {
+                return `
+                  <span class="comm-task-count-num" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Ver histórico de ${aptCount} reunião(ões)/tarefa(s) agendada(s) deste cliente">
+                    ${aptCount}
+                  </span>
+                `;
+              }
+              return '';
+            })()}
           </div>
 
           <div class="comm-actions-right">
@@ -3429,6 +3849,12 @@ function openCommercialTaskModal(clientId, initialTab = 'form', forceNew = false
     setTimeout(() => inputAction?.focus(), 120);
   }
 
+  // Define cor do agendamento no seletor
+  const taskColor = (client.task && client.task.color) ? client.task.color : '#a855f7';
+  if (typeof selectCommercialTaskColor === 'function') {
+    selectCommercialTaskColor(taskColor);
+  }
+
   // Alterna para a aba solicitada (form ou history)
   switchTaskModalTab(initialTab);
 
@@ -3837,12 +4263,14 @@ function handleCommercialTaskSubmit(e) {
     // ========================================================
     // CASO 1: EDIÇÃO DA TAREFA ATUAL (mantém mesmo ID)
     // ========================================================
+    const taskColor = document.getElementById('comm-task-color')?.value || '#a855f7';
     const taskId = client.task.id;
     client.task.action = action;
     client.task.dueDate = dueDate;
     client.task.dueTime = dueTime;
     client.task.endTime = endTime;
     client.task.notes = notes;
+    client.task.color = taskColor;
     client.task.updatedAt = new Date().toISOString();
     client.nextStep = action;
 
@@ -3855,6 +4283,7 @@ function handleCommercialTaskSubmit(e) {
         dueTime: dueTime,
         endTime: endTime,
         notes: notes,
+        color: taskColor,
         updatedAt: new Date().toISOString()
       };
     } else {
@@ -3871,6 +4300,7 @@ function handleCommercialTaskSubmit(e) {
     // ========================================================
     // CASO 2: NOVA TAREFA (NUNCA SOBRESCREVE A ANTERIOR!)
     // ========================================================
+    const taskColor = document.getElementById('comm-task-color')?.value || '#a855f7';
     // Se já havia uma tarefa ativa anterior, garante que ela permanece arquivada no histórico
     if (client.task && client.task.dueDate) {
       const prevTaskId = client.task.id || ('task-' + Date.now() + '-prev');
@@ -3899,6 +4329,7 @@ function handleCommercialTaskSubmit(e) {
       endTime: endTime,
       duration: 30, // 30 minutos fixos na pauta
       notes: notes,
+      color: taskColor,
       status: 'pending',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

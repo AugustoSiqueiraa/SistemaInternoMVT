@@ -71,23 +71,7 @@
           </button>
         </div>
 
-        <div class="sidebar-left-divider"></div>
-        
-        <!-- 4. CONFIGURAÇÃO (Principal) -->
-        <div class="sidebar-item-group" id="group-configuracao">
-          <button class="sidebar-left-item main-item" data-tab="tab-settings" id="side-item-configuracao" type="button" title="Configuração">
-            <span class="sidebar-icon-cell">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </span>
-            <div class="sidebar-text-cell">
-              <span class="sidebar-item-name">Configuração</span>
-              <span class="sidebar-item-function">MindChat, Nuvem & Parâmetros</span>
-            </div>
-          </button>
-        </div>
+
       </nav>
 
       <div class="sidebar-left-footer">
@@ -117,6 +101,12 @@
           </div>
         </div>
         <div class="nav-actions">
+          <button type="button" class="btn-header-settings" id="btn-header-configuracao" onclick="switchTab('tab-settings')" title="Configurações (MindChat, Nuvem & Parâmetros)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
           <div class="theme-toggle-wrapper" title="Alternar entre modo escuro e claro">
             <label class="theme-switch" for="theme-toggle-checkbox">
               <input type="checkbox" id="theme-toggle-checkbox" aria-label="Alternar tema">
@@ -926,26 +916,7 @@
           </div>
         </div>
 
-        <!-- Visão Funil Kanban (Etapas de Próximo Passo) -->
-        <div id="comm-kanban-view-container" class="commercial-kanban-view" style="display: none;">
-          <div class="kanban-header-bar">
-            <div class="kanban-header-left">
-              <span class="kanban-view-title">Funil de Atendimento por Próximo Passo</span>
-              <span class="kanban-view-subtitle">Avance os clientes pelas etapas decisivas do atendimento</span>
-            </div>
-            <div class="kanban-header-right">
-              <div class="kanban-mode-switcher">
-                <button type="button" class="btn-kanban-mode active" id="btn-kanban-mode-pipeline" onclick="setKanbanMode('pipeline')" title="5 fases consolidadas do pipeline">
-                  5 Fases do Pipeline
-                </button>
-                <button type="button" class="btn-kanban-mode" id="btn-kanban-mode-detailed" onclick="setKanbanMode('detailed')" title="Visualizar todas as 10 etapas detalhadas">
-                  Todas as 10 Etapas
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="kanban-board-grid" id="kanban-board-grid"></div>
-        </div>
+
 
         <!-- Barra Inferior de Navegação entre Sub-Páginas do Comercial -->
         <div class="commercial-bottom-nav-bar">
@@ -974,15 +945,6 @@
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
               <span>Tarefas</span>
-            </button>
-            <button type="button" class="comm-view-btn" id="btn-comm-view-kanban" onclick="setCommercialSubtab('kanban')" data-subtab="kanban" data-comm-view="kanban">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="5" height="18" rx="1"></rect>
-                <rect x="11" y="3" width="5" height="12" rx="1"></rect>
-                <rect x="19" y="3" width="5" height="15" rx="1"></rect>
-              </svg>
-              <span>Funil Kanban</span>
-            </button>
           </div>
         </div>
       </section>
@@ -1721,6 +1683,26 @@
               <input type="text" id="comm-task-notes" class="clean-input" placeholder="Observação rápida (opcional)..." style="height: 32px; font-size: 0.78rem;">
             </div>
 
+            <!-- Cor do Agendamento / Tarefa -->
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                <label class="form-label" style="font-size: 0.74rem; font-weight: 700; margin: 0;">Cor do Agendamento</label>
+                <span style="font-size: 0.68rem; color: var(--text-muted);">Destaque no calendário</span>
+              </div>
+              <div class="task-color-picker-row" style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="task-color-swatches" id="comm-task-color-swatches">
+                  <button type="button" class="color-swatch-circle active" data-color="#a855f7" style="background:#a855f7;" title="Roxo (Padrão)" onclick="selectCommercialTaskColor('#a855f7', this)"></button>
+                  <button type="button" class="color-swatch-circle" data-color="#38bdf8" style="background:#38bdf8;" title="Azul claro" onclick="selectCommercialTaskColor('#38bdf8', this)"></button>
+                  <button type="button" class="color-swatch-circle" data-color="#10b981" style="background:#10b981;" title="Verde" onclick="selectCommercialTaskColor('#10b981', this)"></button>
+                  <button type="button" class="color-swatch-circle" data-color="#f59e0b" style="background:#f59e0b;" title="Âmbar / Amarelo" onclick="selectCommercialTaskColor('#f59e0b', this)"></button>
+                  <button type="button" class="color-swatch-circle" data-color="#ec4899" style="background:#ec4899;" title="Rosa" onclick="selectCommercialTaskColor('#ec4899', this)"></button>
+                  <button type="button" class="color-swatch-circle" data-color="#ef4444" style="background:#ef4444;" title="Vermelho" onclick="selectCommercialTaskColor('#ef4444', this)"></button>
+                </div>
+                <input type="color" id="comm-task-custom-color" value="#a855f7" style="width: 26px; height: 26px; border: none; border-radius: 4px; cursor: pointer; background: transparent; padding: 0;" oninput="selectCommercialTaskColor(this.value)">
+                <input type="hidden" id="comm-task-color" value="#a855f7">
+              </div>
+            </div>
+
             <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.45rem; margin-top: 0.4rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
               <button type="button" class="btn-secondary" id="btn-cancel-commercial-task" onclick="cancelCommercialTaskEdit()" style="padding: 0.32rem 0.85rem; font-size: 0.78rem;">Cancelar</button>
               <button type="submit" class="btn-primary" id="btn-save-commercial-task" style="padding: 0.32rem 1.15rem; font-size: 0.78rem; font-weight: 700;">Salvar Tarefa</button>
@@ -1743,9 +1725,64 @@
               <span>Agendar Nova Tarefa</span>
             </button>
           </div>
-        </div>
       </div>
-    <!-- MODAL: Editar Informações do Cliente / Reunião (Ícone de Lápis) -->
+    </div>
+
+    <!-- Modal: Criar Nova Opção com Nome e Cor (Área, Tipo de Atendimento ou Próximo Passo) -->
+    <div class="modal-overlay" id="modal-create-custom-option">
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title" id="custom-option-modal-title">Criar Nova Opção</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;" id="custom-option-modal-subtitle">Defina o nome e a cor para personalizar esta opção</p>
+          </div>
+          <button class="modal-close" id="modal-create-custom-option-close" type="button" onclick="closeCreateCustomOptionModal()">&times;</button>
+        </div>
+
+        <form id="form-create-custom-option" onsubmit="handleSaveCustomOption(event)">
+          <input type="hidden" id="custom-option-type" value="area">
+          <input type="hidden" id="custom-option-client-id" value="">
+
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label" for="custom-option-name" id="custom-option-name-label" style="font-size: 0.76rem; font-weight: 700;">Nome *</label>
+            <input type="text" id="custom-option-name" class="clean-input" placeholder="Digite o nome..." required style="height: 34px; font-size: 0.82rem;" oninput="updateCustomOptionPreview()">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.95rem;">
+            <label class="form-label" style="font-size: 0.76rem; font-weight: 700; margin-bottom: 0.35rem;">Escolha a Cor *</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <div class="custom-option-swatches" id="custom-option-swatches">
+                <button type="button" class="color-swatch-circle active" data-color="#38bdf8" style="background:#38bdf8;" title="Azul claro" onclick="selectCustomOptionColor('#38bdf8', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#10b981" style="background:#10b981;" title="Verde" onclick="selectCustomOptionColor('#10b981', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#f59e0b" style="background:#f59e0b;" title="Âmbar" onclick="selectCustomOptionColor('#f59e0b', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#a855f7" style="background:#a855f7;" title="Roxo" onclick="selectCustomOptionColor('#a855f7', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#ec4899" style="background:#ec4899;" title="Rosa" onclick="selectCustomOptionColor('#ec4899', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#ef4444" style="background:#ef4444;" title="Vermelho" onclick="selectCustomOptionColor('#ef4444', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#06b6d4" style="background:#06b6d4;" title="Ciano" onclick="selectCustomOptionColor('#06b6d4', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#84cc16" style="background:#84cc16;" title="Lima" onclick="selectCustomOptionColor('#84cc16', this)"></button>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.3rem;">
+                <input type="color" id="custom-option-color-input" value="#38bdf8" style="width: 28px; height: 28px; border: none; border-radius: 4px; cursor: pointer; background: transparent; padding: 0;" oninput="selectCustomOptionColor(this.value)">
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Personalizada</span>
+              </div>
+              <input type="hidden" id="custom-option-color-val" value="#38bdf8">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.1rem; padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 6px;">
+            <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Prévia na tabela:</span>
+            <span id="custom-option-preview-badge" style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.76rem; font-weight: 600; color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35);">
+              Nome da Opção
+            </span>
+          </div>
+
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.45rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            <button type="button" class="btn-secondary" onclick="closeCreateCustomOptionModal()" style="padding: 0.35rem 0.85rem; font-size: 0.78rem;">Cancelar</button>
+            <button type="submit" class="btn-primary" style="padding: 0.35rem 1.25rem; font-size: 0.78rem; font-weight: 700;">Criar</button>
+          </div>
+        </form>
+      </div>
+    </div>
     <div class="modal-backdrop" id="modal-edit-meeting" style="display: none;">
       <div class="modal-card modal-md">
         <div class="modal-header">
