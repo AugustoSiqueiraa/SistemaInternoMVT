@@ -6024,16 +6024,16 @@ body.light-theme .btn-table-fechar.active {
 
 /* Card de Tarefa Ativa Agendada no Modal */
 .task-active-preview-box {
-  background: rgba(245, 158, 11, 0.06);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
   padding: 0.85rem 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.95rem;
 }
 
 .task-active-preview-box.overdue-box {
-  background: rgba(239, 68, 68, 0.06);
-  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .task-active-badge-bar {
@@ -6048,7 +6048,10 @@ body.light-theme .btn-table-fechar.active {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #fbbf24;
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .task-overdue-tag {
@@ -6062,7 +6065,7 @@ body.light-theme .btn-table-fechar.active {
 }
 
 .task-active-action-title {
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 0.25rem;
@@ -6087,11 +6090,11 @@ body.light-theme .btn-table-fechar.active {
 
 .task-active-decision-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.65rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .btn-action-conclude-next {
@@ -6100,9 +6103,12 @@ body.light-theme .btn-table-fechar.active {
   color: #34d399;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.38rem 0.75rem;
+  padding: 0.38rem 0.85rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all var(--transition-fast);
 }
 
@@ -6111,51 +6117,45 @@ body.light-theme .btn-table-fechar.active {
   color: #000000;
 }
 
-.btn-action-schedule-another {
-  background: rgba(56, 189, 248, 0.14);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  color: #38bdf8;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.38rem 0.65rem;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.btn-action-schedule-another:hover {
-  background: #38bdf8;
-  color: #000000;
-}
-
 .btn-action-edit-current {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-subtle);
   color: var(--text-main);
   font-size: 0.75rem;
-  padding: 0.38rem 0.65rem;
+  font-weight: 600;
+  padding: 0.38rem 0.75rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all var(--transition-fast);
 }
 
 .btn-action-edit-current:hover {
   background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .btn-action-delete-current {
-  background: transparent;
-  border: 1px solid transparent;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
   color: #f87171;
   font-size: 0.75rem;
-  padding: 0.38rem 0.55rem;
+  font-weight: 600;
+  padding: 0.38rem 0.65rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all var(--transition-fast);
 }
 
 .btn-action-delete-current:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Timeline do Histórico de Tarefas */
@@ -6687,7 +6687,7 @@ body.light-theme .comm-quick-select option {
 
 .comm-tasks-table-header {
   display: grid;
-  grid-template-columns: 165px 1.3fr 115px 130px 1.55fr 210px;
+  grid-template-columns: 155px 1.25fr 110px 120px 1.4fr 225px;
   padding: 0.75rem 1.15rem;
   background: rgba(0, 0, 0, 0.35);
   border-bottom: 1px solid var(--border-subtle);
@@ -6713,7 +6713,7 @@ body.light-theme .comm-tasks-table-header {
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 1.15rem;
   display: grid;
-  grid-template-columns: 165px 1.3fr 115px 130px 1.55fr 210px;
+  grid-template-columns: 155px 1.25fr 110px 120px 1.4fr 225px;
   gap: 0.75rem;
   align-items: center;
   transition: background var(--transition-fast);
@@ -6802,13 +6802,29 @@ body.light-theme .comm-tasks-table-header {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 82px;
   gap: 0.25rem;
   transition: all var(--transition-fast);
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .btn-task-done:hover {
   background: #10b981;
   color: #000000;
+}
+
+.btn-task-done.completed {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #34d399;
+}
+
+.btn-task-done.completed:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
 }
 
 .btn-task-reopen {

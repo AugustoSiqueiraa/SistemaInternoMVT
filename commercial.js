@@ -3691,19 +3691,10 @@ function renderCommercialTasksView() {
         </div>
 
         <!-- Coluna 6: Status & Ações Rápidas -->
-        <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.35rem;">
-          ${!isDone ? `
-            <button type="button" class="btn-task-done" onclick="toggleCommercialTaskStatus('${client.id}')" title="Marcar tarefa como concluída">
-              ✓ Concluir
-            </button>
-          ` : `
-            <button type="button" class="btn-task-reopen" onclick="toggleCommercialTaskStatus('${client.id}')" title="Reabrir tarefa como pendente">
-              ↩ Reabrir
-            </button>
-            <button type="button" class="btn-action-conclude-next" style="padding: 0.22rem 0.5rem; font-size: 0.72rem;" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Agendar novo próximo passo para este cliente">
-              + Próximo Passo
-            </button>
-          `}
+        <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.35rem; flex-wrap: nowrap;">
+          <button type="button" class="btn-task-done ${isDone ? 'completed' : ''}" onclick="toggleCommercialTaskStatus('${client.id}')" title="${isDone ? 'Tarefa concluída! Clique para reabrir como pendente' : 'Clique para marcar esta tarefa como concluída'}">
+            ${isDone ? '✓ Concluída' : '✓ Concluir'}
+          </button>
           ${Array.isArray(client.taskHistory) && client.taskHistory.length > 0 ? `
             <button type="button" class="btn-task-history-pill" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Ver histórico de ${client.taskHistory.length} tarefas deste cliente">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M12 8v4l3 3"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16h4v-4"></path></svg>${client.taskHistory.length}
@@ -3718,6 +3709,7 @@ function renderCommercialTasksView() {
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
           </button>
+          <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTaskRow('${client.id}')" title="Excluir esta tarefa">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -3949,18 +3941,127 @@ function renderCommercialTaskHistory(client) {
             ${item.notes ? `<div class="history-item-notes-line">${escapeHtml(item.notes)}</div>` : ''}
           </div>
         </div>
-        <div class="history-item-actions">
+        <div class="history-item-actions" style="display: flex; align-items: center; gap: 0.35rem;">
           ${!isActiveNow ? `
             <button type="button" class="btn-history-reactivate" onclick="reopenCommercialTaskFromHistory('${client.id}', '${itemKey}')" title="Restaurar esta tarefa como ativa na pauta">
               ↩ Reativar
             </button>
           ` : ''}
+          <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTaskFromHistory('${client.id}', '${itemKey}')" title="Excluir esta tarefa">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
         </div>
       </div>
     `;
   }).join('');
 }
 window.renderCommercialTaskHistory = renderCommercialTaskHistory;
+
+// Excluir tarefa do histórico permanente (ou ativa)
+function deleteCommercialTaskFromHistory(clientId, taskKey) {
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client) return;
+
+  if (!confirm('Deseja realmente excluir esta tarefa?')) return;
+
+  // 1. Remover do histórico
+  if (Array.isArray(client.taskHistory)) {
+    const idx = client.taskHistory.findIndex((item, i) => item.id === taskKey || `idx-${i}` === taskKey || String(i) === taskKey);
+    if (idx >= 0) {
+      const removed = client.taskHistory.splice(idx, 1)[0];
+      // Se for a tarefa ativa atual, limpa também
+      if (client.task && (client.task.id === taskKey || (removed && removed.id === client.task.id))) {
+        client.task = null;
+      }
+    }
+  }
+
+  // 2. Se for a tarefa ativa na pauta
+  if (client.task && client.task.id === taskKey) {
+    client.task = null;
+  }
+
+  saveCommercialData();
+  renderCommercialTaskHistory(client);
+  renderCommercialApp();
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('Tarefa excluída com sucesso!', 'info', 2200);
+  }
+}
+window.deleteCommercialTaskFromHistory = deleteCommercialTaskFromHistory;
+
+// Excluir tarefa da tabela de tarefas do comercial
+function deleteCommercialTaskRow(clientId) {
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client || !client.task) return;
+
+  if (!confirm(`Deseja realmente excluir a tarefa de "${client.name}"?`)) return;
+
+  const tId = client.task.id;
+  if (tId && Array.isArray(client.taskHistory)) {
+    client.taskHistory = client.taskHistory.filter(h => h.id !== tId);
+  }
+  client.task = null;
+
+  saveCommercialData();
+  renderCommercialApp();
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(`Tarefa de "${client.name}" excluída.`, 'info', 2200);
+  }
+}
+window.deleteCommercialTaskRow = deleteCommercialTaskRow;
+
+// Concluir a tarefa ativa atual sem complicar ou forçar novo formulário
+function concludeCurrentActiveTask() {
+  const inputClientId = document.getElementById('comm-task-client-id');
+  const clientId = inputClientId?.value;
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client || !client.task) return;
+
+  client.task.status = 'done';
+  client.task.completedAt = new Date().toISOString();
+  client.task.updatedAt = new Date().toISOString();
+
+  if (!Array.isArray(client.taskHistory)) client.taskHistory = [];
+  const taskId = client.task.id || ('task-done-' + Date.now());
+  const existingIndex = client.taskHistory.findIndex(h => h.id === taskId);
+  const archivedTask = {
+    ...client.task,
+    id: taskId,
+    status: 'done',
+    completedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (existingIndex >= 0) {
+    client.taskHistory[existingIndex] = archivedTask;
+  } else {
+    client.taskHistory.unshift(archivedTask);
+  }
+
+  saveCommercialData();
+  renderCommercialApp();
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
+
+  closeCommercialTaskModal();
+  if (typeof showToast === 'function') {
+    showToast(`✅ Tarefa de "${client.name}" concluída com sucesso!`, 'success', 2800);
+  }
+}
+window.concludeCurrentActiveTask = concludeCurrentActiveTask;
 
 // Concluir a tarefa atual e abrir formulário para o novo próximo passo
 function concludeCurrentAndOpenNext() {
