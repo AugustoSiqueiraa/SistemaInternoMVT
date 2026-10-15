@@ -964,6 +964,8 @@ const COMMERCIAL_STATE = {
   zoom: parseInt(localStorage.getItem('mvt_comm_zoom') || '100', 10),
   panoramic: localStorage.getItem('mvt_comm_panoramic') === 'true',
   taskModalTab: 'form',
+  taskStatusFilter: 'all', // 'all', 'pending' (em aberto), 'today', 'done' (concluídas)
+  taskAreaFilter: 'all',
   mindchatConnected: localStorage.getItem('mvt_commercial_mindchat_connected') !== 'false'
 };
 window.COMMERCIAL_STATE = COMMERCIAL_STATE;
@@ -973,7 +975,55 @@ window.COMMERCIAL_STATE = COMMERCIAL_STATE;
 // Para: Área, Tipo de Atendimento e Próximo Passo
 // ========================================================
 
-// 1. ÁREAS PERSONALIZADAS
+// 1. OBTENÇÃO DE CORES DINÂMICAS PARA CATEGORIAS (PADRÃO OU PERSONALIZADA)
+function getCommercialAreaColor(areaName) {
+  if (!areaName) return '#f59e0b';
+  const clean = String(areaName).trim().toLowerCase();
+  const customList = getCommercialCustomAreas();
+  const matched = customList.find(c => {
+    const n = (c && c.name ? String(c.name) : (typeof c === 'string' ? c : '')).trim().toLowerCase();
+    return n === clean;
+  });
+  if (matched && matched.color) return matched.color;
+  if (clean.includes('cív') || clean.includes('civ')) return '#38bdf8';
+  if (clean.includes('prev') || clean.includes('aposent') || clean.includes('aux')) return '#a855f7';
+  if (clean.includes('trab')) return '#f59e0b';
+  return '#38bdf8';
+}
+window.getCommercialAreaColor = getCommercialAreaColor;
+
+function getCommercialStatusColor(statusName) {
+  if (!statusName) return '#38bdf8';
+  const clean = String(statusName).trim().toLowerCase();
+  const customList = getCommercialCustomTypes();
+  const matched = customList.find(c => {
+    const n = (c && c.name ? String(c.name) : (typeof c === 'string' ? c : '')).trim().toLowerCase();
+    return n === clean;
+  });
+  if (matched && matched.color) return matched.color;
+  if (clean.includes('novo')) return '#38bdf8';
+  if (clean.includes('follow')) return '#a855f7';
+  if (clean.includes('indica') || clean.includes('indicaç')) return '#10b981';
+  if (clean.includes('fechar')) return '#f59e0b';
+  if (clean.includes('assinado')) return '#059669';
+  return '#38bdf8';
+}
+window.getCommercialStatusColor = getCommercialStatusColor;
+
+function getCommercialNextStepColor(stepName) {
+  if (!stepName) return '';
+  const clean = String(stepName).trim().toLowerCase();
+  const customList = getCommercialCustomNextSteps();
+  const matched = customList.find(c => {
+    const n = (c && c.name ? String(c.name) : (typeof c === 'string' ? c : '')).trim().toLowerCase();
+    return n === clean;
+  });
+  if (matched && matched.color) return matched.color;
+  return '';
+}
+window.getCommercialNextStepColor = getCommercialNextStepColor;
+
+// 2. ÁREAS PERSONALIZADAS E CORES DE ÁREAS PADRÃO
 function getCommercialCustomAreas() {
   try {
     const raw = localStorage.getItem('mvt_commercial_custom_areas');
@@ -982,10 +1032,12 @@ function getCommercialCustomAreas() {
       if (Array.isArray(parsed)) {
         return parsed.map(item => {
           if (typeof item === 'string') {
-            return { name: item.trim(), color: '#38bdf8' };
+            const clean = item.trim();
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: '#38bdf8' } : null;
           }
           if (item && item.name) {
-            return { name: String(item.name).trim(), color: item.color || '#38bdf8' };
+            const clean = String(item.name).trim();
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: item.color || '#38bdf8' } : null;
           }
           return null;
         }).filter(Boolean);
@@ -999,9 +1051,10 @@ window.getCommercialCustomAreas = getCommercialCustomAreas;
 function saveCommercialCustomArea(areaName, color = '#38bdf8') {
   if (!areaName || typeof areaName !== 'string') return;
   const clean = areaName.trim();
-  if (!clean) return;
+  if (!clean || clean.startsWith('__') || clean.toUpperCase().includes('CREATE_')) return;
+
   const list = getCommercialCustomAreas();
-  const idx = list.findIndex(a => a.name.toLowerCase() === clean.toLowerCase());
+  const idx = list.findIndex(a => a && a.name && a.name.toLowerCase() === clean.toLowerCase());
   if (idx >= 0) {
     list[idx].color = color;
   } else {
@@ -1012,7 +1065,7 @@ function saveCommercialCustomArea(areaName, color = '#38bdf8') {
 }
 window.saveCommercialCustomArea = saveCommercialCustomArea;
 
-// 2. TIPOS DE ATENDIMENTO PERSONALIZADOS
+// 3. TIPOS DE ATENDIMENTO PERSONALIZADOS E CORES DE STATUS PADRÃO
 function getCommercialCustomTypes() {
   try {
     const raw = localStorage.getItem('mvt_commercial_custom_types');
@@ -1021,10 +1074,12 @@ function getCommercialCustomTypes() {
       if (Array.isArray(parsed)) {
         return parsed.map(item => {
           if (typeof item === 'string') {
-            return { name: item.trim(), color: '#38bdf8' };
+            const clean = item.trim();
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: '#38bdf8' } : null;
           }
           if (item && item.name) {
-            return { name: String(item.name).trim(), color: item.color || '#38bdf8' };
+            const clean = String(item.name).trim();
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: item.color || '#38bdf8' } : null;
           }
           return null;
         }).filter(Boolean);
@@ -1038,19 +1093,21 @@ window.getCommercialCustomTypes = getCommercialCustomTypes;
 function saveCommercialCustomType(typeName, color = '#38bdf8') {
   if (!typeName || typeof typeName !== 'string') return;
   const clean = typeName.trim();
-  if (!clean) return;
+  if (!clean || clean.startsWith('__') || clean.toUpperCase().includes('CREATE_')) return;
+
   const list = getCommercialCustomTypes();
-  const idx = list.findIndex(t => t.name.toLowerCase() === clean.toLowerCase());
+  const idx = list.findIndex(t => t && t.name && t.name.toLowerCase() === clean.toLowerCase());
   if (idx >= 0) {
     list[idx].color = color;
   } else {
     list.push({ name: clean, color: color || '#38bdf8' });
   }
   localStorage.setItem('mvt_commercial_custom_types', JSON.stringify(list));
+  syncCommercialStatusDropdowns();
 }
 window.saveCommercialCustomType = saveCommercialCustomType;
 
-// 3. PRÓXIMOS PASSOS PERSONALIZADOS
+// 4. PRÓXIMOS PASSOS PERSONALIZADOS E CORES DE PASSOS PADRÃO
 function getCommercialCustomNextSteps() {
   try {
     const raw = localStorage.getItem('mvt_commercial_custom_nextsteps');
@@ -1059,10 +1116,12 @@ function getCommercialCustomNextSteps() {
       if (Array.isArray(parsed)) {
         return parsed.map(item => {
           if (typeof item === 'string') {
-            return { name: item.trim(), color: '#38bdf8' };
+            const clean = item.trim();
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: '#38bdf8' } : null;
           }
           if (item && item.name) {
-            return { name: String(item.name).trim(), color: item.color || '#38bdf8' };
+            const clean = String(item.name).trim();
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: item.color || '#38bdf8' } : null;
           }
           return null;
         }).filter(Boolean);
@@ -1076,64 +1135,274 @@ window.getCommercialCustomNextSteps = getCommercialCustomNextSteps;
 function saveCommercialCustomNextStep(stepName, color = '#38bdf8') {
   if (!stepName || typeof stepName !== 'string') return;
   const clean = stepName.trim();
-  if (!clean) return;
+  if (!clean || clean.startsWith('__') || clean.toUpperCase().includes('CREATE_')) return;
+
   const list = getCommercialCustomNextSteps();
-  const idx = list.findIndex(s => s.name.toLowerCase() === clean.toLowerCase());
+  const idx = list.findIndex(s => s && s.name && s.name.toLowerCase() === clean.toLowerCase());
   if (idx >= 0) {
     list[idx].color = color;
   } else {
     list.push({ name: clean, color: color || '#38bdf8' });
   }
   localStorage.setItem('mvt_commercial_custom_nextsteps', JSON.stringify(list));
+  syncCommercialNextStepDropdowns();
 }
 window.saveCommercialCustomNextStep = saveCommercialCustomNextStep;
 
-// 4. MODAL POPUP PARA CRIAR OPÇÃO COM NOME E COR
-function openCreateCustomOptionModal(type, clientId) {
-  const modal = document.getElementById('modal-create-custom-option');
-  if (!modal) return;
-
-  const typeInput = document.getElementById('custom-option-type');
-  const clientInput = document.getElementById('custom-option-client-id');
-  const title = document.getElementById('custom-option-modal-title');
-  const subtitle = document.getElementById('custom-option-modal-subtitle');
-  const nameInput = document.getElementById('custom-option-name');
-  const nameLabel = document.getElementById('custom-option-name-label');
-
-  if (typeInput) typeInput.value = type;
-  if (clientInput) clientInput.value = clientId || '';
-  if (nameInput) {
-    nameInput.value = '';
-  }
+// Excluir opção personalizada do usuário (ou reverter cor personalizada para o padrão)
+function deleteCommercialCustomOption(type, name) {
+  if (!name) return;
+  const clean = name.trim().toLowerCase();
 
   if (type === 'area') {
-    if (title) title.textContent = 'Criar Nova Área';
-    if (subtitle) subtitle.textContent = 'Defina o nome e a cor para destacar esta área de atuação';
-    if (nameLabel) nameLabel.textContent = 'Nome da Área *';
-    if (nameInput) nameInput.placeholder = 'Ex: Tributário, Família, Imobiliário...';
+    let list = getCommercialCustomAreas();
+    list = list.filter(a => a && a.name && a.name.toLowerCase() !== clean);
+    localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(list));
+    syncCommercialAreaDropdowns();
   } else if (type === 'type') {
-    if (title) title.textContent = 'Criar Novo Tipo de Atendimento';
-    if (subtitle) subtitle.textContent = 'Defina o nome e a cor para esta categoria de atendimento';
-    if (nameLabel) nameLabel.textContent = 'Nome do Tipo de Atendimento *';
-    if (nameInput) nameInput.placeholder = 'Ex: Parceria, Retorno Urgente, Assessoria...';
+    let list = getCommercialCustomTypes();
+    list = list.filter(t => t && t.name && t.name.toLowerCase() !== clean);
+    localStorage.setItem('mvt_commercial_custom_types', JSON.stringify(list));
+    syncCommercialStatusDropdowns();
   } else if (type === 'nextstep') {
-    if (title) title.textContent = 'Criar Novo Próximo Passo';
-    if (subtitle) subtitle.textContent = 'Defina o nome e a cor para este próximo passo comercial';
-    if (nameLabel) nameLabel.textContent = 'Nome do Próximo Passo *';
-    if (nameInput) nameInput.placeholder = 'Ex: Apresentar proposta, Enviar procuração...';
+    let list = getCommercialCustomNextSteps();
+    list = list.filter(s => s && s.name && s.name.toLowerCase() !== clean);
+    localStorage.setItem('mvt_commercial_custom_nextsteps', JSON.stringify(list));
+    syncCommercialNextStepDropdowns();
   }
 
-  selectCustomOptionColor('#38bdf8');
-  updateCustomOptionPreview();
+  renderExistingCustomOptions(type);
+  renderCommercialApp();
+  if (typeof showToast === 'function') {
+    showToast(`Opção "${name}" atualizada com sucesso.`, 'info', 2200);
+  }
+}
+window.deleteCommercialCustomOption = deleteCommercialCustomOption;
 
+// Sincronização dos dropdowns de Status
+function syncCommercialStatusDropdowns() {
+  const defaultTypes = ['Lead Novo', 'Follow-up', 'Indicação'];
+  const customTypes = getCommercialCustomTypes();
+  const allTypes = [...defaultTypes];
+  customTypes.forEach(ct => {
+    const tName = ct.name || ct;
+    if (tName && !allTypes.some(t => t.toLowerCase() === tName.toLowerCase())) {
+      allTypes.push(tName);
+    }
+  });
+
+  const quickType = document.getElementById('comm-quick-type');
+  if (quickType) {
+    const currentVal = quickType.value || 'Lead Novo';
+    quickType.innerHTML = allTypes.map(t => `<option value="${escapeHtml(t)}" ${t === currentVal ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('') + '<option value="__CREATE_TYPE__">➕ Criar Tipo de Atendimento...</option>';
+  }
+
+  const modalStatus = document.getElementById('comm-client-status');
+  if (modalStatus) {
+    const currentVal = modalStatus.value || 'Lead Novo';
+    modalStatus.innerHTML = allTypes.map(t => `<option value="${escapeHtml(t)}" ${t === currentVal ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('') + '<option value="__CREATE_TYPE__">➕ Criar Tipo de Atendimento...</option>';
+  }
+}
+window.syncCommercialStatusDropdowns = syncCommercialStatusDropdowns;
+
+// Sincronização dos dropdowns de Próximo Passo
+function syncCommercialNextStepDropdowns() {
+  const defaultSteps = [
+    'Fazer ligação', 'Retornar cliente', 'Retorno para fechamento',
+    'Solicitar documentos', 'Cobrar documentos', 'Analisar documentos',
+    'Enviar contrato', 'Cobrar assinatura', 'Agendar reunião com advogado',
+    'Confirmar reunião'
+  ];
+  const customSteps = getCommercialCustomNextSteps();
+  const allSteps = [...defaultSteps];
+  customSteps.forEach(cs => {
+    const sName = cs.name || cs;
+    if (sName && !allSteps.some(s => s.toLowerCase() === sName.toLowerCase())) {
+      allSteps.push(sName);
+    }
+  });
+
+  const quickStep = document.getElementById('comm-quick-nextstep');
+  if (quickStep) {
+    const currentVal = quickStep.value || 'Fazer ligação';
+    quickStep.innerHTML = allSteps.map(s => `<option value="${escapeHtml(s)}" ${s === currentVal ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('') + '<option value="__CREATE_NEXTSTEP__">➕ Criar Próximo Passo...</option>';
+  }
+
+  const modalStep = document.getElementById('comm-client-next-step');
+  if (modalStep) {
+    const currentVal = modalStep.value || 'Fazer ligação';
+    modalStep.innerHTML = allSteps.map(s => `<option value="${escapeHtml(s)}" ${s === currentVal ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('') + '<option value="__CREATE_NEXTSTEP__">➕ Criar Próximo Passo...</option>';
+  }
+}
+window.syncCommercialNextStepDropdowns = syncCommercialNextStepDropdowns;
+
+// Renderizar lista interativa de opções no modal com visualização de padrões e personalizadas
+function renderExistingCustomOptions(type) {
+  const container = document.getElementById('custom-option-existing-chips');
+  if (!container) return;
+
+  try {
+    let defaults = [];
+    let getColorFn = null;
+    let customList = [];
+
+    if (type === 'area') {
+      defaults = ['Trabalhista', 'Cível', 'Previdenciário'];
+      getColorFn = getCommercialAreaColor;
+      customList = getCommercialCustomAreas();
+    } else if (type === 'type') {
+      defaults = ['Lead Novo', 'Follow-up', 'Indicação', 'Pronto para Fechar', 'Contrato Assinado'];
+      getColorFn = getCommercialStatusColor;
+      customList = getCommercialCustomTypes();
+    } else if (type === 'nextstep') {
+      defaults = [
+        'Fazer ligação', 'Retornar cliente', 'Retorno para fechamento',
+        'Solicitar documentos', 'Cobrar documentos', 'Analisar documentos',
+        'Enviar contrato', 'Cobrar assinatura', 'Agendar reunião com advogado',
+        'Confirmar reunião'
+      ];
+      getColorFn = getCommercialNextStepColor;
+      customList = getCommercialCustomNextSteps();
+    }
+
+    // Identifica quais opções criadas são novas (não estão entre os nomes padrão)
+    const pureCustom = (Array.isArray(customList) ? customList : []).filter(c => {
+      const n = (c && c.name ? String(c.name) : (typeof c === 'string' ? c : '')).trim();
+      return n && !defaults.some(d => d.toLowerCase() === n.toLowerCase());
+    });
+
+    let html = `
+      <div style="margin-bottom: 0.65rem;">
+        <div style="font-size: 0.69rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px;">
+          Opções Padrão (Clique para alterar o nome ou a cor):
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+          ${defaults.map(defName => {
+            const col = (getColorFn ? getColorFn(defName) : '') || '#38bdf8';
+            return `
+              <span class="custom-option-chip" style="color: ${col}; border-color: ${col}55; background: ${col}18; cursor: pointer;" 
+                    onclick="editCustomOptionFromChip('${escapeHtml(defName)}', '${col}')" 
+                    title="Clique para escolher uma nova cor para '${escapeHtml(defName)}'">
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${col};"></span>
+                <span>${escapeHtml(defName)}</span>
+                <span style="font-size: 0.62rem; opacity: 0.65; margin-left: 2px;">(Padrão)</span>
+              </span>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    if (pureCustom.length > 0) {
+      html += `
+        <div style="margin-top: 0.65rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255,255,255,0.08);">
+          <div style="font-size: 0.69rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            Opções Adicionadas por Você:
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+            ${pureCustom.map(item => {
+              const iName = (item && item.name ? String(item.name) : (typeof item === 'string' ? item : '')).trim();
+              const col = (item && item.color) ? item.color : '#38bdf8';
+              if (!iName) return '';
+              return `
+                <span class="custom-option-chip" style="color: ${col}; border-color: ${col}55; background: ${col}18; cursor: pointer;" 
+                      onclick="editCustomOptionFromChip('${escapeHtml(iName)}', '${col}')" 
+                      title="Clique para editar a cor de '${escapeHtml(iName)}'">
+                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${col};"></span>
+                  <span>${escapeHtml(iName)}</span>
+                  <span class="custom-option-chip-del" onclick="event.stopPropagation(); deleteCommercialCustomOption('${type}', '${escapeHtml(iName)}')" title="Excluir esta opção">✕</span>
+                </span>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+  } catch (err) {
+    console.warn('Erro ao renderizar opções existentes no modal:', err);
+  }
+}
+window.renderExistingCustomOptions = renderExistingCustomOptions;
+
+// Ao clicar em uma opção existente, carrega no formulário para mudar a cor
+function editCustomOptionFromChip(name, color) {
+  const nameInput = document.getElementById('custom-option-name');
+  if (nameInput) {
+    nameInput.value = name;
+  }
+  selectCustomOptionColor(color);
+  updateCustomOptionPreview();
+  if (typeof showToast === 'function') {
+    showToast(`Editando "${name}". Escolha a nova cor e clique em "Salvar Opção".`, 'info', 2500);
+  }
+}
+window.editCustomOptionFromChip = editCustomOptionFromChip;
+
+// 4. MODAL POPUP PARA CRIAR / EDITAR OPÇÃO COM NOME E COR
+function openCreateCustomOptionModal(type = 'area', clientId = '') {
+  const modal = document.getElementById('modal-create-custom-option');
+  if (!modal) {
+    console.error('Modal #modal-create-custom-option não encontrado!');
+    return;
+  }
+
+  // Abre de forma imediata e assegura visibilidade prioritária no topo
   modal.classList.add('active');
-  setTimeout(() => nameInput?.focus(), 150);
+  modal.style.display = 'flex';
+  modal.style.zIndex = '10005';
+  modal.style.opacity = '1';
+  modal.style.pointerEvents = 'auto';
+
+  try {
+    const typeInput = document.getElementById('custom-option-type');
+    const clientInput = document.getElementById('custom-option-client-id');
+    const title = document.getElementById('custom-option-modal-title');
+    const subtitle = document.getElementById('custom-option-modal-subtitle');
+    const nameInput = document.getElementById('custom-option-name');
+    const nameLabel = document.getElementById('custom-option-name-label');
+
+    if (typeInput) typeInput.value = type;
+    if (clientInput) clientInput.value = clientId || '';
+    if (nameInput) {
+      nameInput.value = '';
+    }
+
+    if (type === 'area') {
+      if (title) title.textContent = 'Personalizar Área de Atuação';
+      if (subtitle) subtitle.textContent = 'Crie uma nova área ou clique em uma existente para alterar sua cor ou nome';
+      if (nameLabel) nameLabel.textContent = 'Nome da Área *';
+      if (nameInput) nameInput.placeholder = 'Ex: Tributário, Família, Imobiliário...';
+    } else if (type === 'type') {
+      if (title) title.textContent = 'Personalizar Tipo de Atendimento';
+      if (subtitle) subtitle.textContent = 'Crie um novo tipo de atendimento ou clique em um existente para alterar sua cor';
+      if (nameLabel) nameLabel.textContent = 'Nome do Tipo de Atendimento *';
+      if (nameInput) nameInput.placeholder = 'Ex: Parceria, Retorno Urgente, Assessoria...';
+    } else if (type === 'nextstep') {
+      if (title) title.textContent = 'Personalizar Próximo Passo';
+      if (subtitle) subtitle.textContent = 'Crie um novo próximo passo com cor ou altere a cor dos passos existentes';
+      if (nameLabel) nameLabel.textContent = 'Nome do Próximo Passo *';
+      if (nameInput) nameInput.placeholder = 'Ex: Apresentar proposta, Enviar procuração...';
+    }
+
+    selectCustomOptionColor('#38bdf8');
+    updateCustomOptionPreview();
+    renderExistingCustomOptions(type);
+
+    setTimeout(() => nameInput?.focus(), 150);
+  } catch (err) {
+    console.warn('Erro ao configurar campos do modal de opção:', err);
+  }
 }
 window.openCreateCustomOptionModal = openCreateCustomOptionModal;
 
 function closeCreateCustomOptionModal() {
   const modal = document.getElementById('modal-create-custom-option');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 window.closeCreateCustomOptionModal = closeCreateCustomOptionModal;
 
@@ -1181,39 +1450,61 @@ function handleSaveCustomOption(event) {
     return;
   }
 
-  const client = clientId ? COMMERCIAL_STATE.clients.find(c => c.id === clientId) : null;
+  if (name.startsWith('__') || name.toUpperCase().includes('CREATE_')) {
+    if (typeof showToast === 'function') {
+      showToast('Por favor, informe um nome válido para a opção.', 'warning');
+    }
+    return;
+  }
+
+  const client = clientId ? COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId)) : null;
 
   if (type === 'area') {
     saveCommercialCustomArea(name, colorVal);
     if (client) {
       recordCommercialUndo(`Área de ${client.name} para "${name}"`);
-      client.area = name;
+      const cNameLower = (client.name || '').trim().toLowerCase();
+      COMMERCIAL_STATE.clients.forEach(c => {
+        if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+          c.area = name;
+        }
+      });
       saveCommercialData();
     }
     if (typeof showToast === 'function') {
-      showToast(`Área "${name}" criada com sucesso!`, 'success', 2500);
+      showToast(`Área "${name}" salva com cor personalizada!`, 'success', 2500);
     }
   } else if (type === 'type') {
     saveCommercialCustomType(name, colorVal);
     if (client) {
       recordCommercialUndo(`Tipo de atendimento de ${client.name} para "${name}"`);
-      client.tipoAtendimento = name;
-      client.status = name;
+      const cNameLower = (client.name || '').trim().toLowerCase();
+      COMMERCIAL_STATE.clients.forEach(c => {
+        if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+          c.tipoAtendimento = name;
+          c.status = name;
+        }
+      });
       saveCommercialData();
     }
     if (typeof showToast === 'function') {
-      showToast(`Tipo de atendimento "${name}" criado com sucesso!`, 'success', 2500);
+      showToast(`Tipo de atendimento "${name}" salvo com cor personalizada!`, 'success', 2500);
     }
   } else if (type === 'nextstep') {
     saveCommercialCustomNextStep(name, colorVal);
     if (client) {
       recordCommercialUndo(`Próximo passo de ${client.name} para "${name}"`);
-      client.nextStep = name;
-      if (client.task) client.task.action = name;
+      const cNameLower = (client.name || '').trim().toLowerCase();
+      COMMERCIAL_STATE.clients.forEach(c => {
+        if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+          c.nextStep = name;
+          if (c.task) c.task.action = name;
+        }
+      });
       saveCommercialData();
     }
     if (typeof showToast === 'function') {
-      showToast(`Próximo passo "${name}" criado com sucesso!`, 'success', 2500);
+      showToast(`Próximo passo "${name}" salvo com cor personalizada!`, 'success', 2500);
     }
   }
 
@@ -1235,24 +1526,82 @@ function selectCommercialTaskColor(color, btnElement) {
 }
 window.selectCommercialTaskColor = selectCommercialTaskColor;
 
-// Quantidade de reuniões / tarefas agendadas do cliente (somente com números)
+// Quantidade de reuniões / tarefas agendadas do cliente (sem duplicidade entre tarefa ativa e histórico)
 function getClientAppointmentsCount(client) {
   if (!client) return 0;
-  let count = 0;
-  if (client.task && client.task.dueDate) count++;
-  if (Array.isArray(client.taskHistory)) count += client.taskHistory.length;
-  if (window.STATE && Array.isArray(window.STATE.meetings)) {
-    const cName = (client.name || '').trim().toLowerCase();
-    const cPhone = cleanPhoneForWa(client.phone);
-    window.STATE.meetings.forEach(m => {
-      const mName = (m.clientName || '').trim().toLowerCase();
-      const mPhone = cleanPhoneForWa(m.clientPhone);
-      if ((cName && (mName === cName || mName.includes(cName) || cName.includes(mName))) || (cPhone && mPhone && cPhone === mPhone)) {
-        count++;
+  const uniqueItems = [];
+
+  // 1. Tarefa ativa na pauta
+  if (client.task && (client.task.dueDate || client.task.action)) {
+    uniqueItems.push({
+      id: client.task.id || '',
+      date: (client.task.dueDate || '').substring(0, 10),
+      time: client.task.dueTime || '10:00',
+      action: (client.task.action || '').trim().toLowerCase()
+    });
+  }
+
+  // 2. Histórico de tarefas do cliente
+  if (Array.isArray(client.taskHistory)) {
+    client.taskHistory.forEach((h, idx) => {
+      if (!h) return;
+      const hDate = (h.dueDate || h.completedAt || '').substring(0, 10);
+      const hTime = h.dueTime || '10:00';
+      const hAction = (h.action || '').trim().toLowerCase();
+      const hId = h.id || '';
+
+      // Verifica se é a MESMA tarefa (mesmo id, ou mesma ação e mesma data)
+      const isDuplicate = uniqueItems.some(item => {
+        if (hId && item.id && hId === item.id) return true;
+        if (hAction && item.action && hAction === item.action) {
+          if (hDate && item.date && hDate === item.date) return true;
+          if (!hDate || !item.date) return true;
+        }
+        return false;
+      });
+
+      if (!isDuplicate && (hDate || hAction)) {
+        uniqueItems.push({
+          id: hId || `hist_${idx}`,
+          date: hDate,
+          time: hTime,
+          action: hAction
+        });
       }
     });
   }
-  return count;
+
+  // 3. Reuniões de STATE.meetings (Agenda Oficial Anti No-Show)
+  if (window.STATE && Array.isArray(window.STATE.meetings)) {
+    const cName = (client.name || '').trim().toLowerCase();
+    const cPhone = cleanPhoneForWa(client.phone);
+    window.STATE.meetings.forEach((m, idx) => {
+      const mName = (m.clientName || '').trim().toLowerCase();
+      const mPhone = cleanPhoneForWa(m.clientPhone);
+      if ((cName && (mName === cName || mName.includes(cName) || cName.includes(mName))) || (cPhone && mPhone && cPhone === mPhone)) {
+        const mDate = (m.date || m.meeting_date || '').substring(0, 10);
+        const mTime = m.time || '';
+        const mId = m.id || '';
+
+        const isDuplicate = uniqueItems.some(item => {
+          if (mId && item.id && mId === item.id) return true;
+          if (mDate && item.date && mDate === item.date && mTime && item.time && mTime.substring(0, 5) === item.time.substring(0, 5)) return true;
+          return false;
+        });
+
+        if (!isDuplicate) {
+          uniqueItems.push({
+            id: mId || `meet_${idx}`,
+            date: mDate,
+            time: mTime,
+            action: (m.notes || m.type || 'reunião').toLowerCase()
+          });
+        }
+      }
+    });
+  }
+
+  return uniqueItems.length;
 }
 window.getClientAppointmentsCount = getClientAppointmentsCount;
 
@@ -1365,17 +1714,64 @@ function syncCommercialAreaDropdowns() {
   const quickSelect = document.getElementById('comm-quick-area');
   if (quickSelect) {
     const currentVal = quickSelect.value || 'Trabalhista';
-    quickSelect.innerHTML = allAreas.map(a => `<option value="${escapeHtml(a)}" ${a === currentVal ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('');
+    quickSelect.innerHTML = allAreas.map(a => `<option value="${escapeHtml(a)}" ${a === currentVal ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('') + '<option value="__CREATE_AREA__">➕ Criar Área...</option>';
   }
 
   // 3. Modal de Edição de Cliente (#comm-client-area)
   const modalSelect = document.getElementById('comm-client-area');
   if (modalSelect) {
     const currentVal = modalSelect.value || 'Trabalhista';
-    modalSelect.innerHTML = allAreas.map(a => `<option value="${escapeHtml(a)}" ${a === currentVal ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('');
+    modalSelect.innerHTML = allAreas.map(a => `<option value="${escapeHtml(a)}" ${a === currentVal ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('') + '<option value="__CREATE_AREA__">➕ Criar Área...</option>';
   }
 }
 window.syncCommercialAreaDropdowns = syncCommercialAreaDropdowns;
+
+// Rotina de limpeza profunda de valores de tokens e opções corrompidas
+function cleanupDirtyCustomOptions() {
+  try {
+    // 1. Limpar tipos customizados salvos
+    const rawTypes = localStorage.getItem('mvt_commercial_custom_types');
+    if (rawTypes) {
+      let parsed = JSON.parse(rawTypes);
+      if (Array.isArray(parsed)) {
+        parsed = parsed.filter(item => {
+          const name = typeof item === 'string' ? item : (item && item.name);
+          return name && !name.startsWith('__') && !name.toUpperCase().includes('CREATE_');
+        });
+        localStorage.setItem('mvt_commercial_custom_types', JSON.stringify(parsed));
+      }
+    }
+
+    // 2. Limpar áreas customizadas salvas
+    const rawAreas = localStorage.getItem('mvt_commercial_custom_areas');
+    if (rawAreas) {
+      let parsed = JSON.parse(rawAreas);
+      if (Array.isArray(parsed)) {
+        parsed = parsed.filter(item => {
+          const name = typeof item === 'string' ? item : (item && item.name);
+          return name && !name.startsWith('__') && !name.toUpperCase().includes('CREATE_');
+        });
+        localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(parsed));
+      }
+    }
+
+    // 3. Limpar próximos passos customizados salvos
+    const rawSteps = localStorage.getItem('mvt_commercial_custom_nextsteps');
+    if (rawSteps) {
+      let parsed = JSON.parse(rawSteps);
+      if (Array.isArray(parsed)) {
+        parsed = parsed.filter(item => {
+          const name = typeof item === 'string' ? item : (item && item.name);
+          return name && !name.startsWith('__') && !name.toUpperCase().includes('CREATE_');
+        });
+        localStorage.setItem('mvt_commercial_custom_nextsteps', JSON.stringify(parsed));
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao limpar opções customizadas corrompidas:', err);
+  }
+}
+window.cleanupDirtyCustomOptions = cleanupDirtyCustomOptions;
 
 // Função auxiliar para higienizar dados de clientes e garantir histórico de tarefas
 function sanitizeCommercialClient(c) {
@@ -1383,7 +1779,10 @@ function sanitizeCommercialClient(c) {
   if (!Array.isArray(c.taskHistory)) c.taskHistory = [];
 
   // Normalização para Áreas (Trabalhista, Cível, Previdenciário ou Área Dinâmica Personalizada)
-  const aTrimmed = (c.area || '').trim();
+  let aTrimmed = (c.area || '').trim();
+  if (aTrimmed.startsWith('__') || aTrimmed.toUpperCase().includes('CREATE_')) {
+    aTrimmed = 'Trabalhista';
+  }
   const aLower = aTrimmed.toLowerCase();
   if (aLower.includes('cív') || aLower.includes('civ')) {
     c.area = 'Cível';
@@ -1399,30 +1798,54 @@ function sanitizeCommercialClient(c) {
     c.area = 'Trabalhista';
   }
 
-  // Normalização para os Tipos de Atendimento: Lead Novo, Follow-up, Indicação, Pronto para Fechar ou Personalizado
-  const sTrimmed = (c.tipoAtendimento || c.status || '').trim();
+  // Normalização para os Tipos de Atendimento: Lead Novo, Follow-up, Indicação, Pronto para Fechar, Contrato Assinado ou Personalizado
+  let sTrimmed = (c.tipoAtendimento || c.status || '').trim();
+  if (sTrimmed.startsWith('__') || sTrimmed.toUpperCase().includes('CREATE_')) {
+    sTrimmed = 'Follow-up';
+  }
   const sLower = sTrimmed.toLowerCase();
-  const customTypes = getCommercialCustomTypes();
-  const matchCustomType = customTypes.find(ct => (ct.name || ct).toLowerCase() === sLower);
-  if (matchCustomType) {
-    c.status = matchCustomType.name || matchCustomType;
-    c.tipoAtendimento = c.status;
-  } else if (sLower.includes('fechar') || sLower.includes('pronto')) {
-    c.status = 'Pronto para Fechar';
-    c.tipoAtendimento = 'Pronto para Fechar';
-  } else if (sLower.includes('novo') || sLower.includes('lead')) {
-    c.status = 'Lead Novo';
-    c.tipoAtendimento = 'Lead Novo';
-  } else if (sLower.includes('indica')) {
-    c.status = 'Indicação';
-    c.tipoAtendimento = 'Indicação';
-  } else if (sTrimmed && sTrimmed !== 'Follow-up') {
-    c.status = sTrimmed;
-    c.tipoAtendimento = sTrimmed;
-    saveCommercialCustomType(sTrimmed);
+
+  if (c.contratoAssinado === true) {
+    c.status = 'Contrato Assinado';
+    c.tipoAtendimento = 'Contrato Assinado';
+    c.contratoAssinado = true;
+  } else if (c.contratoAssinado === false) {
+    if (c.status === 'Contrato Assinado' || c.status === 'Fechado') {
+      c.status = c.prontoParaFechar ? 'Pronto para Fechar' : (c.originalStatus || 'Follow-up');
+      c.tipoAtendimento = c.status;
+    }
+  } else if (sLower.includes('assinado') || sLower.includes('fechado')) {
+    c.status = 'Contrato Assinado';
+    c.tipoAtendimento = 'Contrato Assinado';
+    c.contratoAssinado = true;
   } else {
-    c.status = 'Follow-up';
-    c.tipoAtendimento = 'Follow-up';
+    const customTypes = getCommercialCustomTypes();
+    const matchCustomType = customTypes.find(ct => (ct.name || ct).toLowerCase() === sLower);
+    if (matchCustomType) {
+      c.status = matchCustomType.name || matchCustomType;
+      c.tipoAtendimento = c.status;
+    } else if (sLower.includes('fechar') || sLower.includes('pronto')) {
+      c.status = 'Pronto para Fechar';
+      c.tipoAtendimento = 'Pronto para Fechar';
+    } else if (sLower.includes('novo') || sLower.includes('lead')) {
+      c.status = 'Lead Novo';
+      c.tipoAtendimento = 'Lead Novo';
+    } else if (sLower.includes('indica')) {
+      c.status = 'Indicação';
+      c.tipoAtendimento = 'Indicação';
+    } else if (sTrimmed && sTrimmed !== 'Follow-up') {
+      c.status = sTrimmed;
+      c.tipoAtendimento = sTrimmed;
+      saveCommercialCustomType(sTrimmed);
+    } else {
+      c.status = 'Follow-up';
+      c.tipoAtendimento = 'Follow-up';
+    }
+  }
+
+  // Higienizar próximo passo
+  if (c.nextStep && (c.nextStep.startsWith('__') || c.nextStep.toUpperCase().includes('CREATE_'))) {
+    c.nextStep = 'Fazer ligação';
   }
 
   // Se o cliente possui uma tarefa ativa, assegura que ela esteja registrada no histórico permanente
@@ -1448,6 +1871,7 @@ function sanitizeCommercialClient(c) {
 
 // Carregar dados salvos no navegador (ou os dados padrao extraidos da planilha)
 function loadCommercialData() {
+  cleanupDirtyCustomOptions();
   try {
     const saved = localStorage.getItem('mvt_commercial_clients');
     if (saved) {
@@ -1511,26 +1935,56 @@ function _rowToCommercialClient(row) {
   return sanitizeCommercialClient(client);
 }
 
+// Registro de IDs de clientes excluídos para evitar ressuscitação por sincronização em nuvem
+const DELETED_COMMERCIAL_CLIENT_IDS_KEY = 'mvt_deleted_commercial_client_ids';
+
+function getDeletedCommercialClientIds() {
+  try {
+    const raw = localStorage.getItem(DELETED_COMMERCIAL_CLIENT_IDS_KEY);
+    return raw ? new Set(JSON.parse(raw).map(String)) : new Set();
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function recordDeletedCommercialClientId(id) {
+  try {
+    const ids = getDeletedCommercialClientIds();
+    ids.add(String(id));
+    localStorage.setItem(DELETED_COMMERCIAL_CLIENT_IDS_KEY, JSON.stringify(Array.from(ids)));
+  } catch (e) {}
+}
+window.recordDeletedCommercialClientId = recordDeletedCommercialClientId;
+
 // Mescla clientes locais com a nuvem preservando tarefas e históricos locais para nunca perder agendamentos
 function mergeCommercialClients(localClients, cloudClients) {
   if (!Array.isArray(cloudClients) || cloudClients.length === 0) return localClients || [];
   if (!Array.isArray(localClients) || localClients.length === 0) return cloudClients || [];
 
+  const deletedIds = getDeletedCommercialClientIds();
   const map = new Map();
-  // 1. Inicia com dados recebidos da nuvem
+
+  // 1. Inicia com dados recebidos da nuvem (descartando clientes excluídos)
   cloudClients.forEach(c => {
-    if (c && c.id) map.set(c.id, { ...c });
+    if (c && c.id && !deletedIds.has(String(c.id))) {
+      map.set(String(c.id), { ...c });
+    }
   });
 
   // 2. Preserva clientes locais e NUNCA sobrescreve tarefas ou históricos válidos
   localClients.forEach(c => {
-    if (!c || !c.id) return;
-    if (!map.has(c.id)) {
-      map.set(c.id, c);
+    if (!c || !c.id || deletedIds.has(String(c.id))) return;
+    const cid = String(c.id);
+    if (!map.has(cid)) {
+      map.set(cid, c);
     } else {
-      const merged = map.get(c.id);
-      // Se cliente local possui tarefa agendada e a nuvem não tem, preserva a tarefa local
-      if (c.task && c.task.dueDate && (!merged.task || !merged.task.dueDate)) {
+      const merged = map.get(cid);
+      // Se a tarefa foi excluída localmente, não ressuscita da nuvem
+      if (c.task === null || c.task === undefined) {
+        if (c._taskDeletedAt) {
+          merged.task = null;
+        }
+      } else if (c.task && c.task.dueDate) {
         merged.task = c.task;
       }
       // Se cliente local possui histórico e a nuvem não tem ou tem menos itens, preserva histórico local
@@ -1864,6 +2318,7 @@ window.closeCommercialFilterDropdown = closeCommercialFilterDropdown;
 
 function onCommercialAreaFilterChange(val) {
   COMMERCIAL_STATE.area = val;
+  COMMERCIAL_STATE.taskAreaFilter = val;
   renderCommercialApp();
 }
 window.onCommercialAreaFilterChange = onCommercialAreaFilterChange;
@@ -1882,6 +2337,7 @@ window.onCommercialTaskFilterChange = onCommercialTaskFilterChange;
 
 function clearCommercialFilters() {
   COMMERCIAL_STATE.area = 'all';
+  COMMERCIAL_STATE.taskAreaFilter = 'all';
   COMMERCIAL_STATE.statusFilter = 'all';
   COMMERCIAL_STATE.taskFilter = 'all';
 
@@ -1912,6 +2368,8 @@ function renderCommercialFilterChips() {
   }
   if (COMMERCIAL_STATE.taskFilter && COMMERCIAL_STATE.taskFilter !== 'all') {
     const taskLabels = {
+      pending: 'Tarefa em Aberto',
+      done: 'Tarefa Concluída',
       has_task: 'Com Tarefa',
       overdue: 'Tarefa Vencida',
       no_task: 'Sem Tarefa'
@@ -1957,6 +2415,11 @@ document.addEventListener('click', function(e) {
   if (viewWrapper && !viewWrapper.contains(e.target)) {
     closeTableViewConfigDropdown();
   }
+
+  const durationWrapper = document.querySelector('.comm-duration-dropdown-wrapper');
+  if (durationWrapper && !durationWrapper.contains(e.target)) {
+    closeCommercialDurationDropdown();
+  }
 });
 
 // Fechar com tecla ESC
@@ -1964,6 +2427,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeCommercialFilterDropdown();
     closeTableViewConfigDropdown();
+    closeCommercialDurationDropdown();
   }
 });
 
@@ -2114,9 +2578,28 @@ const COMMERCIAL_NAV = {
   index: 0
 };
 
-// Alternar sub-aba comercial ('fechar', 'leads', 'kanban', 'tarefas') com histórico
+// Helper unificado para verificar se o cliente possui contrato assinado
+function isClientContratoAssinado(client) {
+  if (!client) return false;
+  if (client.contratoAssinado === false) return false;
+  return Boolean(client.contratoAssinado === true || client.status === 'Contrato Assinado');
+}
+window.isClientContratoAssinado = isClientContratoAssinado;
+
+// Alternar sub-aba comercial ('fechar', 'assinado', 'leads', 'kanban', 'tarefas') com histórico e toggle para retorno
+let _subtabNavigating = false;
 function setCommercialSubtab(subtab, recordHistory = true) {
   if (!subtab) return;
+  if (_subtabNavigating) return;
+  _subtabNavigating = true;
+  setTimeout(() => { _subtabNavigating = false; }, 80);
+
+  // Se o usuário clicar novamente na mesma sub-aba que já está aberta (ex: 'assinado', 'fechar', 'tarefas', 'kanban'),
+  // ele volta / sai da aba retornando para a lista geral de Clientes ('leads')
+  if (COMMERCIAL_STATE.subtab === subtab && subtab !== 'leads') {
+    subtab = 'leads';
+  }
+
   COMMERCIAL_STATE.subtab = subtab;
 
   if (recordHistory !== false) {
@@ -2271,21 +2754,57 @@ function updateCommercialDurationUI() {
   if (lbl) {
     lbl.textContent = `${COMMERCIAL_STATE.defaultDuration}m`;
   }
+  const durations = [15, 30, 45, 60];
+  durations.forEach(d => {
+    const chk = document.getElementById(`duration-check-${d}`);
+    const opt = document.querySelector(`.duration-option[data-duration="${d}"]`);
+    if (chk) {
+      chk.textContent = (COMMERCIAL_STATE.defaultDuration === d) ? '✓' : '';
+    }
+    if (opt) {
+      opt.classList.toggle('active', COMMERCIAL_STATE.defaultDuration === d);
+    }
+  });
 }
 window.updateCommercialDurationUI = updateCommercialDurationUI;
+
+function toggleCommercialDurationDropdown(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('comm-duration-menu');
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none' || !menu.style.display;
+  menu.style.display = isHidden ? 'flex' : 'none';
+  if (isHidden) {
+    updateCommercialDurationUI();
+  }
+}
+window.toggleCommercialDurationDropdown = toggleCommercialDurationDropdown;
+
+function closeCommercialDurationDropdown() {
+  const menu = document.getElementById('comm-duration-menu');
+  if (menu) menu.style.display = 'none';
+}
+window.closeCommercialDurationDropdown = closeCommercialDurationDropdown;
+
+function setCommercialDefaultDuration(minutes) {
+  const val = parseInt(minutes, 10) || 30;
+  COMMERCIAL_STATE.defaultDuration = val;
+  localStorage.setItem('mvt_comm_default_duration', String(val));
+  updateCommercialDurationUI();
+  closeCommercialDurationDropdown();
+  if (typeof showToast === 'function') {
+    showToast(`⏱️ Pauta ajustada para blocos de ${val} minutos`, 'info', 2000);
+  }
+  renderCommercialApp();
+}
+window.setCommercialDefaultDuration = setCommercialDefaultDuration;
 
 function cycleCommercialDefaultDuration() {
   const durations = [15, 30, 45, 60];
   const cur = COMMERCIAL_STATE.defaultDuration || 30;
   const idx = durations.indexOf(cur);
   const next = durations[(idx + 1) % durations.length];
-  COMMERCIAL_STATE.defaultDuration = next;
-  localStorage.setItem('mvt_comm_default_duration', String(next));
-  updateCommercialDurationUI();
-  if (typeof showToast === 'function') {
-    showToast(`⏱️ Duração da pauta ajustada para ${next} minutos`, 'info', 2000);
-  }
-  renderCommercialApp();
+  setCommercialDefaultDuration(next);
 }
 window.cycleCommercialDefaultDuration = cycleCommercialDefaultDuration;
 
@@ -2298,14 +2817,16 @@ window.getTodayYmd = getTodayYmd;
 // Renderizacao geral do modulo comercial
 function renderCommercialApp() {
   syncCommercialAreaDropdowns();
+  syncCommercialStatusDropdowns();
+  syncCommercialNextStepDropdowns();
   const clients = COMMERCIAL_STATE.clients;
 
   // 1. Atualizar KPIs no banner superior
   const totalCount = clients.length;
-  const fecharCount = clients.filter(c => c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar').length;
+  const fecharCount = clients.filter(c => c.prontoParaFechar || c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar').length;
   const docsCount = clients.filter(c => c.status === 'Aguardando DOCS').length;
   const followupCount = clients.filter(c => c.status === 'Follow-up' || c.status === 'Aguardando Reunião' || c.status === 'Lead Novo').length;
-  const fechadosCount = clients.filter(c => c.status === 'Fechado').length;
+  const fechadosCount = clients.filter(c => isClientContratoAssinado(c)).length;
 
   const kpiTotal = document.getElementById('comm-kpi-total');
   const kpiFechar = document.getElementById('comm-kpi-fechar');
@@ -2340,6 +2861,23 @@ function renderCommercialApp() {
         </div>
       `;
       subtitleEl.textContent = 'Clientes qualificados em fase decisiva e prontos para fechamento de contrato';
+    } else if (COMMERCIAL_STATE.subtab === 'assinado') {
+      titleEl.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; flex-wrap:wrap; gap:0.6rem;">
+          <div style="display:flex; align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:7px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span style="color: #34d399;">Contratos Assinados</span>
+          </div>
+          <button type="button" class="btn-back-to-leads" onclick="setCommercialSubtab('leads')" title="Voltar para a Tabela Geral de Clientes">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Voltar para Todos os Clientes</span>
+          </button>
+        </div>
+      `;
+      subtitleEl.textContent = 'Clientes com contrato devidamente assinado e fechamento confirmado';
     } else if (COMMERCIAL_STATE.subtab === 'tarefas') {
       titleEl.innerHTML = 'Tarefas';
       subtitleEl.textContent = 'Pauta executiva de reuniões e compromissos agendados';
@@ -2349,6 +2887,18 @@ function renderCommercialApp() {
     } else {
       titleEl.innerHTML = 'Clientes';
       subtitleEl.textContent = 'Gestão de contatos, próximos passos e agendamento de tarefas comerciais';
+    }
+  }
+
+  // Atualiza cabeçalho da coluna 8 dinamicamente
+  const colHeaderFechar = document.querySelector('.comm-table-header-row .comm-col-fechar');
+  if (colHeaderFechar) {
+    if (COMMERCIAL_STATE.subtab === 'assinado') {
+      colHeaderFechar.textContent = 'CONTRATO ASSINADO';
+    } else if (COMMERCIAL_STATE.subtab === 'fechar') {
+      colHeaderFechar.textContent = 'PRONTOS P/ FECHAR';
+    } else {
+      colHeaderFechar.textContent = 'PRONTOS P/ FECHAR';
     }
   }
 
@@ -2365,7 +2915,9 @@ function renderCommercialApp() {
   const kanbanContainer = document.getElementById('comm-kanban-view-container');
   const tasksContainer = document.getElementById('comm-tasks-view-container');
   const quickAddWrapper = document.getElementById('comm-quick-add-wrapper');
+  const tasksKpiStrip = document.getElementById('comm-tasks-kpi-strip');
 
+  if (tasksKpiStrip) tasksKpiStrip.style.display = isTarefas ? 'flex' : 'none';
   if (tableContainer) tableContainer.style.display = (!isKanban && !isTarefas) ? 'block' : 'none';
   if (kanbanContainer) kanbanContainer.style.display = isKanban ? 'block' : 'none';
   if (tasksContainer) tasksContainer.style.display = isTarefas ? 'block' : 'none';
@@ -2378,17 +2930,34 @@ function renderCommercialApp() {
   }
 
   // 3. Filtrar clientes para a visao de lista/tabela
-  let filtered = [...clients];
+  let filtered = Array.isArray(clients) ? [...clients] : [];
+
+  // Busca textual
+  const q = (COMMERCIAL_STATE.search || '').trim().toLowerCase();
+  if (q) {
+    filtered = filtered.filter(c => {
+      if (!c) return false;
+      return (c.name || '').toLowerCase().includes(q) ||
+        (c.phone || '').includes(q) ||
+        (c.area || '').toLowerCase().includes(q) ||
+        (c.status || '').toLowerCase().includes(q) ||
+        (c.nextStep || '').toLowerCase().includes(q) ||
+        (c.notes || '').toLowerCase().includes(q);
+    });
+  }
 
   // Se sub-aba for "fechar", filtra apenas quem esta pronto para fechar
   if (COMMERCIAL_STATE.subtab === 'fechar') {
-    filtered = filtered.filter(c => c.prontoParaFechar || c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar');
+    filtered = filtered.filter(c => c && (c.prontoParaFechar || c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar'));
+  } else if (COMMERCIAL_STATE.subtab === 'assinado') {
+    filtered = filtered.filter(c => c && isClientContratoAssinado(c));
   }
 
   // Filtro de Area
   if (COMMERCIAL_STATE.area && COMMERCIAL_STATE.area !== 'all') {
     const fAreaLower = COMMERCIAL_STATE.area.toLowerCase();
     filtered = filtered.filter(c => {
+      if (!c) return false;
       const cArea = (c.area || '').toLowerCase();
       if (fAreaLower.includes('trab/prev') || fAreaLower.includes('trab')) {
         return cArea.includes('trab');
@@ -2402,33 +2971,58 @@ function renderCommercialApp() {
 
   // Filtro de Status Comercial
   if (COMMERCIAL_STATE.statusFilter && COMMERCIAL_STATE.statusFilter !== 'all') {
-    filtered = filtered.filter(c => c.status === COMMERCIAL_STATE.statusFilter);
+    filtered = filtered.filter(c => c && c.status === COMMERCIAL_STATE.statusFilter);
   }
 
   // Filtro de Tarefas de 30m
   if (COMMERCIAL_STATE.taskFilter && COMMERCIAL_STATE.taskFilter !== 'all') {
     const todayStr = getTodayYmd();
-    if (COMMERCIAL_STATE.taskFilter === 'has_task') {
-      filtered = filtered.filter(c => c.task && c.task.dueDate && c.task.status !== 'done');
+    if (COMMERCIAL_STATE.taskFilter === 'pending') {
+      filtered = filtered.filter(c => c && c.task && c.task.dueDate && c.task.status !== 'done');
+    } else if (COMMERCIAL_STATE.taskFilter === 'done') {
+      filtered = filtered.filter(c => c && c.task && c.task.status === 'done');
+    } else if (COMMERCIAL_STATE.taskFilter === 'has_task') {
+      filtered = filtered.filter(c => c && c.task && c.task.dueDate);
     } else if (COMMERCIAL_STATE.taskFilter === 'overdue') {
-      filtered = filtered.filter(c => c.task && c.task.dueDate && c.task.dueDate < todayStr && c.task.status !== 'done');
+      filtered = filtered.filter(c => c && c.task && c.task.dueDate && c.task.dueDate < todayStr && c.task.status !== 'done');
     } else if (COMMERCIAL_STATE.taskFilter === 'no_task') {
-      filtered = filtered.filter(c => !c.task || !c.task.dueDate || c.task.status === 'done');
+      filtered = filtered.filter(c => !c || !c.task || !c.task.dueDate);
     }
   }
 
-  // Filtro de Busca textual (nome, telefone, notas, proximo passo)
-  const q = (COMMERCIAL_STATE.search || '').trim().toLowerCase();
-  if (q) {
-    filtered = filtered.filter(c => 
-      (c.name || '').toLowerCase().includes(q) ||
-      (c.phone || '').includes(q) ||
-      (c.notes || '').toLowerCase().includes(q) ||
-      (c.nextStep || '').toLowerCase().includes(q)
-    );
+  // 4. Ordenação cronológica por data dos clientes: mais novos em cima, mais antigos em baixo
+  function parseClientSortTime(dStr) {
+    if (!dStr) return 0;
+    if (typeof dStr !== 'string') return 0;
+    const clean = dStr.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(clean)) {
+      return new Date(clean.substring(0, 10) + 'T12:00:00').getTime() || 0;
+    }
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(clean)) {
+      const parts = clean.split('/');
+      if (parts.length === 3) {
+        return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T12:00:00`).getTime() || 0;
+      }
+    }
+    const t = new Date(clean).getTime();
+    return isNaN(t) ? 0 : t;
   }
 
-  // 4. Atualizar contador de resultados na barra de ferramentas (com destaque bold igual a pauta)
+  filtered.sort((a, b) => {
+    if (!a && !b) return 0;
+    if (!a) return 1;
+    if (!b) return -1;
+    const timeA = parseClientSortTime(a.date);
+    const timeB = parseClientSortTime(b.date);
+    if (timeA !== timeB) {
+      return timeB - timeA; // Mais novos em cima (maior timestamp), mais antigos em baixo
+    }
+    const idA = String(a.id || '');
+    const idB = String(b.id || '');
+    return idB.localeCompare(idA);
+  });
+
+  // 5. Atualizar contador de resultados na barra de ferramentas (com destaque bold igual a pauta)
   const counterPillText = document.getElementById('comm-counter-text');
   const counterPill = document.getElementById('comm-counter-pill');
   const countBadge = document.getElementById('comm-count-badge');
@@ -2452,19 +3046,26 @@ function renderCommercialApp() {
     counterPill.classList.toggle('is-filtered', activeFiltersCount > 0 || Boolean(q));
   }
 
-  const textLabel = COMMERCIAL_STATE.subtab === 'fechar'
-    ? `<strong>${filtered.length}</strong> pronto${filtered.length === 1 ? '' : 's'} para fechar`
-    : `<strong>${filtered.length}</strong> cliente${filtered.length === 1 ? '' : 's'}`;
+  let textLabel = `<strong>${filtered.length}</strong> cliente${filtered.length === 1 ? '' : 's'}`;
+  if (COMMERCIAL_STATE.subtab === 'fechar') {
+    textLabel = `<strong>${filtered.length}</strong> pronto${filtered.length === 1 ? '' : 's'} para fechar`;
+  } else if (COMMERCIAL_STATE.subtab === 'assinado') {
+    textLabel = `<strong>${filtered.length}</strong> contrato${filtered.length === 1 ? '' : 's'} assinado${filtered.length === 1 ? '' : 's'}`;
+  }
   if (counterPillText) counterPillText.innerHTML = textLabel;
   if (countBadge) countBadge.textContent = `${filtered.length} clientes`;
 
   renderCommercialFilterChips();
 
   // 5. Renderizar view correspondente
-  if (isKanban) {
-    renderCommercialKanban(clients);
-  } else {
-    renderCommercialTable(filtered);
+  try {
+    if (isKanban) {
+      renderCommercialKanban(clients);
+    } else {
+      renderCommercialTable(filtered);
+    }
+  } catch (err) {
+    console.error('Erro ao renderizar view comercial:', err);
   }
 }
 window.renderCommercialApp = renderCommercialApp;
@@ -2489,7 +3090,8 @@ function getStatusBadge(status) {
     case 'Aguardando DOCS':
       return '<span class="comm-status-badge status-docs">Aguardando DOCS</span>';
     case 'Fechado':
-      return '<span class="comm-status-badge status-fechado">Contrato Fechado</span>';
+    case 'Contrato Assinado':
+      return '<span class="comm-status-badge status-fechado">Contrato Assinado</span>';
     case 'Desqualificado':
       return '<span class="comm-status-badge status-desqualificado">Desqualificado</span>';
     case 'Aguardando Reunião':
@@ -2524,31 +3126,30 @@ function getCommercialStatusSelect(client) {
 
   const defaultTypes = ['Lead Novo', 'Follow-up', 'Indicação'];
   const customTypes = getCommercialCustomTypes();
-  const matchedCustom = customTypes.find(t => t.name.toLowerCase() === status.toLowerCase());
+  const customColor = getCommercialStatusColor(status);
 
   let statusClass = 'status-followup';
-  let customStyle = '';
+  let customStyle = `color: ${customColor} !important; border-color: ${customColor}55 !important; background: ${customColor}18 !important;`;
 
-  if (matchedCustom) {
-    statusClass = 'status-custom';
-    customStyle = `color: ${matchedCustom.color}; border-color: ${matchedCustom.color}55; background: ${matchedCustom.color}18;`;
-  } else if (status === 'Lead Novo') {
+  const rawStatus = status.toLowerCase();
+  if (rawStatus.includes('novo')) {
     statusClass = 'status-novo';
-  } else if (status === 'Indicação' || status === 'Indicacao') {
-    status = 'Indicação';
+  } else if (rawStatus.includes('indica') || rawStatus.includes('indicaç')) {
     statusClass = 'status-indicacao';
-  } else {
-    status = 'Follow-up';
-    statusClass = 'status-followup';
+  } else if (rawStatus.includes('fechar')) {
+    statusClass = 'status-pronto';
+  } else if (rawStatus.includes('assinado')) {
+    statusClass = 'status-assinado';
   }
 
   const allTypes = [...defaultTypes];
   customTypes.forEach(ct => {
-    if (!allTypes.some(t => t.toLowerCase() === ct.name.toLowerCase())) {
-      allTypes.push(ct.name);
+    const tName = ct.name || ct;
+    if (tName && !tName.startsWith('__') && !tName.toUpperCase().includes('CREATE_') && !allTypes.some(t => t.toLowerCase() === tName.toLowerCase())) {
+      allTypes.push(tName);
     }
   });
-  if (status && !allTypes.some(t => t.toLowerCase() === status.toLowerCase())) {
+  if (status && !status.startsWith('__') && !status.toUpperCase().includes('CREATE_') && !allTypes.some(t => t.toLowerCase() === status.toLowerCase())) {
     allTypes.push(status);
   }
 
@@ -2558,7 +3159,7 @@ function getCommercialStatusSelect(client) {
 
   return `
     <div class="comm-status-badge-container">
-      <select class="comm-status-pill-select ${statusClass}" style="${customStyle}" onchange="changeCommercialStatus('${client.id}', this.value)" title="Tipo de Atendimento: escolha uma opção ou crie uma nova com cor personalizada">
+      <select class="comm-status-pill-select ${statusClass}" style="${customStyle}" onchange="changeCommercialStatus('${client.id}', this.value, this)" oninput="changeCommercialStatus('${client.id}', this.value, this)" title="Tipo de Atendimento: escolha uma opção ou crie uma nova com cor personalizada">
         ${optionsHtml}
         <option value="__CREATE_TYPE__">➕ Criar Tipo de Atendimento...</option>
       </select>
@@ -2570,19 +3171,29 @@ function getCommercialStatusSelect(client) {
 }
 window.getCommercialStatusSelect = getCommercialStatusSelect;
 
-function changeCommercialStatus(clientId, newStatus) {
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
-  if (!client) return;
-
-  if (newStatus === '__CREATE_TYPE__') {
+function changeCommercialStatus(clientId, newStatus, selectEl) {
+  if (newStatus === '__CREATE_TYPE__' || (newStatus && newStatus.startsWith('__'))) {
+    const currClient = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+    const prev = (currClient && (currClient.tipoAtendimento || currClient.status)) ? (currClient.tipoAtendimento || currClient.status) : (selectEl?.options[0]?.value || 'Lead Novo');
+    if (selectEl) {
+      setTimeout(() => { selectEl.value = prev; }, 60);
+    }
     openCreateCustomOptionModal('type', clientId);
-    renderCommercialApp();
     return;
   }
 
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+  if (!client) return;
+
   recordCommercialUndo(`Tipo de atendimento de ${client.name} para "${newStatus}"`);
-  client.tipoAtendimento = newStatus;
-  client.status = newStatus;
+  const cNameLower = (client.name || '').trim().toLowerCase();
+  COMMERCIAL_STATE.clients.forEach(c => {
+    if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+      c.tipoAtendimento = newStatus;
+      c.status = newStatus;
+    }
+  });
+
   saveCommercialData();
   renderCommercialApp();
   if (typeof showToast === 'function') {
@@ -2591,38 +3202,33 @@ function changeCommercialStatus(clientId, newStatus) {
 }
 window.changeCommercialStatus = changeCommercialStatus;
 
-// Badge Interativo com Select Embutido: Área (Trabalhista [Amarela], Cível [Azul], Previdenciário [Roxo] ou Personalizada com Cor)
+// Badge Interativo com Select Embutido: Área (Trabalhista, Cível, Previdenciário ou Personalizada com Cor)
 function getCommercialAreaSelect(client) {
   const currentArea = (client.area || 'Trabalhista').trim();
   const rawArea = currentArea.toLowerCase();
   const defaultAreas = ['Trabalhista', 'Cível', 'Previdenciário'];
   const customAreas = getCommercialCustomAreas();
-  const matchedCustom = customAreas.find(ca => ca.name.toLowerCase() === rawArea);
+  const customColor = getCommercialAreaColor(currentArea);
 
-  let areaClass = 'trabalhista';
-  let customStyle = '';
+  let areaClass = 'custom';
+  let customStyle = `color: ${customColor} !important; border-color: ${customColor}55 !important; background: ${customColor}18 !important;`;
 
-  if (matchedCustom) {
-    areaClass = 'custom';
-    customStyle = `color: ${matchedCustom.color}; border-color: ${matchedCustom.color}55; background: ${matchedCustom.color}18;`;
-  } else if (rawArea.includes('cív') || rawArea.includes('civ')) {
+  if (rawArea.includes('cív') || rawArea.includes('civ')) {
     areaClass = 'civel';
   } else if (rawArea.includes('prev') || rawArea.includes('aposent') || rawArea.includes('aux')) {
     areaClass = 'previdenciario';
   } else if (rawArea.includes('trab')) {
     areaClass = 'trabalhista';
-  } else {
-    areaClass = 'custom';
   }
 
   const allAreas = [...defaultAreas];
   customAreas.forEach(ca => {
     const aName = ca.name || ca;
-    if (!allAreas.some(a => a.toLowerCase() === aName.toLowerCase())) {
+    if (aName && !aName.startsWith('__') && !aName.toUpperCase().includes('CREATE_') && !allAreas.some(a => a.toLowerCase() === aName.toLowerCase())) {
       allAreas.push(aName);
     }
   });
-  if (currentArea && !allAreas.some(a => a.toLowerCase() === currentArea.toLowerCase())) {
+  if (currentArea && !currentArea.startsWith('__') && !currentArea.toUpperCase().includes('CREATE_') && !allAreas.some(a => a.toLowerCase() === currentArea.toLowerCase())) {
     allAreas.push(currentArea);
   }
 
@@ -2632,7 +3238,7 @@ function getCommercialAreaSelect(client) {
 
   return `
     <div class="comm-area-badge-container">
-      <select class="comm-area-pill-select area-${areaClass}" style="${customStyle}" onchange="changeCommercialArea('${client.id}', this.value)" title="Clique para alterar a área ou criar uma nova área com cor personalizada">
+      <select class="comm-area-pill-select area-${areaClass}" style="${customStyle}" onchange="changeCommercialArea('${client.id}', this.value, this)" oninput="changeCommercialArea('${client.id}', this.value, this)" title="Clique para alterar a área ou criar uma nova área com cor personalizada">
         ${optionsHtml}
         <option value="__CREATE_AREA__">➕ Criar Área...</option>
       </select>
@@ -2644,18 +3250,28 @@ function getCommercialAreaSelect(client) {
 }
 window.getCommercialAreaSelect = getCommercialAreaSelect;
 
-function changeCommercialArea(clientId, newArea) {
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
-  if (!client) return;
-
-  if (newArea === '__CREATE_AREA__') {
+function changeCommercialArea(clientId, newArea, selectEl) {
+  if (newArea === '__CREATE_AREA__' || (newArea && newArea.startsWith('__'))) {
+    const currClient = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+    const prev = (currClient && currClient.area) ? currClient.area : (selectEl?.options[0]?.value || 'Trabalhista');
+    if (selectEl) {
+      setTimeout(() => { selectEl.value = prev; }, 60);
+    }
     openCreateCustomOptionModal('area', clientId);
-    renderCommercialApp();
     return;
   }
 
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+  if (!client) return;
+
   recordCommercialUndo(`Área de ${client.name} para "${newArea}"`);
-  client.area = newArea;
+  const cNameLower = (client.name || '').trim().toLowerCase();
+  COMMERCIAL_STATE.clients.forEach(c => {
+    if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+      c.area = newArea;
+    }
+  });
+
   saveCommercialData();
   renderCommercialApp();
   if (typeof showToast === 'function') {
@@ -2668,20 +3284,21 @@ window.changeCommercialArea = changeCommercialArea;
 function getCommercialNextStepSelect(client) {
   const currentStep = (client.nextStep || (client.task ? client.task.action : '') || 'Fazer ligação').trim();
   const customSteps = getCommercialCustomNextSteps();
-  const matchedCustom = customSteps.find(cs => cs.name.toLowerCase() === currentStep.toLowerCase());
+  const customColor = getCommercialNextStepColor(currentStep);
 
   let customStyle = '';
-  if (matchedCustom) {
-    customStyle = `color: ${matchedCustom.color}; border-color: ${matchedCustom.color}55; background: ${matchedCustom.color}18;`;
+  if (customColor) {
+    customStyle = `color: ${customColor} !important; border-color: ${customColor}55 !important; background: ${customColor}18 !important;`;
   }
 
   const allSteps = [...NEXT_STEP_OPTIONS];
   customSteps.forEach(cs => {
-    if (!allSteps.some(s => s.toLowerCase() === cs.name.toLowerCase())) {
-      allSteps.push(cs.name);
+    const sName = cs.name || cs;
+    if (sName && !sName.startsWith('__') && !sName.toUpperCase().includes('CREATE_') && !allSteps.some(s => s.toLowerCase() === sName.toLowerCase())) {
+      allSteps.push(sName);
     }
   });
-  if (currentStep && !allSteps.some(s => s.toLowerCase() === currentStep.toLowerCase())) {
+  if (currentStep && !currentStep.startsWith('__') && !currentStep.toUpperCase().includes('CREATE_') && !allSteps.some(s => s.toLowerCase() === currentStep.toLowerCase())) {
     allSteps.push(currentStep);
   }
 
@@ -2691,7 +3308,7 @@ function getCommercialNextStepSelect(client) {
 
   return `
     <div class="comm-nextstep-badge-container">
-      <select class="comm-nextstep-pill-select" style="${customStyle}" onchange="changeCommercialNextStep('${client.id}', this.value)" title="Clique para alterar o próximo passo ou criar um novo com cor personalizada">
+      <select class="comm-nextstep-pill-select" style="${customStyle}" onchange="changeCommercialNextStep('${client.id}', this.value, this)" oninput="changeCommercialNextStep('${client.id}', this.value, this)" title="Clique para alterar o próximo passo ou criar um novo com cor personalizada">
         ${optionsHtml}
         <option value="__CREATE_NEXTSTEP__">➕ Criar Próximo Passo...</option>
       </select>
@@ -2703,21 +3320,31 @@ function getCommercialNextStepSelect(client) {
 }
 window.getCommercialNextStepSelect = getCommercialNextStepSelect;
 
-function changeCommercialNextStep(clientId, newStep) {
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
-  if (!client) return;
-
-  if (newStep === '__CREATE_NEXTSTEP__') {
+function changeCommercialNextStep(clientId, newStep, selectEl) {
+  if (newStep === '__CREATE_NEXTSTEP__' || (newStep && newStep.startsWith('__'))) {
+    const currClient = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+    const prev = (currClient && currClient.nextStep) ? currClient.nextStep : (selectEl?.options[0]?.value || 'Fazer ligação');
+    if (selectEl) {
+      setTimeout(() => { selectEl.value = prev; }, 60);
+    }
     openCreateCustomOptionModal('nextstep', clientId);
-    renderCommercialApp();
     return;
   }
 
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+  if (!client) return;
+
   recordCommercialUndo(`Próximo passo de ${client.name} para "${newStep}"`);
-  client.nextStep = newStep;
-  if (client.task) {
-    client.task.action = newStep;
-  }
+  const cNameLower = (client.name || '').trim().toLowerCase();
+  COMMERCIAL_STATE.clients.forEach(c => {
+    if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+      c.nextStep = newStep;
+      if (c.task) {
+        c.task.action = newStep;
+      }
+    }
+  });
+
   saveCommercialData();
   renderCommercialApp();
   if (typeof showToast === 'function') {
@@ -2729,6 +3356,8 @@ window.changeCommercialNextStep = changeCommercialNextStep;
 function getAreaBadge(area) {
   const cleanArea = (area || 'Trabalhista').trim();
   const areaLower = cleanArea.toLowerCase();
+  const customColor = getCommercialAreaColor(cleanArea);
+
   let cls = 'badge-area-trabalhista';
   let label = cleanArea;
   if (areaLower.includes('cív') || areaLower.includes('civ')) {
@@ -2744,7 +3373,7 @@ function getAreaBadge(area) {
     cls = 'badge-area-custom';
     label = cleanArea;
   }
-  return `<span class="area-badge ${cls}">${escapeHtml(label)}</span>`;
+  return `<span class="area-badge ${cls}" style="color: ${customColor}; border-color: ${customColor}55; background: ${customColor}18;">${escapeHtml(label)}</span>`;
 }
 window.getAreaBadge = getAreaBadge;
 
@@ -2787,11 +3416,12 @@ function renderCommercialTable(clients) {
     }
     tableContainer.style.zoom = `${(COMMERCIAL_STATE.zoom || 100) / 100}`;
 
-    // Aplica Tema Dourado especial quando estiver na aba 'Prontos para Fechar'
+    // Aplica Tema Dourado ou Esmeralda
+    tableContainer.classList.remove('theme-fechar-gold', 'theme-assinado-emerald');
     if (COMMERCIAL_STATE.subtab === 'fechar') {
       tableContainer.classList.add('theme-fechar-gold');
-    } else {
-      tableContainer.classList.remove('theme-fechar-gold');
+    } else if (COMMERCIAL_STATE.subtab === 'assinado') {
+      tableContainer.classList.add('theme-assinado-emerald');
     }
   }
   updateCommercialDisplayControlsUi();
@@ -2810,10 +3440,12 @@ function renderCommercialTable(clients) {
         <div class="empty-state-title">Nenhum cliente comercial encontrado</div>
         <p class="empty-state-text" style="margin-top: 0.5rem; color: var(--text-muted);">
           ${COMMERCIAL_STATE.subtab === 'fechar' 
-            ? 'Não há nenhum cliente marcado como "Pronto para Fechar" no filtro atual. Clique em "Todos os Leads & Clientes" ou cadastre um novo.' 
+            ? 'Não há nenhum cliente marcado como "Pronto para Fechar" no filtro atual. Clique em "Todos os Clientes" ou marque novos clientes.' 
+            : COMMERCIAL_STATE.subtab === 'assinado'
+            ? 'Nenhum contrato assinado ainda. Abra a aba "Prontos para Fechar" e clique em "Assinar Contrato" para registrar contratos assinados.'
             : 'Tente alterar os termos da busca ou filtre por outra área.'}
         </p>
-        ${COMMERCIAL_STATE.subtab === 'fechar'
+        ${COMMERCIAL_STATE.subtab === 'fechar' || COMMERCIAL_STATE.subtab === 'assinado'
           ? `<button class="btn-primary" onclick="setCommercialSubtab('leads')" style="margin-top: 1rem; display: inline-flex; align-items: center; gap: 0.45rem;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -2834,12 +3466,13 @@ function renderCommercialTable(clients) {
     return;
   }
 
-  container.innerHTML = clients.map(client => {
-    const waDigits = cleanPhoneForWa(client.phone);
-    const waLink = waDigits ? `https://wa.me/${waDigits}?text=${encodeURIComponent(`Olá, ${client.name}! Tudo bem? Augusto da MVT Advogados por aqui.`)}` : '';
-    const hasTask = Boolean(client.task && client.task.dueDate);
-    const isOverdue = hasTask && client.task.dueDate < todayStr && client.task.status !== 'done';
-    const historyCount = Array.isArray(client.taskHistory) ? client.taskHistory.length : 0;
+  container.innerHTML = clients.filter(Boolean).map(client => {
+    try {
+      const waDigits = cleanPhoneForWa(client.phone);
+      const waLink = waDigits ? `https://wa.me/${waDigits}?text=${encodeURIComponent(`Olá, ${client.name}! Tudo bem? Augusto da MVT Advogados por aqui.`)}` : '';
+      const hasTask = Boolean(client.task && client.task.dueDate);
+      const isOverdue = hasTask && client.task.dueDate < todayStr && client.task.status !== 'done';
+      const historyCount = Array.isArray(client.taskHistory) ? client.taskHistory.length : 0;
 
     return `
       <div class="comm-lead-row" id="comm-row-${client.id}">
@@ -2934,14 +3567,87 @@ function renderCommercialTable(clients) {
           </div>
         </div>
 
-        <!-- Coluna 8: Pronto para Fechar (Ação Rápida com Envio Direto para a Aba) -->
+        <!-- Coluna 8: Ações de Fechamento / Contrato Assinado -->
         <div class="comm-col-fechar">
-          ${getCommercialFecharButton(client)}
+          ${getCommercialFecharCell(client)}
         </div>
       </div>
     `;
+    } catch (err) {
+      console.warn('Erro ao renderizar linha do cliente:', client, err);
+      return '';
+    }
   }).join('');
 }
+
+// Célula dinâmica da coluna 8 conforme a sub-aba ativa
+function getCommercialFecharCell(client) {
+  const isAssinado = isClientContratoAssinado(client);
+
+  // Na aba "Contrato Assinado": exibe o ícone verde + badge de assinado (clique para desfazer)
+  if (COMMERCIAL_STATE.subtab === 'assinado') {
+    return `
+      <div class="comm-fechar-cell-wrapper">
+        <button type="button" class="btn-table-assinado-badge" onclick="handleTableAssinadoClick('${client.id}')" title="Contrato Assinado! Clique para desmarcar e remover da lista">
+          <span>Assinado</span>
+        </button>
+        <div class="comm-contract-slot">
+          <button type="button" class="btn-contract-icon active" onclick="handleTableAssinadoClick('${client.id}')" title="Contrato Assinado! Clique para desmarcar e remover da lista">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <polyline points="9 15 11 17 15 13"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Na aba "Prontos para Fechar":
+  // Totalmente clean e despoluído: Estrela de Pronto para Fechar + Ícone discreto de Contrato (Cinza quando desmarcado, Verde quando clicado)
+  if (COMMERCIAL_STATE.subtab === 'fechar') {
+    return `
+      <div class="comm-fechar-cell-wrapper">
+        <button type="button" class="btn-table-fechar active" onclick="handleTableFecharClick('${client.id}')" title="Pronto para Fechar (Clique para remover)">
+          <svg class="fechar-star-icon" width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span class="fechar-btn-text">Pronto p/ Fechar</span>
+        </button>
+        <div class="comm-contract-slot">
+          <button type="button" class="btn-contract-icon ${isAssinado ? 'active' : ''}" onclick="handleTableAssinadoClick('${client.id}')" title="${isAssinado ? 'Contrato Assinado! Clique para desmarcar' : 'Clique para marcar Contrato Assinado'}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <polyline points="9 15 11 17 15 13"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Na visão geral de clientes (leads):
+  // O slot do contrato na direita é fixo (25px) para NUNCA empurrar ou desalinhar o botão Pronto p/ Fechar
+  return `
+    <div class="comm-fechar-cell-wrapper">
+      ${getCommercialFecharButton(client)}
+      <div class="comm-contract-slot">
+        ${isAssinado ? `
+          <button type="button" class="btn-contract-icon active" onclick="handleTableAssinadoClick('${client.id}')" title="Contrato Assinado! Clique para desmarcar ou ver em Contratos Assinados">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <polyline points="9 15 11 17 15 13"></polyline>
+            </svg>
+          </button>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+window.getCommercialFecharCell = getCommercialFecharCell;
 
 // Botão de ação rápida na tabela: Pronto para Fechar (proporcional, clean e integrado)
 function getCommercialFecharButton(client) {
@@ -2967,42 +3673,108 @@ function getCommercialFecharButton(client) {
 }
 window.getCommercialFecharButton = getCommercialFecharButton;
 
+// Handler do clique em Assinar Contrato (Alternância / Confirmação de Fechamento)
+function handleTableAssinadoClick(clientId) {
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+  if (!client) return;
+
+  const isAssinado = isClientContratoAssinado(client);
+  const cNameLower = (client.name || '').trim().toLowerCase();
+
+  if (isAssinado) {
+    recordCommercialUndo(`Desmarcar Contrato Assinado de "${client.name}"`);
+    COMMERCIAL_STATE.clients.forEach(c => {
+      if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+        c.contratoAssinado = false;
+        if (c.prontoParaFechar) {
+          c.status = 'Pronto para Fechar';
+        } else {
+          const fallback = (c.originalStatus && c.originalStatus !== 'Contrato Assinado' && c.originalStatus !== 'Fechado')
+            ? c.originalStatus
+            : (c.tipoAtendimento || 'Follow-up');
+          c.status = fallback;
+        }
+      }
+    });
+
+    saveCommercialData();
+    renderCommercialApp();
+
+    if (typeof showToast === 'function') {
+      showToast(`Contrato de "${client.name}" desmarcado / reaberto.`, 'info', 2200);
+    }
+  } else {
+    recordCommercialUndo(`Marcar Contrato Assinado para "${client.name}"`);
+    COMMERCIAL_STATE.clients.forEach(c => {
+      if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+        c.contratoAssinado = true;
+        if (c.status !== 'Contrato Assinado') {
+          c.originalStatus = (c.status !== 'Fechado') ? (c.tipoAtendimento || c.status) : 'Follow-up';
+        }
+        c.status = 'Contrato Assinado';
+        c.tipoAtendimento = 'Contrato Assinado';
+        c.assinadoAt = new Date().toISOString();
+      }
+    });
+
+    saveCommercialData();
+    renderCommercialApp();
+
+    if (typeof showToast === 'function') {
+      showToast(`✍️ Contrato assinado para "${client.name}"!`, 'success', 2500);
+    }
+  }
+}
+window.handleTableAssinadoClick = handleTableAssinadoClick;
+
 // Handler do clique em Pronto para Fechar na tabela (Alternância / Toggle direta)
 function handleTableFecharClick(clientId) {
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
   if (!client) return;
 
   const isAlreadyFechar = Boolean(client.prontoParaFechar || client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar');
+  const cNameLower = (client.name || '').trim().toLowerCase();
 
   if (isAlreadyFechar) {
     // DESMARCAR: remove imediatamente sem bloqueio por popup
     recordCommercialUndo(`Remover "${client.name}" de Pronto para Fechar`);
-    client.prontoParaFechar = false;
-    
-    // Restaura o status original de atendimento ou 'Follow-up'
-    if (client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar') {
-      client.status = client.originalStatus || client.tipoAtendimento || 'Follow-up';
-    }
+    COMMERCIAL_STATE.clients.forEach(c => {
+      if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+        c.prontoParaFechar = false;
+        if (!isClientContratoAssinado(c)) {
+          if (c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar') {
+            c.status = c.originalStatus || c.tipoAtendimento || 'Follow-up';
+          }
+        }
+      }
+    });
 
     saveCommercialData();
     renderCommercialApp();
 
     if (typeof showToast === 'function') {
-      showToast(`⭐ Cliente "${client.name}" desmarcado de Prontos para Fechar.`, 'info', 2500);
+      showToast(`⭐ Cliente "${client.name}" desmarcado de Prontos para Fechar.`, 'info', 2200);
     }
   } else {
     // MARCAR: Adiciona a Prontos para Fechar e mantém o usuário na tela atual
     recordCommercialUndo(`Marcar "${client.name}" como Pronto para Fechar`);
-    client.prontoParaFechar = true;
-    if (client.status !== 'Pronto para Fechar' && client.status !== 'Prontos para Fechar') {
-      client.originalStatus = client.tipoAtendimento || client.status;
-    }
-    client.status = 'Pronto para Fechar';
+    COMMERCIAL_STATE.clients.forEach(c => {
+      if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
+        c.prontoParaFechar = true;
+        if (!isClientContratoAssinado(c)) {
+          if (c.status !== 'Pronto para Fechar' && c.status !== 'Prontos para Fechar') {
+            c.originalStatus = c.tipoAtendimento || c.status;
+          }
+          c.status = 'Pronto para Fechar';
+        }
+      }
+    });
+
     saveCommercialData();
     renderCommercialApp();
 
     if (typeof showToast === 'function') {
-      showToast(`⭐ "${client.name}" marcado como Pronto para Fechar!`, 'success', 2500);
+      showToast(`⭐ "${client.name}" marcado como Pronto para Fechar!`, 'success', 2200);
     }
   }
 }
@@ -3202,30 +3974,11 @@ function renderCommercialKanban(clients) {
 }
 window.renderCommercialKanban = renderCommercialKanban;
 
-// Alteração rápida de status comercial
-function changeCommercialStatus(id, newStatus) {
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === id);
-  if (!client) return;
-  recordCommercialUndo(`Tipo de atendimento de ${client.name} para "${newStatus}"`);
-  client.tipoAtendimento = newStatus;
-  if (client.prontoParaFechar || client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar') {
-    client.originalStatus = newStatus;
-  } else {
-    client.status = newStatus;
-  }
-  saveCommercialData();
-  renderCommercialApp();
-  if (typeof showToast === 'function') {
-    showToast(`Tipo de atendimento de ${client.name} alterado para "${newStatus}".`, 'success', 2200);
-  }
-}
-window.changeCommercialStatus = changeCommercialStatus;
-
 // Modal Popup de Confirmação para Exclusão de Cliente
 let CLIENT_PENDING_DELETE = null;
 
 function deleteCommercialClient(id) {
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === id);
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(id));
   if (!client) return;
 
   CLIENT_PENDING_DELETE = client;
@@ -3236,10 +3989,9 @@ function deleteCommercialClient(id) {
 
   if (modal) {
     modal.classList.add('active');
+    modal.style.display = 'flex';
   } else {
-    if (confirm(`Deseja realmente excluir o cliente "${client.name}"?`)) {
-      confirmExecuteDeleteClient();
-    }
+    confirmExecuteDeleteClient();
   }
 }
 window.deleteCommercialClient = deleteCommercialClient;
@@ -3247,26 +3999,34 @@ window.deleteCommercialClient = deleteCommercialClient;
 function closeDeleteClientModal() {
   CLIENT_PENDING_DELETE = null;
   const modal = document.getElementById('modal-delete-client-confirm');
-  if (modal) modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
 }
 window.closeDeleteClientModal = closeDeleteClientModal;
 
 function confirmExecuteDeleteClient() {
   if (!CLIENT_PENDING_DELETE) return;
   const client = CLIENT_PENDING_DELETE;
+  const clientId = String(client.id);
 
   recordCommercialUndo(`Exclusão do cliente "${client.name}"`);
-  COMMERCIAL_STATE.clients = COMMERCIAL_STATE.clients.filter(c => c.id !== client.id);
-  saveCommercialData();
+
+  // Registra ID excluído para prevenir ressurreição via sync de nuvem
+  recordDeletedCommercialClientId(clientId);
+
+  COMMERCIAL_STATE.clients = COMMERCIAL_STATE.clients.filter(c => String(c.id) !== clientId);
+  saveCommercialData(false);
 
   // Excluir também na nuvem Supabase
   try {
     const getSb = window.getSupabaseClient;
     const sb = typeof getSb === 'function' ? getSb() : null;
-    if (sb && client.id) {
-      sb.from('clientes_comercial').delete().eq('id', client.id).then(({ error }) => {
+    if (sb && clientId) {
+      sb.from('clientes_comercial').delete().eq('id', clientId).then(({ error }) => {
         if (error) console.warn('Erro ao deletar cliente comercial do Supabase:', error);
-        else console.log(`☁️ Cliente ${client.id} (${client.name}) removido da nuvem Supabase.`);
+        else console.log(`☁️ Cliente ${clientId} (${client.name}) removido da nuvem Supabase.`);
       });
     }
   } catch (err) {
@@ -3281,6 +4041,72 @@ function confirmExecuteDeleteClient() {
   }
 }
 window.confirmExecuteDeleteClient = confirmExecuteDeleteClient;
+
+// Modal Popup de Confirmação para Exclusão de Tarefa da Pauta
+let TASK_PENDING_DELETE = null;
+
+function deleteCommercialTaskRow(clientId) {
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+  if (!client || !client.task) return;
+
+  TASK_PENDING_DELETE = client;
+
+  const modal = document.getElementById('modal-delete-task-confirm');
+  const nameEl = document.getElementById('confirm-delete-task-name');
+  if (nameEl) nameEl.textContent = `"${client.name}"`;
+
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  } else {
+    confirmExecuteDeleteTask();
+  }
+}
+window.deleteCommercialTaskRow = deleteCommercialTaskRow;
+window.deleteCommercialTask = deleteCommercialTaskRow;
+
+function closeDeleteTaskModal() {
+  TASK_PENDING_DELETE = null;
+  const modal = document.getElementById('modal-delete-task-confirm');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+window.closeDeleteTaskModal = closeDeleteTaskModal;
+
+function confirmExecuteDeleteTask() {
+  if (!TASK_PENDING_DELETE) return;
+  const client = TASK_PENDING_DELETE;
+
+  recordCommercialUndo(`Exclusão de tarefa de "${client.name}"`);
+
+  const tId = client.task ? client.task.id : null;
+  if (Array.isArray(client.taskHistory)) {
+    if (tId) {
+      client.taskHistory = client.taskHistory.filter(h => h.id !== tId);
+    } else if (client.task) {
+      client.taskHistory = client.taskHistory.filter(h => !(h.action === client.task.action && h.dueDate === client.task.dueDate));
+    }
+  }
+
+  client.task = null;
+  client._taskDeletedAt = Date.now();
+
+  closeDeleteTaskModal();
+  saveCommercialData(false);
+  renderCommercialApp();
+  renderCommercialTasksView();
+
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(`Tarefa de "${client.name}" excluída da pauta.`, 'info', 2500);
+  }
+}
+window.confirmExecuteDeleteTask = confirmExecuteDeleteTask;
 
 // Abertura do Modal de Cadastro / Edicao
 function openCommercialModal(clientId = null) {
@@ -3571,8 +4397,8 @@ function renderCommercialTasksView() {
   const container = document.getElementById('comm-tasks-list');
   if (!container) return;
 
-  const clients = COMMERCIAL_STATE.clients;
-  const clientsWithTask = clients.filter(c => c.task && c.task.action);
+  const clients = COMMERCIAL_STATE.clients || [];
+  const clientsWithTask = clients.filter(c => c && c.task && c.task.action);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const totalTasks = clientsWithTask.length;
@@ -3580,6 +4406,7 @@ function renderCommercialTasksView() {
   const pendingTasks = clientsWithTask.filter(c => c.task.status !== 'done').length;
   const doneTasks = clientsWithTask.filter(c => c.task.status === 'done').length;
 
+  // Atualiza indicadores KPI no topo
   const kpiTotal = document.getElementById('comm-tasks-kpi-total');
   const kpiToday = document.getElementById('comm-tasks-kpi-today');
   const kpiPending = document.getElementById('comm-tasks-kpi-pending');
@@ -3590,12 +4417,73 @@ function renderCommercialTasksView() {
   if (kpiPending) kpiPending.textContent = pendingTasks;
   if (kpiDone) kpiDone.textContent = doneTasks;
 
-  // Filtragem por área e busca textual
+  // Atualiza contadores na barra de filtros dedicados
+  const cntAll = document.getElementById('task-filter-count-all');
+  const cntPending = document.getElementById('task-filter-count-pending');
+  const cntToday = document.getElementById('task-filter-count-today');
+  const cntDone = document.getElementById('task-filter-count-done');
+
+  if (cntAll) cntAll.textContent = totalTasks;
+  if (cntPending) cntPending.textContent = pendingTasks;
+  if (cntToday) cntToday.textContent = todayTasks;
+  if (cntDone) cntDone.textContent = doneTasks;
+
+  // Sincroniza classes ativas nos botões de filtro e KPIs
+  const activeStatus = COMMERCIAL_STATE.taskStatusFilter || 'all';
+  ['all', 'pending', 'today', 'done'].forEach(st => {
+    const pill = document.getElementById(`btn-filter-task-${st}`);
+    if (pill) {
+      if (st === activeStatus) pill.classList.add('active');
+      else pill.classList.remove('active');
+    }
+    const kpi = document.getElementById(`kpi-task-filter-${st}`);
+    if (kpi) {
+      if (st === activeStatus) kpi.classList.add('active-filter');
+      else kpi.classList.remove('active-filter');
+    }
+  });
+
+  // Preenche opções de área no dropdown da pauta se existirem opções personalizadas
+  const taskAreaSelect = document.getElementById('comm-task-area-filter');
+  if (taskAreaSelect) {
+    const curArea = COMMERCIAL_STATE.taskAreaFilter || 'all';
+    const customList = typeof getCommercialCustomAreas === 'function' ? getCommercialCustomAreas() : [];
+    const customNames = customList.map(a => typeof a === 'string' ? a : a.name).filter(Boolean);
+    const baseAreas = ['Trabalhista', 'Cível', 'Previdenciário'];
+    const mergedAreas = Array.from(new Set([...baseAreas, ...customNames]));
+
+    const desiredHtml = ['<option value="all">Todas as Áreas</option>']
+      .concat(mergedAreas.map(a => `<option value="${escapeHtml(a)}"${a === curArea ? ' selected' : ''}>${escapeHtml(a)}</option>`))
+      .join('');
+    if (taskAreaSelect.innerHTML !== desiredHtml) {
+      taskAreaSelect.innerHTML = desiredHtml;
+    }
+    taskAreaSelect.value = curArea;
+  }
+
+  // Filtragem
   let tasksList = [...clientsWithTask];
-  if (COMMERCIAL_STATE.area && COMMERCIAL_STATE.area !== 'all') {
+
+  // 1. Filtragem por Status da Tarefa (Todas, ⏳ Em Aberto, 📅 Hoje, ✓ Concluídas)
+  if (activeStatus === 'pending') {
+    tasksList = tasksList.filter(c => c.task.status !== 'done');
+  } else if (activeStatus === 'today') {
+    tasksList = tasksList.filter(c => c.task.dueDate === todayStr);
+  } else if (activeStatus === 'done') {
+    tasksList = tasksList.filter(c => c.task.status === 'done');
+  }
+
+  // 2. Filtragem por Área da Tarefa
+  const activeArea = COMMERCIAL_STATE.taskAreaFilter || 'all';
+  if (activeArea !== 'all') {
+    const fAreaLower = activeArea.toLowerCase();
+    tasksList = tasksList.filter(c => (c.area || '').toLowerCase().includes(fAreaLower));
+  } else if (COMMERCIAL_STATE.area && COMMERCIAL_STATE.area !== 'all') {
     const fAreaLower = COMMERCIAL_STATE.area.toLowerCase();
     tasksList = tasksList.filter(c => (c.area || '').toLowerCase().includes(fAreaLower));
   }
+
+  // 3. Busca textual
   const q = (COMMERCIAL_STATE.search || '').trim().toLowerCase();
   if (q) {
     tasksList = tasksList.filter(c => 
@@ -3617,16 +4505,31 @@ function renderCommercialTasksView() {
   });
 
   if (tasksList.length === 0) {
+    const statusNotice = activeStatus === 'pending'
+      ? 'Não há tarefas em aberto pendentes de execução.'
+      : activeStatus === 'done'
+      ? 'Nenhuma tarefa concluída nesta seleção.'
+      : activeStatus === 'today'
+      ? 'Nenhuma tarefa agendada para hoje.'
+      : 'Nenhuma tarefa de 30 minutos agendada.';
+
     container.innerHTML = `
       <div class="empty-state" style="padding: 3.5rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px dashed var(--border-subtle); text-align: center;">
         <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">⏱️</div>
-        <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff;">Nenhuma tarefa de 30 minutos agendada</div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff;">${statusNotice}</div>
         <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem auto 1.4rem auto; max-width: 480px; line-height: 1.4;">
-          Ao clicar no botão <strong>"Marcar Tarefa"</strong> ao lado de qualquer cliente, o sistema agenda automaticamente um compromisso de 30 minutos nesta pauta de acompanhamento.
+          ${activeStatus !== 'all' ? 'Alterne os filtros acima para visualizar outros compromissos ou agende uma nova tarefa.' : 'Ao clicar no botão "Marcar Tarefa" ao lado de qualquer cliente, o sistema agenda automaticamente um compromisso de 30 minutos nesta pauta.'}
         </p>
-        <button type="button" class="btn-primary" onclick="setCommercialSubtab('leads')" style="font-size: 0.8rem; padding: 0.45rem 1.1rem;">
-          👥 Ver Todos os Clientes
-        </button>
+        <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+          ${activeStatus !== 'all' ? `
+            <button type="button" class="btn-secondary" onclick="setCommercialTaskStatusFilter('all')" style="font-size: 0.8rem; padding: 0.45rem 1rem;">
+              Ver Todas as Tarefas (${totalTasks})
+            </button>
+          ` : ''}
+          <button type="button" class="btn-primary" onclick="setCommercialSubtab('leads')" style="font-size: 0.8rem; padding: 0.45rem 1.1rem;">
+            👥 Ver Todos os Clientes
+          </button>
+        </div>
       </div>
     `;
     return;
@@ -3776,6 +4679,11 @@ function openCommercialTaskModal(clientId, initialTab = 'form', forceNew = false
   if (previewName) previewName.textContent = client.name || 'Cliente';
   if (previewSub) previewSub.textContent = `Área: ${client.area || 'Geral'}  •  Fase: ${client.status || 'Follow-up'}`;
 
+  const displayBox = document.getElementById('comm-task-client-display');
+  const selectWrapper = document.getElementById('comm-task-client-select-wrapper');
+  if (displayBox) displayBox.style.display = 'flex';
+  if (selectWrapper) selectWrapper.style.display = 'none';
+
   // Atualiza timeline de histórico e contador
   renderCommercialTaskHistory(client);
 
@@ -3811,6 +4719,36 @@ function openCommercialTaskModal(clientId, initialTab = 'form', forceNew = false
         activeNotes.style.display = 'block';
       } else {
         activeNotes.style.display = 'none';
+      }
+    }
+
+    // Botão de conclusão do modal: Fica verde apenas se já concluído, cinza se pendente
+    const isDone = client.task.status === 'done';
+    const btnConclude = document.querySelector('.btn-action-conclude-next');
+    if (btnConclude) {
+      if (isDone) {
+        btnConclude.classList.add('is-done');
+        btnConclude.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>✓ Concluída</span>`;
+        btnConclude.title = 'Esta tarefa já foi concluída! Clique para reabrir como pendente se necessário.';
+      } else {
+        btnConclude.classList.remove('is-done');
+        btnConclude.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Concluir Tarefa</span>`;
+        btnConclude.title = 'Conclui esta tarefa e atualiza o histórico';
+      }
+    }
+
+    const activePill = document.querySelector('.active-task-pill');
+    if (activePill) {
+      if (isDone) {
+        activePill.style.background = 'rgba(16, 185, 129, 0.2)';
+        activePill.style.color = '#34d399';
+        activePill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        activePill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg> Tarefa Concluída (30m)`;
+      } else {
+        activePill.style.background = '';
+        activePill.style.color = '';
+        activePill.style.borderColor = '';
+        activePill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Tarefa Agendada (30m)`;
       }
     }
 
@@ -3997,30 +4935,7 @@ function deleteCommercialTaskFromHistory(clientId, taskKey) {
 }
 window.deleteCommercialTaskFromHistory = deleteCommercialTaskFromHistory;
 
-// Excluir tarefa da tabela de tarefas do comercial
-function deleteCommercialTaskRow(clientId) {
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
-  if (!client || !client.task) return;
 
-  if (!confirm(`Deseja realmente excluir a tarefa de "${client.name}"?`)) return;
-
-  const tId = client.task.id;
-  if (tId && Array.isArray(client.taskHistory)) {
-    client.taskHistory = client.taskHistory.filter(h => h.id !== tId);
-  }
-  client.task = null;
-
-  saveCommercialData();
-  renderCommercialApp();
-  if (typeof window.renderCalendarGrid === 'function') {
-    window.renderCalendarGrid();
-  }
-
-  if (typeof showToast === 'function') {
-    showToast(`Tarefa de "${client.name}" excluída.`, 'info', 2200);
-  }
-}
-window.deleteCommercialTaskRow = deleteCommercialTaskRow;
 
 // Concluir a tarefa ativa atual sem complicar ou forçar novo formulário
 function concludeCurrentActiveTask() {
@@ -4028,6 +4943,23 @@ function concludeCurrentActiveTask() {
   const clientId = inputClientId?.value;
   const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
   if (!client || !client.task) return;
+
+  if (client.task.status === 'done') {
+    client.task.status = 'pending';
+    delete client.task.completedAt;
+    client.task.updatedAt = new Date().toISOString();
+    saveCommercialData();
+    renderCommercialApp();
+    renderCommercialTasksView();
+    if (typeof window.renderCalendarGrid === 'function') {
+      window.renderCalendarGrid();
+    }
+    openCommercialTaskModal(client.id);
+    if (typeof showToast === 'function') {
+      showToast(`⏳ Tarefa de "${client.name}" reaberta como em aberto.`, 'info', 2500);
+    }
+    return;
+  }
 
   client.task.status = 'done';
   client.task.completedAt = new Date().toISOString();
@@ -4164,11 +5096,12 @@ function scheduleAnotherTaskDirectly() {
 window.scheduleAnotherTaskDirectly = scheduleAnotherTaskDirectly;
 
 // Prepara os campos para agendar nova tarefa limpa
-function prepareScheduleNewTask(forceNew) {
+function prepareScheduleNewTask(forceNew = true) {
   const activeCard = document.getElementById('comm-task-active-card');
   const formElement = document.getElementById('form-commercial-task');
   const inputAction = document.getElementById('comm-task-action');
   const inputDate = document.getElementById('comm-task-date');
+  const inputTime = document.getElementById('comm-task-time');
   const inputNotes = document.getElementById('comm-task-notes');
   const formTitle = document.getElementById('comm-task-form-section-title');
   const modeInput = document.getElementById('comm-task-edit-mode');
@@ -4176,19 +5109,64 @@ function prepareScheduleNewTask(forceNew) {
   if (activeCard) activeCard.style.display = 'none';
   if (formElement) formElement.style.display = 'block';
   if (modeInput) modeInput.value = 'new';
-  if (formTitle) formTitle.textContent = 'Definir Nova Tarefa / Próximo Passo:';
-  if (inputAction) {
-    inputAction.value = '';
-    setTimeout(() => inputAction.focus(), 80);
+  if (formTitle) formTitle.textContent = 'Agendar Nova Tarefa / Próximo Passo:';
+  
+  if (forceNew) {
+    if (inputAction) inputAction.value = '';
+    if (inputNotes) inputNotes.value = '';
   }
   if (inputDate) {
     inputDate.value = new Date().toISOString().split('T')[0];
   }
-  if (inputNotes) inputNotes.value = '';
+  if (inputTime && !inputTime.value) {
+    inputTime.value = '10:00';
+  }
 
   switchTaskModalTab('form');
+  setTimeout(() => inputAction?.focus(), 80);
+
+  if (typeof showToast === 'function') {
+    showToast('Modo de Nova Tarefa ativado. Preencha e salve.', 'info', 2200);
+  }
 }
 window.prepareScheduleNewTask = prepareScheduleNewTask;
+
+// Abre modal para agendar nova tarefa diretamente da página de Tarefas
+function openNewTaskForClientModal() {
+  if (!COMMERCIAL_STATE.clients || COMMERCIAL_STATE.clients.length === 0) {
+    if (typeof showToast === 'function') showToast('Cadastre um cliente antes de agendar uma tarefa.', 'warning');
+    return;
+  }
+
+  const sortedClients = [...COMMERCIAL_STATE.clients].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const firstClient = sortedClients[0];
+
+  const clientSelect = document.getElementById('comm-task-client-select');
+  if (clientSelect) {
+    clientSelect.innerHTML = sortedClients.map(c => `
+      <option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.area || 'Geral')})</option>
+    `).join('');
+    clientSelect.value = firstClient.id;
+  }
+
+  openCommercialTaskModal(firstClient.id, 'form', true);
+
+  const displayBox = document.getElementById('comm-task-client-display');
+  const selectWrapper = document.getElementById('comm-task-client-select-wrapper');
+  if (displayBox) displayBox.style.display = 'none';
+  if (selectWrapper) selectWrapper.style.display = 'block';
+}
+window.openNewTaskForClientModal = openNewTaskForClientModal;
+
+function onSelectTaskClientChange(selectedId) {
+  const inputClientId = document.getElementById('comm-task-client-id');
+  if (inputClientId) inputClientId.value = selectedId;
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(selectedId));
+  if (client) {
+    renderCommercialTaskHistory(client);
+  }
+}
+window.onSelectTaskClientChange = onSelectTaskClientChange;
 
 // Focar nos campos para editar a tarefa ativa
 function editCurrentActiveTaskFields() {
@@ -4213,7 +5191,7 @@ window.editCurrentActiveTaskFields = editCurrentActiveTaskFields;
 function cancelCommercialTaskEdit() {
   const inputClientId = document.getElementById('comm-task-client-id');
   const clientId = inputClientId?.value;
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
   const activeCard = document.getElementById('comm-task-active-card');
   const formElement = document.getElementById('form-commercial-task');
 
@@ -4228,41 +5206,15 @@ function cancelCommercialTaskEdit() {
 }
 window.cancelCommercialTaskEdit = cancelCommercialTaskEdit;
 
-// Desmarcar tarefa ativa atual (registro PERMANECE no histórico como desmarcada)
+// Excluir tarefa ativa atual da pauta
 function removeCurrentActiveTask() {
   const inputClientId = document.getElementById('comm-task-client-id');
   const clientId = inputClientId?.value;
-  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
   if (!client || !client.task) return;
 
-  if (!Array.isArray(client.taskHistory)) client.taskHistory = [];
-  const taskId = client.task.id || ('task-canc-' + Date.now());
-  const existingIndex = client.taskHistory.findIndex(h => h.id === taskId);
-  const cancelledRecord = {
-    ...client.task,
-    id: taskId,
-    status: 'cancelled',
-    cancelledAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-
-  if (existingIndex >= 0) {
-    client.taskHistory[existingIndex] = cancelledRecord;
-  } else {
-    client.taskHistory.unshift(cancelledRecord);
-  }
-
-  client.task = null;
-  saveCommercialData();
-  renderCommercialApp();
-  if (typeof window.renderCalendarGrid === 'function') {
-    window.renderCalendarGrid();
-  }
-
   closeCommercialTaskModal();
-  if (typeof showToast === 'function') {
-    showToast(`Tarefa ativa de "${client.name}" desmarcada (registro preservado no histórico).`, 'info', 3500);
-  }
+  deleteCommercialTaskRow(clientId);
 }
 window.removeCurrentActiveTask = removeCurrentActiveTask;
 
@@ -4512,6 +5464,28 @@ function setupCommercialEvents() {
     if (e.target === modal) closeCommercialModal();
   });
 
+  // Fechar modal de opções personalizadas com clique fora
+  const customOptModal = document.getElementById('modal-create-custom-option');
+  customOptModal?.addEventListener('click', (e) => {
+    if (e.target === customOptModal) closeCreateCustomOptionModal();
+  });
+
+  // Gatilhos de criação nos selects de Quick Add e Modal
+  const bindCreateOptionSelect = (selectId, type) => {
+    const el = document.getElementById(selectId);
+    el?.addEventListener('change', (e) => {
+      if (e.target.value && e.target.value.startsWith('__CREATE_')) {
+        openCreateCustomOptionModal(type);
+      }
+    });
+  };
+  bindCreateOptionSelect('comm-quick-area', 'area');
+  bindCreateOptionSelect('comm-client-area', 'area');
+  bindCreateOptionSelect('comm-quick-type', 'type');
+  bindCreateOptionSelect('comm-client-status', 'type');
+  bindCreateOptionSelect('comm-quick-nextstep', 'nextstep');
+  bindCreateOptionSelect('comm-client-next-step', 'nextstep');
+
   // Submit do formulario de cliente
   document.getElementById('form-commercial-client')?.addEventListener('submit', handleCommercialSubmit);
 
@@ -4548,22 +5522,15 @@ function setupCommercialEvents() {
 
   document.getElementById('form-commercial-task')?.addEventListener('submit', handleCommercialTaskSubmit);
 
-  // Botoes de alternancia das sub-abas internas (por classe generica e por IDs)
+  // Botoes de alternancia das sub-abas internas
   document.querySelectorAll('.comm-view-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.subtab || btn.dataset.subtabTarget || btn.dataset.commView || (btn.id || '').replace('btn-comm-view-', '').replace('comm-view-', '');
-      if (target) setCommercialSubtab(target);
-    });
+    if (!btn.getAttribute('onclick')) {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.subtab || btn.dataset.subtabTarget || btn.dataset.commView || (btn.id || '').replace('btn-comm-view-', '').replace('comm-view-', '');
+        if (target) setCommercialSubtab(target);
+      });
+    }
   });
-
-  document.getElementById('btn-comm-view-leads')?.addEventListener('click', () => setCommercialSubtab('leads'));
-  document.getElementById('comm-view-leads')?.addEventListener('click', () => setCommercialSubtab('leads'));
-  document.getElementById('btn-comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
-  document.getElementById('comm-view-fechar')?.addEventListener('click', () => setCommercialSubtab('fechar'));
-  document.getElementById('btn-comm-view-tarefas')?.addEventListener('click', () => setCommercialSubtab('tarefas'));
-  document.getElementById('comm-view-tarefas')?.addEventListener('click', () => setCommercialSubtab('tarefas'));
-  document.getElementById('btn-comm-view-kanban')?.addEventListener('click', () => setCommercialSubtab('kanban'));
-  document.getElementById('comm-view-kanban')?.addEventListener('click', () => setCommercialSubtab('kanban'));
 
   // Subitem de Tarefas na Sidebar
   document.getElementById('side-item-comercial-tarefas')?.addEventListener('click', () => setCommercialSubtab('tarefas'));
@@ -4629,6 +5596,382 @@ function setupCommercialEvents() {
   });
 }
 
+// ========================================================
+// SISTEMA DE ALARME E NOTIFICAÇÃO DE TAREFAS NO TOPO DIREITO
+// ========================================================
+const DEFAULT_TASK_ALARM_SETTINGS = {
+  enabled: true,
+  antecedence: 0, // 0 (no horário exato), 5, 10, 15, 30 minutos
+  sound: 'chime', // 'chime', 'crystal', 'digital', 'harp', 'gong'
+  volume: 80 // 0 a 100%
+};
+
+let COMMERCIAL_ALARM_SETTINGS = { ...DEFAULT_TASK_ALARM_SETTINGS };
+try {
+  const savedAlarmSettings = localStorage.getItem('mvt_task_alarm_settings');
+  if (savedAlarmSettings) {
+    COMMERCIAL_ALARM_SETTINGS = { ...DEFAULT_TASK_ALARM_SETTINGS, ...JSON.parse(savedAlarmSettings) };
+  }
+} catch (e) {}
+
+function saveTaskAlarmSettings() {
+  try {
+    localStorage.setItem('mvt_task_alarm_settings', JSON.stringify(COMMERCIAL_ALARM_SETTINGS));
+  } catch (e) {}
+  syncTaskAlarmInputs();
+}
+
+const COMMERCIAL_TASK_ALARMS = {
+  dismissed: new Set(),
+  activeNotifs: new Set(),
+  timer: null
+};
+
+// Sintetizador Web Audio API: 5 Timbres Profissionais sem necessidade de arquivos externos
+function playTaskAlarmSound(soundType, volumePercent) {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    const type = soundType || COMMERCIAL_ALARM_SETTINGS.sound || 'chime';
+    const volSetting = typeof volumePercent === 'number' ? volumePercent : (COMMERCIAL_ALARM_SETTINGS.volume ?? 80);
+    const vol = Math.max(0, Math.min(100, volSetting)) / 100;
+    if (vol <= 0) return;
+
+    const now = ctx.currentTime;
+
+    if (type === 'crystal') {
+      // 1. Sino Cristalino (Harmônicos triplos cristalinos estilo Apple / Slack)
+      const freqs = [1046.5, 1318.51, 1567.98];
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.001, now + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.24 * vol, now + idx * 0.08 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.85);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.85);
+      });
+    } else if (type === 'digital') {
+      // 2. Alerta Digital (Dois pings modernos e nítidos em 1200Hz)
+      [0, 0.12].forEach(startOffset => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1200, now + startOffset);
+        gain.gain.setValueAtTime(0.001, now + startOffset);
+        gain.gain.linearRampToValueAtTime(0.3 * vol, now + startOffset + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + 0.09);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + startOffset);
+        osc.stop(now + startOffset + 0.095);
+      });
+    } else if (type === 'harp') {
+      // 3. Acorde Relaxante (Arpejo suave em 4 notas A4 -> C#5 -> E5 -> A5)
+      const notes = [440, 554.37, 659.25, 880];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.001, now + idx * 0.09);
+        gain.gain.linearRampToValueAtTime(0.24 * vol, now + idx * 0.09 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.95);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.95);
+      });
+    } else if (type === 'gong') {
+      // 4. Gongo Corporativo (Ressonância rica e encorpada em 329.63Hz com harmônico)
+      [329.63, 659.25].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = idx === 0 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime((idx === 0 ? 0.35 : 0.15) * vol, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.45);
+      });
+    } else {
+      // 5. Chime Suave (Campainha Dupla clássica D5 -> A5)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.16);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.28 * vol, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+      osc.start(now);
+      osc.stop(now + 0.75);
+    }
+  } catch (e) {
+    // Silencia caso bloqueado por autoplay policy antes de qualquer clique do usuário
+  }
+}
+window.playTaskAlarmSound = playTaskAlarmSound;
+
+// Sincroniza controles de input da aba de configurações e do modal rápido
+function syncTaskAlarmInputs() {
+  const chk = document.getElementById('alarm-setting-enabled-toggle');
+  const lbl = document.getElementById('alarm-setting-enabled-label');
+  const ant = document.getElementById('alarm-setting-antecedence');
+  const snd = document.getElementById('alarm-setting-sound');
+  const vol = document.getElementById('alarm-setting-volume');
+  const volDsp = document.getElementById('alarm-volume-display');
+
+  const mChk = document.getElementById('modal-alarm-setting-enabled-toggle');
+  const mAnt = document.getElementById('modal-alarm-setting-antecedence');
+  const mSnd = document.getElementById('modal-alarm-setting-sound');
+  const mVol = document.getElementById('modal-alarm-setting-volume');
+  const mVolDsp = document.getElementById('modal-alarm-volume-display');
+
+  const en = Boolean(COMMERCIAL_ALARM_SETTINGS.enabled);
+  if (chk) chk.checked = en;
+  if (mChk) mChk.checked = en;
+  if (lbl) {
+    lbl.textContent = en ? 'Alertas Ativados' : 'Alertas Desativados';
+    lbl.style.color = en ? '#10b981' : 'var(--text-muted)';
+  }
+
+  const antVal = String(COMMERCIAL_ALARM_SETTINGS.antecedence ?? 0);
+  if (ant) ant.value = antVal;
+  if (mAnt) mAnt.value = antVal;
+
+  const sndVal = COMMERCIAL_ALARM_SETTINGS.sound || 'chime';
+  if (snd) snd.value = sndVal;
+  if (mSnd) mSnd.value = sndVal;
+
+  const volVal = String(COMMERCIAL_ALARM_SETTINGS.volume ?? 80);
+  if (vol) vol.value = volVal;
+  if (mVol) mVol.value = volVal;
+  if (volDsp) volDsp.textContent = `${volVal}%`;
+  if (mVolDsp) mVolDsp.textContent = `${volVal}%`;
+}
+window.syncTaskAlarmInputs = syncTaskAlarmInputs;
+
+function updateTaskAlarmAntecedence(val) {
+  COMMERCIAL_ALARM_SETTINGS.antecedence = parseInt(val, 10) || 0;
+  saveTaskAlarmSettings();
+  if (typeof showToast === 'function') {
+    const txt = COMMERCIAL_ALARM_SETTINGS.antecedence === 0 ? 'no horário exato marcado' : `${COMMERCIAL_ALARM_SETTINGS.antecedence} min antes`;
+    showToast(`⏱️ Alarme ajustado para disparar ${txt}.`, 'info', 2200);
+  }
+}
+window.updateTaskAlarmAntecedence = updateTaskAlarmAntecedence;
+
+function updateTaskAlarmSoundType(val) {
+  COMMERCIAL_ALARM_SETTINGS.sound = val;
+  saveTaskAlarmSettings();
+  playTaskAlarmSound(val);
+}
+window.updateTaskAlarmSoundType = updateTaskAlarmSoundType;
+
+function updateTaskAlarmVolume(val) {
+  COMMERCIAL_ALARM_SETTINGS.volume = parseInt(val, 10);
+  saveTaskAlarmSettings();
+}
+window.updateTaskAlarmVolume = updateTaskAlarmVolume;
+
+function toggleTaskAlarmEnabled(checked) {
+  COMMERCIAL_ALARM_SETTINGS.enabled = Boolean(checked);
+  saveTaskAlarmSettings();
+  if (typeof showToast === 'function') {
+    showToast(checked ? '🔔 Alertas sonoros ativados!' : '🔕 Alertas sonoros desativados.', checked ? 'success' : 'info', 2200);
+  }
+}
+window.toggleTaskAlarmEnabled = toggleTaskAlarmEnabled;
+
+function testCurrentAlarmSound() {
+  playTaskAlarmSound();
+  if (typeof showToast === 'function') {
+    showToast('🔊 Tocando som de teste...', 'info', 1500);
+  }
+}
+window.testCurrentAlarmSound = testCurrentAlarmSound;
+
+function openTaskAlarmSettingsModal() {
+  syncTaskAlarmInputs();
+  const m = document.getElementById('modal-task-alarm-settings');
+  if (m) m.classList.add('active');
+}
+window.openTaskAlarmSettingsModal = openTaskAlarmSettingsModal;
+
+function closeTaskAlarmSettingsModal() {
+  const m = document.getElementById('modal-task-alarm-settings');
+  if (m) m.classList.remove('active');
+}
+window.closeTaskAlarmSettingsModal = closeTaskAlarmSettingsModal;
+
+// Filtros da Pauta de Tarefas
+function setCommercialTaskStatusFilter(status) {
+  COMMERCIAL_STATE.taskStatusFilter = status;
+  renderCommercialTasksView();
+}
+window.setCommercialTaskStatusFilter = setCommercialTaskStatusFilter;
+
+function onCommercialTaskAreaFilterChange(area) {
+  COMMERCIAL_STATE.taskAreaFilter = area;
+  renderCommercialTasksView();
+}
+window.onCommercialTaskAreaFilterChange = onCommercialTaskAreaFilterChange;
+
+// Verificação periódica com garantia de disparo no horário (mesmo alterado)
+function checkCommercialTaskAlarms() {
+  if (!COMMERCIAL_ALARM_SETTINGS.enabled) return;
+
+  const container = document.getElementById('task-alarm-notification-container');
+  if (!container) return;
+
+  const clients = COMMERCIAL_STATE.clients || [];
+  const now = new Date();
+  const todayStr = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0')
+  ].join('-');
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const antecedence = parseInt(COMMERCIAL_ALARM_SETTINGS.antecedence || 0, 10);
+
+  clients.forEach(client => {
+    if (!client || !client.task || !client.task.dueDate || client.task.status === 'done') return;
+
+    // Apenas tarefas agendadas para hoje
+    if (client.task.dueDate !== todayStr) return;
+
+    const dueTime = client.task.dueTime || '10:00';
+    const [tH, tM] = dueTime.split(':').map(Number);
+    if (isNaN(tH)) return;
+    const taskMinutes = tH * 60 + (tM || 0);
+
+    // O horário de disparo considera a antecedência
+    const triggerMinutes = taskMinutes - antecedence;
+
+    // Se já deu o horário de disparo (ou passou recentemente nos últimos 60 minutos)
+    if (currentMinutes >= triggerMinutes && currentMinutes <= triggerMinutes + 60) {
+      // A chave inclui dueTime e antecedência: se o horário for alterado para outro valor, o alarme tocará no novo horário!
+      const alarmKey = `alarm-${client.id}-${client.task.dueDate}_${dueTime}_ant${antecedence}`;
+      
+      if (!COMMERCIAL_TASK_ALARMS.dismissed.has(alarmKey) && !COMMERCIAL_TASK_ALARMS.activeNotifs.has(alarmKey)) {
+        triggerTaskAlarmNotification(client, alarmKey, antecedence);
+      }
+    }
+  });
+}
+window.checkCommercialTaskAlarms = checkCommercialTaskAlarms;
+
+function triggerTaskAlarmNotification(client, alarmKey, antecedence = 0) {
+  const container = document.getElementById('task-alarm-notification-container');
+  if (!container) return;
+
+  COMMERCIAL_TASK_ALARMS.activeNotifs.add(alarmKey);
+  playTaskAlarmSound();
+
+  const task = client.task;
+  const startTime = task.dueTime || '10:00';
+  const timeLabel = antecedence > 0 ? `⏰ ${startTime} (em ${antecedence}m)` : `⏰ ${startTime}`;
+
+  const card = document.createElement('div');
+  card.className = 'task-alarm-card';
+  card.id = alarmKey;
+  card.innerHTML = `
+    <div class="task-alarm-header">
+      <div class="task-alarm-title-box task-alarm-title-group">
+        <span class="task-alarm-bell">🔔</span>
+        <span class="task-alarm-title">Lembrete de Tarefa</span>
+      </div>
+      <div style="display:flex; align-items:center; gap: 6px;">
+        <span class="task-alarm-time-badge task-alarm-badge-time">${timeLabel}</span>
+        <button type="button" class="btn-task-alarm-dismiss" onclick="dismissTaskAlarm('${alarmKey}')" title="Dispensar aviso">✕</button>
+      </div>
+    </div>
+    <div class="task-alarm-body">
+      <div class="task-alarm-client-name task-alarm-client">
+        <strong>${escapeHtml(client.name || 'Cliente')}</strong>
+        ${client.phone ? `<span style="opacity:0.75; font-size:0.75rem;">• ${formatPhoneDisplay(client.phone)}</span>` : ''}
+      </div>
+      <div class="task-alarm-action">${escapeHtml(task.action || 'Compromisso Comercial')}</div>
+      ${task.notes ? `<div class="task-alarm-notes" style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px;">${escapeHtml(task.notes)}</div>` : ''}
+    </div>
+    <div class="task-alarm-actions">
+      <button type="button" class="btn-task-alarm-done" onclick="quickCompleteTaskFromAlarm('${client.id}', '${alarmKey}')" title="Marcar como concluída">
+        ✓ Concluir
+      </button>
+      <button type="button" class="btn-task-alarm-view" onclick="openTaskFromAlarm('${client.id}', '${alarmKey}')" title="Abrir detalhes da tarefa">
+        Ver Detalhes
+      </button>
+    </div>
+  `;
+
+  container.appendChild(card);
+}
+
+function dismissTaskAlarm(alarmKey) {
+  COMMERCIAL_TASK_ALARMS.dismissed.add(alarmKey);
+  COMMERCIAL_TASK_ALARMS.activeNotifs.delete(alarmKey);
+  const card = document.getElementById(alarmKey);
+  if (card) {
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(50px)';
+    card.style.transition = 'all 0.25s ease';
+    setTimeout(() => card.remove(), 260);
+  }
+}
+window.dismissTaskAlarm = dismissTaskAlarm;
+
+function quickCompleteTaskFromAlarm(clientId, alarmKey) {
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+  if (client && client.task) {
+    client.task.status = 'done';
+    client.task.completedAt = new Date().toISOString();
+    if (!Array.isArray(client.taskHistory)) client.taskHistory = [];
+    client.taskHistory.unshift({ ...client.task });
+    saveCommercialData();
+    renderCommercialApp();
+    renderCommercialTasksView();
+    if (typeof window.renderCalendarGrid === 'function') {
+      window.renderCalendarGrid();
+    }
+    if (typeof showToast === 'function') {
+      showToast(`✅ Tarefa de "${client.name}" concluída!`, 'success');
+    }
+  }
+  dismissTaskAlarm(alarmKey);
+}
+window.quickCompleteTaskFromAlarm = quickCompleteTaskFromAlarm;
+
+function openTaskFromAlarm(clientId, alarmKey) {
+  openCommercialTaskModal(clientId);
+  dismissTaskAlarm(alarmKey);
+}
+window.openTaskFromAlarm = openTaskFromAlarm;
+
+function startCommercialTaskAlarmMonitor() {
+  if (COMMERCIAL_TASK_ALARMS.timer) clearInterval(COMMERCIAL_TASK_ALARMS.timer);
+  syncTaskAlarmInputs();
+  checkCommercialTaskAlarms();
+  // Monitoramento a cada 5 segundos para precisão pontual no horário
+  COMMERCIAL_TASK_ALARMS.timer = setInterval(checkCommercialTaskAlarms, 5000);
+}
+window.startCommercialTaskAlarmMonitor = startCommercialTaskAlarmMonitor;
+
 // Utilitario simples para escapar HTML
 function escapeHtml(text) {
   if (!text) return '';
@@ -4647,4 +5990,9 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCommercialMindChatButtonUi();
   renderCommercialApp();
   startCommercialRealtimeMonitoring();
+  startCommercialTaskAlarmMonitor();
 });
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  startCommercialTaskAlarmMonitor();
+}

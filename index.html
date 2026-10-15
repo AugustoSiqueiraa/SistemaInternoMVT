@@ -603,7 +603,7 @@
               <span class="kpi-lbl">Total de Clientes</span>
             </div>
             <div class="kpi-divider"></div>
-            <div class="kpi-item">
+            <div class="kpi-item" style="cursor: pointer;" onclick="setCommercialSubtab('fechar')" title="Ver clientes Prontos para Fechar">
               <span class="kpi-val" id="comm-kpi-fechar" style="color: var(--amber);">0</span>
               <span class="kpi-lbl">Prontos para Fechar</span>
             </div>
@@ -618,9 +618,9 @@
               <span class="kpi-lbl">Follow-up / No Tempo</span>
             </div>
             <div class="kpi-divider"></div>
-            <div class="kpi-item confirmed">
+            <div class="kpi-item confirmed" style="cursor: pointer;" onclick="setCommercialSubtab('assinado')" title="Ver clientes com Contrato Assinado">
               <span class="kpi-val" id="comm-kpi-fechado" style="color: var(--emerald);">0</span>
-              <span class="kpi-lbl">Fechados</span>
+              <span class="kpi-lbl">Contratos Assinados</span>
             </div>
           </div>
         </div>
@@ -696,7 +696,76 @@
           </div>
         </div>
 
-        <!-- Barra de Ferramentas Superior: Busca, Filtros, Contador e Exibição -->
+        <!-- Barra Compacta de Indicadores das Tarefas: Duração com Popover e KPIs Clicáveis (Exibido no topo na aba Tarefas) -->
+        <div class="comm-tasks-kpi-strip" id="comm-tasks-kpi-strip" style="display: none;">
+          <!-- Dropdown Minimalista de Duração da Pauta -->
+          <div class="comm-duration-dropdown-wrapper">
+            <button type="button" class="comm-tasks-duration-btn" id="btn-comm-tasks-duration" onclick="toggleCommercialDurationDropdown(event)" title="Clique para selecionar a duração da pauta">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Pauta: <strong id="comm-default-duration-label">30m</strong></span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7; margin-left: 2px;">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="comm-duration-popover" id="comm-duration-menu" style="display: none;">
+              <div class="comm-duration-popover-title">Duração da Pauta</div>
+              <button type="button" class="duration-option" data-duration="15" onclick="setCommercialDefaultDuration(15)">
+                <span>15 minutos</span>
+                <span class="duration-check" id="duration-check-15"></span>
+              </button>
+              <button type="button" class="duration-option" data-duration="30" onclick="setCommercialDefaultDuration(30)">
+                <span>30 minutos</span>
+                <span class="duration-check" id="duration-check-30">✓</span>
+              </button>
+              <button type="button" class="duration-option" data-duration="45" onclick="setCommercialDefaultDuration(45)">
+                <span>45 minutos</span>
+                <span class="duration-check" id="duration-check-45"></span>
+              </button>
+              <button type="button" class="duration-option" data-duration="60" onclick="setCommercialDefaultDuration(60)">
+                <span>60 minutos</span>
+                <span class="duration-check" id="duration-check-60"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="comm-task-kpi-divider"></div>
+
+          <div class="comm-task-kpi-item active-filter" id="kpi-task-filter-all" onclick="setCommercialTaskStatusFilter('all')" title="Ver todas as tarefas agendadas">
+            <span class="task-kpi-val" id="comm-tasks-kpi-total">0</span>
+            <span class="task-kpi-lbl">Tarefas Agendadas</span>
+          </div>
+
+          <div class="comm-task-kpi-divider"></div>
+
+          <div class="comm-task-kpi-item today" id="kpi-task-filter-today" onclick="setCommercialTaskStatusFilter('today')" title="Clique para ver tarefas de hoje">
+            <span class="task-kpi-val" id="comm-tasks-kpi-today">0</span>
+            <span class="task-kpi-lbl">Tarefas Hoje</span>
+          </div>
+
+          <div class="comm-task-kpi-divider"></div>
+
+          <div class="comm-task-kpi-item pending" id="kpi-task-filter-pending" onclick="setCommercialTaskStatusFilter('pending')" title="Clique para filtrar apenas tarefas em aberto">
+            <span class="task-kpi-val" id="comm-tasks-kpi-pending">0</span>
+            <span class="task-kpi-lbl">Em Aberto</span>
+          </div>
+
+          <div class="comm-task-kpi-divider"></div>
+
+          <div class="comm-task-kpi-item done" id="kpi-task-filter-done" onclick="setCommercialTaskStatusFilter('done')" title="Clique para filtrar tarefas já concluídas">
+            <span class="task-kpi-val" id="comm-tasks-kpi-done">0</span>
+            <span class="task-kpi-lbl">Concluídas</span>
+          </div>
+
+          <button type="button" class="btn-primary" onclick="openNewTaskForClientModal()" style="margin-left: auto; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; padding: 0.35rem 0.85rem; font-weight: 600; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); color: #f1f5f9;" title="Agendar nova tarefa para um cliente">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Nova Tarefa</span>
+          </button>
+        </div>
+
+        <!-- Barra de Ferramentas Superior: Busca, Filtros, Indicadores e Exibição -->
         <div class="commercial-controls-bar">
           <div class="commercial-filter-tools">
             <!-- Navegação: Apenas Ícones de Seta Minimalistas (Voltar e Avançar) -->
@@ -741,7 +810,7 @@
 
                 <!-- Filtro de Área -->
                 <div class="comm-filter-section">
-                  <label class="comm-filter-label" for="comm-area-filter">Área de Atuação</label>
+                  <label class="comm-filter-label" for="comm-area-filter">Área de Atuação / Tarefa</label>
                   <select id="comm-area-filter" class="clean-input" onchange="onCommercialAreaFilterChange(this.value)">
                     <option value="all">Todas as Áreas</option>
                     <option value="Trabalhista">Trabalhista</option>
@@ -767,7 +836,9 @@
                   <label class="comm-filter-label" for="comm-task-filter">Tarefas de 30 Minutos</label>
                   <select id="comm-task-filter" class="clean-input" onchange="onCommercialTaskFilterChange(this.value)">
                     <option value="all">Todas as Tarefas</option>
-                    <option value="has_task">Com Tarefa Agendada</option>
+                    <option value="pending">⏳ Apenas com Tarefa em Aberto</option>
+                    <option value="done">✓ Apenas com Tarefa Concluída</option>
+                    <option value="has_task">Com Qualquer Tarefa Agendada</option>
                     <option value="overdue">Tarefas Vencidas</option>
                     <option value="no_task">Sem Tarefa Agendada</option>
                   </select>
@@ -781,12 +852,6 @@
               </div>
             </div>
 
-            <!-- Contador de Resultados Idêntico ao da Pauta -->
-            <div class="filter-results-counter-pill" id="comm-counter-pill" title="Total de clientes listados">
-              <span class="results-count-dot"></span>
-              <span class="results-count-text" id="comm-counter-text"><strong>0</strong> clientes</span>
-            </div>
-
             <!-- Indicador de Nuvem em Tempo Real -->
             <div class="comm-realtime-badge" id="comm-realtime-status-badge" title="Sincronização em tempo real ativa na nuvem Supabase">
               <span class="realtime-live-dot"></span>
@@ -795,6 +860,14 @@
 
             <!-- Chips de Filtros Ativos -->
             <div class="active-filter-chips" id="comm-active-filter-chips"></div>
+
+            <!-- Botão Minimalista do Sino de Alertas de Tarefas -->
+            <button type="button" class="btn-comm-alarm-trigger" id="btn-header-task-alarm" onclick="openTaskAlarmSettingsModal()" title="Configurações de Alertas e Sons de Tarefas">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
 
             <!-- Botão Ícone de Configuração de Visualização da Tabela (Limpo e Minimalista) -->
             <div class="comm-view-settings-dropdown-wrapper">
@@ -863,9 +936,18 @@
           <div class="comm-table-header-row">
             <div class="comm-col-date">DATA</div>
             <div class="comm-col-client">CLIENTE</div>
-            <div class="comm-col-area">ÁREA</div>
-            <div class="comm-col-type">TIPO DE ATENDIMENTO</div>
-            <div class="comm-col-nextstep">PRÓXIMO PASSO</div>
+            <div class="comm-col-area" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>ÁREA</span>
+              <button type="button" class="btn-header-add-option" onclick="openCreateCustomOptionModal('area')" title="Criar ou personalizar Área de Atuação (com cor)">+</button>
+            </div>
+            <div class="comm-col-type" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>TIPO DE ATENDIMENTO</span>
+              <button type="button" class="btn-header-add-option" onclick="openCreateCustomOptionModal('type')" title="Criar ou personalizar Tipo de Atendimento (com cor)">+</button>
+            </div>
+            <div class="comm-col-nextstep" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>PRÓXIMO PASSO</span>
+              <button type="button" class="btn-header-add-option" onclick="openCreateCustomOptionModal('nextstep')" title="Criar ou personalizar Próximo Passo (com cor)">+</button>
+            </div>
             <div class="comm-col-schedule">AGENDAMENTO</div>
             <div class="comm-col-actions">TAREFA & AÇÕES</div>
             <div class="comm-col-fechar">PRONTOS P/ FECHAR</div>
@@ -875,33 +957,6 @@
 
         <!-- Visão: Pauta & Agenda de Tarefas -->
         <div id="comm-tasks-view-container" class="commercial-tasks-view" style="display: none;">
-          <!-- Barra Compacta de Indicadores das Tarefas com Alteração de Tempo à Esquerda -->
-          <div class="comm-tasks-kpi-strip">
-            <button type="button" class="comm-tasks-duration-btn" id="btn-comm-tasks-duration" onclick="cycleCommercialDefaultDuration()" title="Clique para alterar a duração da pauta (15m, 30m, 45m, 60m)">
-              ⏱️ Pauta: <strong id="comm-default-duration-label">30m</strong> ▾
-            </button>
-            <div class="comm-task-kpi-divider"></div>
-            <div class="comm-task-kpi-item">
-              <span class="task-kpi-val" id="comm-tasks-kpi-total">0</span>
-              <span class="task-kpi-lbl">Tarefas Agendadas</span>
-            </div>
-            <div class="comm-task-kpi-divider"></div>
-            <div class="comm-task-kpi-item today">
-              <span class="task-kpi-val" id="comm-tasks-kpi-today">0</span>
-              <span class="task-kpi-lbl">Tarefas Hoje</span>
-            </div>
-            <div class="comm-task-kpi-divider"></div>
-            <div class="comm-task-kpi-item pending">
-              <span class="task-kpi-val" id="comm-tasks-kpi-pending">0</span>
-              <span class="task-kpi-lbl">Pendentes</span>
-            </div>
-            <div class="comm-task-kpi-divider"></div>
-            <div class="comm-task-kpi-item done">
-              <span class="task-kpi-val" id="comm-tasks-kpi-done">0</span>
-              <span class="task-kpi-lbl">Concluídas</span>
-            </div>
-          </div>
-
           <!-- Tabela Executiva de Tarefas -->
           <div class="commercial-tasks-table-card">
             <div class="comm-tasks-table-header">
@@ -937,6 +992,16 @@
               </svg>
               <span>Prontos para Fechar</span>
             </button>
+            <button type="button" class="comm-view-btn comm-view-btn-assinado" id="btn-comm-view-assinado" onclick="setCommercialSubtab('assinado')" data-subtab="assinado" data-comm-view="assinado">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span>Contrato Assinado</span>
+            </button>
             <button type="button" class="comm-view-btn" id="btn-comm-view-tarefas" onclick="setCommercialSubtab('tarefas')" data-subtab="tarefas" data-comm-view="tarefas">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -945,6 +1010,7 @@
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
               <span>Tarefas</span>
+            </button>
           </div>
         </div>
       </section>
@@ -1225,6 +1291,80 @@
           </div>
         </div>
 
+        <!-- Painel: Alertas Sonoros & Notificações de Tarefas -->
+        <div class="panel-card" id="panel-task-alarms-settings" style="margin-bottom: 1.25rem;">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">🔔 Alertas Sonoros & Notificações de Tarefas (Pauta Comercial)</h2>
+              <p class="panel-subtitle">Edite antecedência do aviso, escolha o som desejado, regule o volume e ative/desative disparos automáticos.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <label class="switch-clean" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="alarm-setting-enabled-toggle" onchange="toggleTaskAlarmEnabled(this.checked)" checked style="width: 17px; height: 17px; cursor: pointer; accent-color: #10b981;">
+                <span style="font-size: 0.82rem; font-weight: 700; color: #10b981;" id="alarm-setting-enabled-label">Alertas Ativados</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="task-alarm-settings-grid">
+            <!-- 1. Alerta de Antecedência -->
+            <div class="task-alarm-setting-box">
+              <div>
+                <div class="alarm-setting-title">⏱️ Antecedência do Alerta</div>
+                <p class="alarm-setting-desc">Momento em que o alarme sonoro e o aviso visual irão disparar para lembrá-lo da tarefa agendada.</p>
+              </div>
+              <div>
+                <select id="alarm-setting-antecedence" class="clean-input" onchange="updateTaskAlarmAntecedence(this.value)" style="width: 100%; font-size: 0.8rem; height: 34px;">
+                  <option value="0">No horário exato marcado (0 min)</option>
+                  <option value="5">5 minutos antes</option>
+                  <option value="10">10 minutos antes</option>
+                  <option value="15">15 minutos antes</option>
+                  <option value="30">30 minutos antes</option>
+                </select>
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.35rem;">
+                  ℹ️ Mesmo que o horário da tarefa seja alterado, o alarme tocará pontualmente no novo horário programado.
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Tipo de Som do Alarme -->
+            <div class="task-alarm-setting-box">
+              <div>
+                <div class="alarm-setting-title">🎵 Som do Alarme</div>
+                <p class="alarm-setting-desc">Escolha o toque sonoro emitido ao atingir o momento da tarefa.</p>
+              </div>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="alarm-setting-sound" class="clean-input" onchange="updateTaskAlarmSoundType(this.value)" style="flex: 1; font-size: 0.8rem; height: 34px;">
+                  <option value="chime">Chime Suave (Campainha Dupla)</option>
+                  <option value="crystal">Sino Cristalino (Apple / Slack)</option>
+                  <option value="digital">Alerta Digital (Beep Moderno)</option>
+                  <option value="harp">Acorde Relaxante (Harp Chord)</option>
+                  <option value="gong">Gongo Corporativo (Deep Bell)</option>
+                </select>
+                <button type="button" class="btn-test-alarm-sound" onclick="testCurrentAlarmSound()" title="Clique para ouvir uma amostra deste som com o volume atual">
+                  ▶️ Testar
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Regulador de Volume -->
+            <div class="task-alarm-setting-box">
+              <div>
+                <div class="alarm-setting-title">🔊 Volume do Som</div>
+                <p class="alarm-setting-desc">Ajuste a intensidade do alarme sonoro para o seu ambiente de trabalho.</p>
+              </div>
+              <div>
+                <div class="alarm-volume-slider-wrapper">
+                  <span style="font-size: 0.85rem;">🔈</span>
+                  <input type="range" id="alarm-setting-volume" class="alarm-volume-slider" min="0" max="100" value="80" oninput="updateTaskAlarmVolume(this.value)">
+                  <span style="font-size: 0.85rem;">🔊</span>
+                  <span class="alarm-volume-val" id="alarm-volume-display">80%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Painel 1: Status do Sistema & Modo de Segurança -->
         <div class="panel-card" style="margin-bottom: 1.25rem;">
           <div class="panel-header">
@@ -1466,9 +1606,9 @@
     </div>
 
     <!-- Modal Popup de Confirmação para Excluir Cliente Comercial -->
-    <div class="modal-confirm-overlay" id="modal-delete-client-confirm">
+    <div class="modal-confirm-overlay" id="modal-delete-client-confirm" onclick="if(event.target === this) closeDeleteClientModal()">
       <div class="modal-confirm-box">
-        <div class="modal-confirm-icon" style="color: #ef4444; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3);">⚠️</div>
+        <div class="modal-confirm-icon" id="confirm-delete-client-icon">⚠️</div>
         <h3 class="modal-confirm-title" id="confirm-delete-client-title">Excluir Cliente?</h3>
         <p class="modal-confirm-desc" id="confirm-delete-client-desc">
           Tem certeza que deseja excluir o cadastro de <strong id="confirm-delete-client-name" style="color: #ffffff;">-</strong>?<br>
@@ -1477,6 +1617,22 @@
         <div class="modal-confirm-actions">
           <button type="button" class="btn-secondary" id="btn-cancel-delete-client" onclick="closeDeleteClientModal()">Cancelar</button>
           <button type="button" class="btn-primary" id="btn-confirm-delete-client" onclick="confirmExecuteDeleteClient()" style="background: #ef4444; border-color: #ef4444; font-weight: 700;">Sim, Excluir</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Popup de Confirmação para Excluir Tarefa Comercial -->
+    <div class="modal-confirm-overlay" id="modal-delete-task-confirm" onclick="if(event.target === this) closeDeleteTaskModal()">
+      <div class="modal-confirm-box">
+        <div class="modal-confirm-icon" id="confirm-delete-task-icon">⚠️</div>
+        <h3 class="modal-confirm-title" id="confirm-delete-task-title">Excluir Tarefa?</h3>
+        <p class="modal-confirm-desc" id="confirm-delete-task-desc">
+          Tem certeza que deseja excluir a tarefa de <strong id="confirm-delete-task-name" style="color: #ffffff;">-</strong>?<br>
+          <span style="font-size: 0.76rem; color: #94a3b8; display: block; margin-top: 0.35rem;">A tarefa de 30 minutos será removida da pauta ativa e da grade de horários.</span>
+        </p>
+        <div class="modal-confirm-actions">
+          <button type="button" class="btn-secondary" id="btn-cancel-delete-task" onclick="closeDeleteTaskModal()">Cancelar</button>
+          <button type="button" class="btn-primary" id="btn-confirm-delete-task" onclick="confirmExecuteDeleteTask()" style="background: #ef4444; border-color: #ef4444; font-weight: 700;">Sim, Excluir</button>
         </div>
       </div>
     </div>
@@ -1581,10 +1737,15 @@
         </div>
 
         <!-- Card do Cliente Compacto -->
-        <div class="task-client-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.45rem 0.75rem; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+        <div class="task-client-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 0.45rem 0.75rem; margin-bottom: 0.75rem;">
+          <div id="comm-task-client-display" style="display: flex; align-items: baseline; gap: 0.5rem;">
             <span id="comm-task-client-name" style="font-size: 0.95rem; font-weight: 700; color: #ffffff;">-</span>
             <span id="comm-task-client-sub" style="font-size: 0.72rem; color: var(--text-muted);">Área: -</span>
+          </div>
+          <div id="comm-task-client-select-wrapper" style="display: none;">
+            <label class="form-label" for="comm-task-client-select" style="font-size: 0.74rem; font-weight: 700; margin-bottom: 0.25rem;">Selecione o Cliente para a Tarefa *</label>
+            <select id="comm-task-client-select" class="clean-input" style="height: 32px; font-size: 0.82rem;" onchange="onSelectTaskClientChange(this.value)">
+            </select>
           </div>
         </div>
 
@@ -1606,6 +1767,10 @@
 
             <!-- Botões de Ação Diretos e Transparentes -->
             <div class="task-active-decision-actions">
+              <button type="button" class="btn-action-schedule-new" onclick="prepareScheduleNewTask(true)" title="Agendar uma nova tarefa para este cliente">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Nova Tarefa</span>
+              </button>
               <button type="button" class="btn-action-conclude-next" onclick="concludeCurrentActiveTask()" title="Conclui esta tarefa e atualiza o histórico">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>Concluir Tarefa</span>
@@ -1699,9 +1864,14 @@
               </div>
             </div>
 
-            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.45rem; margin-top: 0.4rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-              <button type="button" class="btn-secondary" id="btn-cancel-commercial-task" onclick="cancelCommercialTaskEdit()" style="padding: 0.32rem 0.85rem; font-size: 0.78rem;">Cancelar</button>
-              <button type="submit" class="btn-primary" id="btn-save-commercial-task" style="padding: 0.32rem 1.15rem; font-size: 0.78rem; font-weight: 700;">Salvar Tarefa</button>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+              <button type="button" class="btn-action-schedule-new" id="btn-create-as-new-task" onclick="prepareScheduleNewTask(false)" style="font-size: 0.78rem; padding: 0.32rem 0.75rem;" title="Criar como uma nova tarefa sem substituir o histórico">
+                <span>+ Criar como Nova Tarefa</span>
+              </button>
+              <div style="display: flex; gap: 0.45rem;">
+                <button type="button" class="btn-secondary" id="btn-cancel-commercial-task" onclick="cancelCommercialTaskEdit()" style="padding: 0.32rem 0.85rem; font-size: 0.78rem;">Cancelar</button>
+                <button type="submit" class="btn-primary" id="btn-save-commercial-task" style="padding: 0.32rem 1.15rem; font-size: 0.78rem; font-weight: 700;">Salvar Tarefa</button>
+              </div>
             </div>
           </form>
         </div>
@@ -1714,12 +1884,13 @@
           <div style="margin-top: 1.2rem; display: flex; justify-content: flex-end; align-items: center;">
             <button type="button" class="btn-secondary" onclick="closeCommercialTaskModal()" style="font-size: 0.78rem; padding: 0.35rem 1rem;">Fechar</button>
           </div>
+        </div>
       </div>
     </div>
 
     <!-- Modal: Criar Nova Opção com Nome e Cor (Área, Tipo de Atendimento ou Próximo Passo) -->
-    <div class="modal-overlay" id="modal-create-custom-option">
-      <div class="modal-card" style="max-width: 440px;">
+    <div class="modal-overlay" id="modal-create-custom-option" style="z-index: 10001;" onclick="if(event.target === this) closeCreateCustomOptionModal()">
+      <div class="modal-card" style="max-width: 460px; max-height: 90vh; overflow-y: auto;">
         <div class="modal-header">
           <div>
             <h2 class="modal-title" id="custom-option-modal-title">Criar Nova Opção</h2>
@@ -1733,7 +1904,7 @@
           <input type="hidden" id="custom-option-client-id" value="">
 
           <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label" for="custom-option-name" id="custom-option-name-label" style="font-size: 0.76rem; font-weight: 700;">Nome *</label>
+            <label class="form-label" for="custom-option-name" id="custom-option-name-label" style="font-size: 0.76rem; font-weight: 700;">Nome da Opção *</label>
             <input type="text" id="custom-option-name" class="clean-input" placeholder="Digite o nome..." required style="height: 34px; font-size: 0.82rem;" oninput="updateCustomOptionPreview()">
           </div>
 
@@ -1742,15 +1913,17 @@
             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
               <div class="custom-option-swatches" id="custom-option-swatches">
                 <button type="button" class="color-swatch-circle active" data-color="#38bdf8" style="background:#38bdf8;" title="Azul claro" onclick="selectCustomOptionColor('#38bdf8', this)"></button>
-                <button type="button" class="color-swatch-circle" data-color="#10b981" style="background:#10b981;" title="Verde" onclick="selectCustomOptionColor('#10b981', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#10b981" style="background:#10b981;" title="Verde esmeralda" onclick="selectCustomOptionColor('#10b981', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#f59e0b" style="background:#f59e0b;" title="Âmbar" onclick="selectCustomOptionColor('#f59e0b', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#a855f7" style="background:#a855f7;" title="Roxo" onclick="selectCustomOptionColor('#a855f7', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#ec4899" style="background:#ec4899;" title="Rosa" onclick="selectCustomOptionColor('#ec4899', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#ef4444" style="background:#ef4444;" title="Vermelho" onclick="selectCustomOptionColor('#ef4444', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#06b6d4" style="background:#06b6d4;" title="Ciano" onclick="selectCustomOptionColor('#06b6d4', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#84cc16" style="background:#84cc16;" title="Lima" onclick="selectCustomOptionColor('#84cc16', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#6366f1" style="background:#6366f1;" title="Índigo" onclick="selectCustomOptionColor('#6366f1', this)"></button>
+                <button type="button" class="color-swatch-circle" data-color="#f97316" style="background:#f97316;" title="Laranja" onclick="selectCustomOptionColor('#f97316', this)"></button>
               </div>
-              <div style="display: flex; align-items: center; gap: 0.3rem;">
+              <div style="display: flex; align-items: center; gap: 0.35rem; margin-left: 0.2rem;">
                 <input type="color" id="custom-option-color-input" value="#38bdf8" style="width: 28px; height: 28px; border: none; border-radius: 4px; cursor: pointer; background: transparent; padding: 0;" oninput="selectCustomOptionColor(this.value)">
                 <span style="font-size: 0.7rem; color: var(--text-muted);">Personalizada</span>
               </div>
@@ -1758,16 +1931,30 @@
             </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 1.1rem; padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 6px;">
+          <div class="form-group" style="margin-bottom: 0.95rem; padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 6px;">
             <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Prévia na tabela:</span>
             <span id="custom-option-preview-badge" style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.76rem; font-weight: 600; color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35);">
               Nome da Opção
             </span>
           </div>
 
+          <!-- Seção de opções já personalizadas para trocar a cor ou excluir -->
+          <div id="custom-option-existing-section" style="margin-bottom: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.75rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">Opções Personalizadas Criadas:</span>
+              <span style="font-size: 0.68rem; color: var(--text-muted); font-style: italic;">Clique para editar a cor</span>
+            </div>
+            <div id="custom-option-existing-chips" class="custom-option-chips-container">
+              <!-- Gerado dinamicamente -->
+            </div>
+            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.3;">
+              🛡️ <em>As opções padrão do sistema (Trabalhista, Cível, Previdenciário / Lead Novo, Follow-up, Indicação / 10 Próximos Passos) permanecem preservadas intactas.</em>
+            </div>
+          </div>
+
           <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.45rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
             <button type="button" class="btn-secondary" onclick="closeCreateCustomOptionModal()" style="padding: 0.35rem 0.85rem; font-size: 0.78rem;">Cancelar</button>
-            <button type="submit" class="btn-primary" style="padding: 0.35rem 1.25rem; font-size: 0.78rem; font-weight: 700;">Criar</button>
+            <button type="submit" class="btn-primary" style="padding: 0.35rem 1.25rem; font-size: 0.78rem; font-weight: 700;">Salvar Opção</button>
           </div>
         </form>
       </div>
@@ -1842,7 +2029,80 @@
       </div>
     </div>
 
+    <!-- Modal: Configuração Rápida de Alarmes e Notificações de Tarefas -->
+    <div class="modal-overlay" id="modal-task-alarm-settings" style="z-index: 10002;" onclick="if(event.target === this) closeTaskAlarmSettingsModal()">
+      <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">🔔 Configuração de Alarme de Tarefas</h2>
+            <p class="modal-subtitle">Configure o som, volume e antecedência para avisar suas tarefas da pauta.</p>
+          </div>
+          <button type="button" class="btn-close-modal" onclick="closeTaskAlarmSettingsModal()" title="Fechar">✕</button>
+        </div>
+
+        <div style="padding: 0.75rem 0;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.85rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; margin-bottom: 1rem;">
+            <div>
+              <div style="font-size: 0.82rem; font-weight: 700; color: #ffffff;">Disparo Automático de Alertas</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Toca som e abre aviso flutuante ao atingir o horário.</div>
+            </div>
+            <label class="switch-clean" style="cursor: pointer;">
+              <input type="checkbox" id="modal-alarm-setting-enabled-toggle" onchange="toggleTaskAlarmEnabled(this.checked)" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #10b981;">
+            </label>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.9rem;">
+            <label class="form-label" for="modal-alarm-setting-antecedence" style="font-size: 0.76rem; font-weight: 700;">⏱️ Antecedência do Alerta</label>
+            <select id="modal-alarm-setting-antecedence" class="clean-input" onchange="updateTaskAlarmAntecedence(this.value)" style="height: 34px; font-size: 0.8rem;">
+              <option value="0">No horário exato marcado (0 min)</option>
+              <option value="5">5 minutos antes</option>
+              <option value="10">10 minutos antes</option>
+              <option value="15">15 minutos antes</option>
+              <option value="30">30 minutos antes</option>
+            </select>
+            <span style="font-size: 0.68rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+              Mesmo que você altere o horário da tarefa, o alarme tocará pontualmente no novo horário marcado.
+            </span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.9rem;">
+            <label class="form-label" for="modal-alarm-setting-sound" style="font-size: 0.76rem; font-weight: 700;">🎵 Tipo de Som</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <select id="modal-alarm-setting-sound" class="clean-input" onchange="updateTaskAlarmSoundType(this.value)" style="flex: 1; height: 34px; font-size: 0.8rem;">
+                <option value="chime">Chime Suave (Campainha Dupla)</option>
+                <option value="crystal">Sino Cristalino (Apple / Slack)</option>
+                <option value="digital">Alerta Digital (Beep Moderno)</option>
+                <option value="harp">Acorde Relaxante (Harp Chord)</option>
+                <option value="gong">Gongo Corporativo (Deep Bell)</option>
+              </select>
+              <button type="button" class="btn-test-alarm-sound" onclick="testCurrentAlarmSound()" title="Ouvir som">
+                ▶️ Testar
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label class="form-label" style="font-size: 0.76rem; font-weight: 700;">🔊 Volume do Som</label>
+            <div class="alarm-volume-slider-wrapper" style="margin-top: 0.2rem;">
+              <span style="font-size: 0.85rem;">🔈</span>
+              <input type="range" id="modal-alarm-setting-volume" class="alarm-volume-slider" min="0" max="100" value="80" oninput="updateTaskAlarmVolume(this.value)">
+              <span style="font-size: 0.85rem;">🔊</span>
+              <span class="alarm-volume-val" id="modal-alarm-volume-display">80%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.75rem; margin-top: 0.5rem;">
+          <button type="button" class="btn-primary" onclick="closeTaskAlarmSettingsModal()" style="font-size: 0.78rem; font-weight: 700; padding: 0.38rem 1.15rem;">
+            Salvar e Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast-container" id="toast-container"></div>
+    <!-- Container de Notificação de Alarme de Tarefa no Canto Superior Direito -->
+    <div id="task-alarm-notification-container" aria-live="assertive"></div>
 
     </div><!-- fim app-main-wrapper -->
   </div><!-- fim app-container -->

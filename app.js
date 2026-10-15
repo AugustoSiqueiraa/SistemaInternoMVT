@@ -1021,8 +1021,9 @@ const TEAM_MEMBERS = (window.CONFIG && window.CONFIG.TEAM) || [
 ];
 
 const TIME_SLOTS = [
-  '08:00', '09:00', '10:00', '11:00', '12:00',
-  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+  '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
+  '19:00', '20:00', '21:00', '22:00', '23:00'
 ];
 
 // Utilitário para formatar/obter a data da reunião (YYYY-MM-DD)
@@ -2131,6 +2132,11 @@ function switchTab(tabId, subtab) {
   // Se a aba for Reuniões / Anti No-Show, renderizar lista
   if (tabId === 'tab-reunioes' && typeof renderMeetingsList === 'function') {
     renderMeetingsList();
+  }
+
+  // Se a aba for Configurações, sincronizar inputs de alarme de tarefas
+  if (tabId === 'tab-settings' && typeof window.syncTaskAlarmInputs === 'function') {
+    window.syncTaskAlarmInputs();
   }
 }
 window.switchTab = switchTab;
