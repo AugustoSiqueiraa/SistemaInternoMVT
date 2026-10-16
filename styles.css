@@ -6533,7 +6533,8 @@ body.light-theme .btn-contract-icon.active:hover {
 }
 
 /* Modo Panorâmico: Enxuga as métricas do topo para altura total da tabela */
-.commercial-panoramic .commercial-kpi-banner {
+.commercial-panoramic .commercial-kpi-banner,
+.commercial-panoramic #comm-tasks-kpi-strip {
   display: none !important;
 }
 
@@ -6541,8 +6542,9 @@ body.light-theme .btn-contract-icon.active:hover {
   margin-top: 0.5rem;
 }
 
-/* Zoom Container da Tabela */
-#comm-table-view-container {
+/* Zoom Container da Tabela e da Pauta de Tarefas */
+#comm-table-view-container,
+#comm-tasks-view-container {
   transition: zoom var(--transition-fast);
 }
 
@@ -6665,6 +6667,69 @@ body.light-theme .btn-contract-icon.active:hover {
 .commercial-table-view.density-compact .btn-icon-clean {
   width: 24px;
   height: 24px;
+}
+
+/* Disposição Tabela Ampla (Alta Densidade) para a Pauta de Tarefas */
+.commercial-tasks-view.density-compact .comm-tasks-table-header {
+  padding: 0.42rem 0.95rem;
+  font-size: 0.67rem;
+}
+
+.commercial-tasks-view.density-compact .comm-task-row {
+  padding: 0.38rem 0.95rem;
+  min-height: 42px;
+}
+
+.commercial-tasks-view.density-compact .col-task-time-box {
+  gap: 0.08rem;
+}
+
+.commercial-tasks-view.density-compact .task-date-pill {
+  font-size: 0.68rem;
+  margin-bottom: 0.08rem;
+}
+
+.commercial-tasks-view.density-compact .task-time-span {
+  font-size: 0.78rem;
+}
+
+.commercial-tasks-view.density-compact .task-duration-tag {
+  font-size: 0.64rem;
+  padding: 0.08rem 0.3rem;
+}
+
+.commercial-tasks-view.density-compact .comm-client-name {
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.commercial-tasks-view.density-compact .comm-client-phone {
+  font-size: 0.68rem;
+}
+
+.commercial-tasks-view.density-compact .task-action-main {
+  font-size: 0.78rem;
+}
+
+.commercial-tasks-view.density-compact .task-notes-sub {
+  font-size: 0.68rem;
+}
+
+.commercial-tasks-view.density-compact .btn-task-attend,
+.commercial-tasks-view.density-compact .btn-task-noshow {
+  padding: 0.22rem 0.5rem;
+  font-size: 0.7rem;
+  height: 26px;
+}
+
+.commercial-tasks-view.density-compact .btn-task-history-pill {
+  padding: 0.16rem 0.38rem;
+  font-size: 0.67rem;
+}
+
+.commercial-tasks-view.density-compact .btn-icon-clean {
+  width: 26px;
+  height: 26px;
 }
 
 /* Alerta visual de tarefa que já passou da data */

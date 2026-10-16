@@ -960,6 +960,14 @@ const COMMERCIAL_STATE = {
   subtab: sessionStorage.getItem('mvt_comm_active_subtab') || 'leads', // Lembra sub-aba ativa após recarregar
   search: '',
   area: 'all',
+  leadsDensity: localStorage.getItem('mvt_comm_density') || 'comfortable',
+  leadsZoom: parseInt(localStorage.getItem('mvt_comm_zoom') || '100', 10),
+  leadsPanoramic: localStorage.getItem('mvt_comm_panoramic') === 'true',
+  tasksDensity: localStorage.getItem('mvt_comm_tasks_density') || localStorage.getItem('mvt_comm_density') || 'comfortable',
+  tasksZoom: parseInt(localStorage.getItem('mvt_comm_tasks_zoom') || localStorage.getItem('mvt_comm_zoom') || '100', 10),
+  tasksPanoramic: localStorage.getItem('mvt_comm_tasks_panoramic') !== null
+    ? (localStorage.getItem('mvt_comm_tasks_panoramic') === 'true')
+    : (localStorage.getItem('mvt_comm_panoramic') === 'true'),
   density: localStorage.getItem('mvt_comm_density') || 'comfortable',
   zoom: parseInt(localStorage.getItem('mvt_comm_zoom') || '100', 10),
   panoramic: localStorage.getItem('mvt_comm_panoramic') === 'true',
@@ -2243,87 +2251,179 @@ window.startCommercialRealtimeMonitoring = startCommercialRealtimeMonitoring;
 
 
 // ========================================================
-// CONTROLES DE DISPOSIÇÃO & ZOOM DA TABELA COMERCIAL
+// CONTROLES DE DISPOSIÇÃO & ZOOM DA TABELA E DA PAUTA DE TAREFAS
+// Cada botão de exibição altera sua página de origem ativa
 // ========================================================
-function setCommercialTableDensity(density) {
-  COMMERCIAL_STATE.density = density;
-  try {
-    localStorage.setItem('mvt_comm_density', density);
-  } catch (e) {}
-  updateCommercialDisplayControlsUi();
-  const container = document.getElementById('comm-table-view-container');
-  if (container) {
-    if (density === 'compact') {
-      container.classList.add('density-compact');
+function getCommercialActiveOrigin() {
+  return (COMMERCIAL_STATE.subtab === 'tarefas') ? 'tarefas' : 'leads';
+}
+window.getCommercialActiveOrigin = getCommercialActiveOrigin;
+
+function applyCommercialActiveDensity() {
+  const leadsContainer = document.getElementById('comm-table-view-container');
+  const tasksContainer = document.getElementById('comm-tasks-view-container');
+  const leadsDensity = COMMERCIAL_STATE.leadsDensity || 'comfortable';
+  const tasksDensity = COMMERCIAL_STATE.tasksDensity || 'comfortable';
+
+  if (leadsContainer) {
+    if (leadsDensity === 'compact') {
+      leadsContainer.classList.add('density-compact');
     } else {
-      container.classList.remove('density-compact');
+      leadsContainer.classList.remove('density-compact');
     }
   }
+
+  if (tasksContainer) {
+    if (tasksDensity === 'compact') {
+      tasksContainer.classList.add('density-compact');
+    } else {
+      tasksContainer.classList.remove('density-compact');
+    }
+  }
+}
+window.applyCommercialActiveDensity = applyCommercialActiveDensity;
+
+function setCommercialTableDensity(density) {
+  const origin = getCommercialActiveOrigin();
+  if (origin === 'tarefas') {
+    COMMERCIAL_STATE.tasksDensity = density;
+    try {
+      localStorage.setItem('mvt_comm_tasks_density', density);
+    } catch (e) {}
+  } else {
+    COMMERCIAL_STATE.leadsDensity = density;
+    try {
+      localStorage.setItem('mvt_comm_density', density);
+    } catch (e) {}
+  }
+  COMMERCIAL_STATE.density = density;
+  applyCommercialActiveDensity();
+  updateCommercialDisplayControlsUi();
 }
 window.setCommercialTableDensity = setCommercialTableDensity;
 
 function changeCommercialTableZoom(delta) {
-  let current = COMMERCIAL_STATE.zoom || 100;
+  const origin = getCommercialActiveOrigin();
+  let current = (origin === 'tarefas')
+    ? (COMMERCIAL_STATE.tasksZoom || 100)
+    : (COMMERCIAL_STATE.leadsZoom || 100);
+
   current += delta;
   if (current < 70) current = 70;
   if (current > 130) current = 130;
+
+  if (origin === 'tarefas') {
+    COMMERCIAL_STATE.tasksZoom = current;
+    try {
+      localStorage.setItem('mvt_comm_tasks_zoom', String(current));
+    } catch (e) {}
+  } else {
+    COMMERCIAL_STATE.leadsZoom = current;
+    try {
+      localStorage.setItem('mvt_comm_zoom', String(current));
+    } catch (e) {}
+  }
   COMMERCIAL_STATE.zoom = current;
-  try {
-    localStorage.setItem('mvt_comm_zoom', String(current));
-  } catch (e) {}
   applyCommercialTableZoom();
 }
 window.changeCommercialTableZoom = changeCommercialTableZoom;
 
 function resetCommercialTableZoom() {
+  const origin = getCommercialActiveOrigin();
+  if (origin === 'tarefas') {
+    COMMERCIAL_STATE.tasksZoom = 100;
+    try {
+      localStorage.setItem('mvt_comm_tasks_zoom', '100');
+    } catch (e) {}
+  } else {
+    COMMERCIAL_STATE.leadsZoom = 100;
+    try {
+      localStorage.setItem('mvt_comm_zoom', '100');
+    } catch (e) {}
+  }
   COMMERCIAL_STATE.zoom = 100;
-  try {
-    localStorage.setItem('mvt_comm_zoom', '100');
-  } catch (e) {}
   applyCommercialTableZoom();
 }
 window.resetCommercialTableZoom = resetCommercialTableZoom;
 
 function applyCommercialTableZoom() {
+  const origin = getCommercialActiveOrigin();
+  const currentZoom = (origin === 'tarefas')
+    ? (COMMERCIAL_STATE.tasksZoom || 100)
+    : (COMMERCIAL_STATE.leadsZoom || 100);
+
   const display = document.getElementById('comm-zoom-display');
-  if (display) display.textContent = `${COMMERCIAL_STATE.zoom}%`;
-  const container = document.getElementById('comm-table-view-container');
-  if (container) {
-    container.style.zoom = `${(COMMERCIAL_STATE.zoom || 100) / 100}`;
+  if (display) display.textContent = `${currentZoom}%`;
+
+  const leadsContainer = document.getElementById('comm-table-view-container');
+  if (leadsContainer) {
+    leadsContainer.style.zoom = `${(COMMERCIAL_STATE.leadsZoom || 100) / 100}`;
+  }
+
+  const tasksContainer = document.getElementById('comm-tasks-view-container');
+  if (tasksContainer) {
+    tasksContainer.style.zoom = `${(COMMERCIAL_STATE.tasksZoom || 100) / 100}`;
   }
 }
 window.applyCommercialTableZoom = applyCommercialTableZoom;
 
 function toggleCommercialPanoramicView() {
-  COMMERCIAL_STATE.panoramic = !COMMERCIAL_STATE.panoramic;
-  try {
-    localStorage.setItem('mvt_comm_panoramic', String(COMMERCIAL_STATE.panoramic));
-  } catch (e) {}
+  const origin = getCommercialActiveOrigin();
+  if (origin === 'tarefas') {
+    COMMERCIAL_STATE.tasksPanoramic = !COMMERCIAL_STATE.tasksPanoramic;
+    try {
+      localStorage.setItem('mvt_comm_tasks_panoramic', String(COMMERCIAL_STATE.tasksPanoramic));
+    } catch (e) {}
+  } else {
+    COMMERCIAL_STATE.leadsPanoramic = !COMMERCIAL_STATE.leadsPanoramic;
+    try {
+      localStorage.setItem('mvt_comm_panoramic', String(COMMERCIAL_STATE.leadsPanoramic));
+    } catch (e) {}
+  }
+  COMMERCIAL_STATE.panoramic = (origin === 'tarefas') ? COMMERCIAL_STATE.tasksPanoramic : COMMERCIAL_STATE.leadsPanoramic;
   updateCommercialPanoramicUi();
 }
 window.toggleCommercialPanoramicView = toggleCommercialPanoramicView;
 
 function updateCommercialPanoramicUi() {
+  const origin = getCommercialActiveOrigin();
+  const isPanoramic = (origin === 'tarefas')
+    ? !!COMMERCIAL_STATE.tasksPanoramic
+    : !!COMMERCIAL_STATE.leadsPanoramic;
+
   const sec = document.querySelector('.section-commercial') || document.getElementById('tab-comercial');
   const btn = document.getElementById('btn-comm-panoramic-toggle');
   const text = document.getElementById('comm-panoramic-text');
-  if (COMMERCIAL_STATE.panoramic) {
+  const tasksKpiStrip = document.getElementById('comm-tasks-kpi-strip');
+
+  if (isPanoramic) {
     if (sec) sec.classList.add('commercial-panoramic');
     if (btn) btn.classList.add('active');
     if (text) text.textContent = 'Visão Padrão';
+    if (origin === 'tarefas' && tasksKpiStrip) {
+      tasksKpiStrip.style.display = 'none';
+    }
   } else {
     if (sec) sec.classList.remove('commercial-panoramic');
     if (btn) btn.classList.remove('active');
     if (text) text.textContent = 'Visão Panorâmica';
+    if (origin === 'tarefas' && tasksKpiStrip) {
+      tasksKpiStrip.style.display = 'flex';
+    }
   }
 }
 window.updateCommercialPanoramicUi = updateCommercialPanoramicUi;
 
 function updateCommercialDisplayControlsUi() {
+  const origin = getCommercialActiveOrigin();
+  const activeDensity = (origin === 'tarefas')
+    ? (COMMERCIAL_STATE.tasksDensity || 'comfortable')
+    : (COMMERCIAL_STATE.leadsDensity || 'comfortable');
+
   const btnCompact = document.getElementById('btn-density-compact');
   const btnComfortable = document.getElementById('btn-density-comfortable');
   if (btnCompact && btnComfortable) {
-    if (COMMERCIAL_STATE.density === 'compact') {
+    if (activeDensity === 'compact') {
       btnCompact.classList.add('active');
       btnComfortable.classList.remove('active');
     } else {
@@ -2331,6 +2431,14 @@ function updateCommercialDisplayControlsUi() {
       btnCompact.classList.remove('active');
     }
   }
+
+  // Título dinâmico no popover indicando a tabela de origem atual
+  const popoverTitle = document.querySelector('.comm-settings-popover-header .comm-settings-title');
+  if (popoverTitle) {
+    popoverTitle.textContent = (origin === 'tarefas') ? 'Visualização da Pauta de Tarefas' : 'Visualização da Tabela';
+  }
+
+  applyCommercialActiveDensity();
   applyCommercialTableZoom();
   updateCommercialPanoramicUi();
 }
@@ -2346,6 +2454,7 @@ function toggleTableViewConfigDropdown(event) {
   if (!menu) return;
   const isHidden = menu.style.display === 'none' || !menu.style.display;
   if (isHidden) {
+    updateCommercialDisplayControlsUi();
     menu.style.display = 'flex';
     if (btn) btn.classList.add('active');
     closeCommercialFilterDropdown();
@@ -3490,12 +3599,12 @@ function renderCommercialTable(clients) {
 
   // Aplica classe de densidade e zoom na tabela
   if (tableContainer) {
-    if (COMMERCIAL_STATE.density === 'compact') {
+    if (COMMERCIAL_STATE.leadsDensity === 'compact') {
       tableContainer.classList.add('density-compact');
     } else {
       tableContainer.classList.remove('density-compact');
     }
-    tableContainer.style.zoom = `${(COMMERCIAL_STATE.zoom || 100) / 100}`;
+    tableContainer.style.zoom = `${(COMMERCIAL_STATE.leadsZoom || 100) / 100}`;
 
     // Aplica Tema Dourado ou Esmeralda
     tableContainer.classList.remove('theme-fechar-gold', 'theme-assinado-emerald');
@@ -4894,6 +5003,18 @@ function renderCommercialTasksView() {
       </div>
     `;
   }).join('');
+
+  // Aplica classe de densidade e zoom na pauta de tarefas
+  const tasksContainer = document.getElementById('comm-tasks-view-container');
+  if (tasksContainer) {
+    if (COMMERCIAL_STATE.tasksDensity === 'compact') {
+      tasksContainer.classList.add('density-compact');
+    } else {
+      tasksContainer.classList.remove('density-compact');
+    }
+    tasksContainer.style.zoom = `${(COMMERCIAL_STATE.tasksZoom || 100) / 100}`;
+  }
+  updateCommercialDisplayControlsUi();
 }
 window.renderCommercialTasksView = renderCommercialTasksView;
 

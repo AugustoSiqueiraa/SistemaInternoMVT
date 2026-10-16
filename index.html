@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
   <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
-  <link rel="stylesheet" href="styles.css?v=3.4">
+  <link rel="stylesheet" href="styles.css?v=3.5">
 </head>
 <body>
   <div class="app-container">
@@ -1826,47 +1826,21 @@
               Agendar Próximo Passo (30m)
             </div>
 
-            <!-- Próximo Passo / Ação com Atalhos Rápidos -->
+            <!-- Próximo Passo / Ação -->
             <div class="form-group" style="margin-bottom: 0.75rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                <label class="form-label" for="comm-task-action" style="font-size: 0.74rem; font-weight: 700; margin: 0;">Próximo Passo / Ação *</label>
-                <span style="font-size: 0.68rem; color: var(--text-muted);">Clique para escolher rápido:</span>
-              </div>
-              <div class="task-quick-tags" style="display: flex; gap: 0.28rem; margin-bottom: 0.45rem; flex-wrap: wrap;">
-                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Fazer ligação')">Ligação</button>
-                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Retornar cliente')">Retornar</button>
-                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Retorno para fechamento')">Fechamento</button>
-                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Solicitar documentos')">Docs</button>
-                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Cobrar assinatura')">Assinatura</button>
-                <button type="button" class="btn-tag-pill" onclick="setTaskActionSuggestion('Agendar reunião com advogado')">Reunião</button>
-              </div>
-              <input type="text" id="comm-task-action" class="clean-input" placeholder="Selecione acima ou digite..." required style="height: 32px; font-size: 0.8rem;">
+              <label class="form-label" for="comm-task-action" style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.35rem; display: block;">Próximo Passo / Ação *</label>
+              <input type="text" id="comm-task-action" class="clean-input" placeholder="Descreva o próximo passo..." required style="height: 34px; font-size: 0.82rem;">
             </div>
 
-            <!-- Data e Horário com Atalhos de 1 Clique -->
-            <div class="form-row" style="display: flex; gap: 0.65rem; margin-bottom: 0.75rem;">
+            <!-- Data e Horário -->
+            <div class="form-row" style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
               <div class="form-group" style="flex: 1.15;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                  <label class="form-label" for="comm-task-date" style="font-size: 0.74rem; font-weight: 700; margin: 0;">Data *</label>
-                  <div class="quick-preset-chips" style="display: flex; gap: 0.2rem;">
-                    <button type="button" class="btn-quick-preset" onclick="setTaskDateQuick('hoje')">Hoje</button>
-                    <button type="button" class="btn-quick-preset" onclick="setTaskDateQuick('amanha')">Amanhã</button>
-                    <button type="button" class="btn-quick-preset" onclick="setTaskDateQuick('segunda')">Segunda</button>
-                  </div>
-                </div>
-                <input type="date" id="comm-task-date" class="clean-input" required style="height: 32px;">
+                <label class="form-label" for="comm-task-date" style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.35rem; display: block;">Data *</label>
+                <input type="date" id="comm-task-date" class="clean-input" required style="height: 34px;">
               </div>
               <div class="form-group" style="flex: 1;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                  <label class="form-label" for="comm-task-time" style="font-size: 0.74rem; font-weight: 700; margin: 0;">Horário *</label>
-                  <div class="quick-preset-chips" style="display: flex; gap: 0.2rem;">
-                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('09:00')">09h</button>
-                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('10:00')">10h</button>
-                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('14:00')">14h</button>
-                    <button type="button" class="btn-quick-preset" onclick="setTaskTimeQuick('16:00')">16h</button>
-                  </div>
-                </div>
-                <input type="time" id="comm-task-time" class="clean-input" value="10:00" required style="height: 32px;">
+                <label class="form-label" for="comm-task-time" style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.35rem; display: block;">Horário *</label>
+                <input type="time" id="comm-task-time" class="clean-input" value="10:00" required style="height: 34px;">
               </div>
             </div>
 
@@ -2188,7 +2162,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
-  <script src="commercial.js?v=3.4"></script>
-  <script src="app.js?v=3.4"></script>
+  <script src="commercial.js?v=3.5"></script>
+  <script src="app.js?v=3.5"></script>
 </body>
 </html>
