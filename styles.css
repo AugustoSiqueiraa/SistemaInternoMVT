@@ -4370,10 +4370,10 @@ body.light-theme .comm-view-btn.active svg {
   position: -webkit-sticky;
   position: sticky;
   top: var(--navbar-height, 78px);
-  z-index: 40;
-  background: var(--bg-primary);
+  z-index: 45 !important;
+  background: var(--bg-primary) !important;
   padding-top: 0.35rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.35rem;
   margin-top: -0.25rem;
   margin-bottom: 0.85rem;
   border-bottom: 1px solid transparent;
@@ -4382,7 +4382,7 @@ body.light-theme .comm-view-btn.active svg {
 
 .comm-sticky-top-bar.is-stuck {
   border-bottom-color: var(--border-subtle);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.75);
 }
 
 body.light-theme .comm-sticky-top-bar.is-stuck {
@@ -4390,7 +4390,7 @@ body.light-theme .comm-sticky-top-bar.is-stuck {
 }
 
 .commercial-panoramic .comm-sticky-top-bar {
-  top: 0 !important;
+  top: var(--navbar-height, 78px) !important;
   margin-top: 0;
 }
 
@@ -4639,6 +4639,8 @@ body.light-theme .comm-quick-add-title {
 
 /* Tabela Comercial */
 .commercial-table-view {
+  position: relative;
+  z-index: 5 !important;
   background: var(--bg-row);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -4756,16 +4758,16 @@ body.light-theme .comm-quick-add-title {
   text-align: center;
 }
 
-/* Coluna 2: Cliente (Centralizado e com divisórias nítidas) */
+/* Coluna 2: Cliente (Alinhado à esquerda com divisórias) */
 .comm-col-client {
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
+  justify-content: flex-start;
+  text-align: left;
   gap: 0.35rem;
   min-width: 0;
   overflow: hidden;
-  padding: 0 0.5rem;
+  padding: 0 0.65rem;
   border-left: 1px solid rgba(255, 255, 255, 0.10);
   border-right: 1px solid rgba(255, 255, 255, 0.10);
 }
@@ -4773,9 +4775,9 @@ body.light-theme .comm-quick-add-title {
 .comm-table-header-row .comm-col-client {
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 0 0.5rem;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 0 0.65rem;
   border-left: 1px solid rgba(255, 255, 255, 0.10);
   border-right: 1px solid rgba(255, 255, 255, 0.10);
 }
@@ -4788,7 +4790,7 @@ body.light-theme .comm-quick-add-title {
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
-  text-align: center;
+  text-align: left;
   width: 100%;
 }
 
@@ -6568,13 +6570,21 @@ body.light-theme .btn-contract-icon.active:hover {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   gap: 0.08rem;
   min-width: 0;
-  padding: 0 0.4rem;
+  padding: 0 0.65rem;
   border-left: 1px solid rgba(255, 255, 255, 0.10);
   border-right: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.commercial-table-view.density-compact .comm-table-header-row .comm-col-client {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 0 0.65rem;
 }
 
 .commercial-table-view.density-compact .comm-client-name {
@@ -6583,7 +6593,7 @@ body.light-theme .btn-contract-icon.active:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
+  text-align: left;
   width: 100%;
 }
 
@@ -6591,6 +6601,8 @@ body.light-theme .btn-contract-icon.active:hover {
   font-size: 0.68rem;
   line-height: 1.1;
   color: var(--text-muted);
+  text-align: left;
+  width: 100%;
 }
 
 .commercial-table-view.density-compact .comm-date-badge {

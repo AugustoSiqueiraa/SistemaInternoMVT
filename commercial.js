@@ -6364,15 +6364,10 @@ function escapeHtml(text) {
 
 // Sincronização dinâmica da altura da Navbar com a variável CSS --navbar-height
 function syncNavbarHeightCssVar() {
-  const isPanoramic = document.body.classList.contains('commercial-panoramic');
-  if (isPanoramic) {
-    document.documentElement.style.setProperty('--navbar-height', '0px');
-    return;
-  }
   const navbar = document.querySelector('.navbar');
   if (navbar) {
     const h = navbar.offsetHeight;
-    const validH = (h >= 50 && h <= 110) ? h : 78;
+    const validH = (h >= 50 && h <= 120) ? h : 78;
     document.documentElement.style.setProperty('--navbar-height', `${validH}px`);
   } else {
     document.documentElement.style.setProperty('--navbar-height', '78px');
