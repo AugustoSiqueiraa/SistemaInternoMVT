@@ -62,11 +62,17 @@ CREATE TABLE IF NOT EXISTS public.clientes_comercial (
     date DATE DEFAULT CURRENT_DATE,
     responsible TEXT DEFAULT 'Augusto',
     pronto_para_fechar BOOLEAN DEFAULT false,
+    desqualificado BOOLEAN DEFAULT false,
+    motivo_desqualificado TEXT,
     task JSONB,
     task_history JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Migração incremental segura caso a tabela já tenha sido criada:
+ALTER TABLE public.clientes_comercial ADD COLUMN IF NOT EXISTS desqualificado BOOLEAN DEFAULT false;
+ALTER TABLE public.clientes_comercial ADD COLUMN IF NOT EXISTS motivo_desqualificado TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_clientes_status ON public.clientes_comercial (status);
 CREATE INDEX IF NOT EXISTS idx_clientes_area ON public.clientes_comercial (area);

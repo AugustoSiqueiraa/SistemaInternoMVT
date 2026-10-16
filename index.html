@@ -754,9 +754,9 @@
 
           <div class="comm-task-kpi-divider"></div>
 
-          <div class="comm-task-kpi-item done" id="kpi-task-filter-done" onclick="setCommercialTaskStatusFilter('done')" title="Clique para filtrar tarefas já concluídas">
+          <div class="comm-task-kpi-item done" id="kpi-task-filter-done" onclick="setCommercialTaskStatusFilter('done')" title="Clique para filtrar tarefas onde o cliente compareceu">
             <span class="task-kpi-val" id="comm-tasks-kpi-done">0</span>
-            <span class="task-kpi-lbl">Concluídas</span>
+            <span class="task-kpi-lbl">Compareceram</span>
           </div>
 
           <button type="button" class="btn-primary" onclick="openNewTaskForClientModal()" style="margin-left: auto; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; padding: 0.35rem 0.85rem; font-weight: 600; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); color: #f1f5f9;" title="Agendar nova tarefa para um cliente">
@@ -1771,9 +1771,13 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 <span>Nova Tarefa</span>
               </button>
-              <button type="button" class="btn-action-conclude-next" onclick="concludeCurrentActiveTask()" title="Conclui esta tarefa e atualiza o histórico">
+              <button type="button" class="btn-action-conclude-next" onclick="concludeCurrentActiveTask()" title="Marcar que o cliente compareceu">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Concluir Tarefa</span>
+                <span>Compareceu</span>
+              </button>
+              <button type="button" class="btn-action-noshow-next" onclick="noshowCurrentActiveTask()" title="Marcar que o cliente NÃO compareceu">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>Não Compareceu</span>
               </button>
               <button type="button" class="btn-action-edit-current" onclick="editCurrentActiveTaskFields()" title="Alterar o que fazer, data ou horário">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -2103,6 +2107,24 @@
     <div class="toast-container" id="toast-container"></div>
     <!-- Container de Notificação de Alarme de Tarefa no Canto Superior Direito -->
     <div id="task-alarm-notification-container" aria-live="assertive"></div>
+
+    <!-- Popover Flutuante Compacto: Motivo de Desqualificação (Sem cobrir a tela) -->
+    <div id="popover-disqualify" class="popover-disqualify" style="display: none;">
+      <div class="popover-disqualify-header">
+        <span class="popover-disqualify-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          Motivo da Desqualificação:
+        </span>
+        <button type="button" class="btn-popover-close" onclick="closeDisqualifyPopover()" title="Fechar">✕</button>
+      </div>
+      <div class="popover-disqualify-body">
+        <input type="text" id="disqualify-reason-input" class="popover-disqualify-input" placeholder="Qual o motivo da desqualificação?" maxlength="120" autocomplete="off" />
+      </div>
+      <div class="popover-disqualify-footer">
+        <button type="button" class="btn-secondary btn-popover-cancel" onclick="closeDisqualifyPopover()">Cancelar</button>
+        <button type="button" class="btn-primary btn-popover-ok" onclick="confirmDisqualifyClient()">OK</button>
+      </div>
+    </div>
 
     </div><!-- fim app-main-wrapper -->
   </div><!-- fim app-container -->

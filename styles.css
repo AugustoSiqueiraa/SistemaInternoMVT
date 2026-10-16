@@ -4614,7 +4614,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-table-header-row {
   display: grid;
-  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 135px 225px 145px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 135px 235px 145px;
   gap: 0.45rem;
   padding: 0.7rem 0.85rem;
   background: rgba(0, 0, 0, 0.35);
@@ -4662,7 +4662,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-lead-row {
   display: grid;
-  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 135px 225px 145px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 135px 235px 145px;
   gap: 0.45rem;
   padding: 0.8rem 0.85rem;
   border-bottom: 1px solid var(--border-subtle);
@@ -7824,4 +7824,294 @@ body.light-theme .task-alarm-setting-box {
   background: #f8fafc;
   border-color: #e2e8f0;
 }
+
+/* ============================================================ */
+/* BOTÕES DE COMPARECIMENTO (PAUTA DE TAREFAS)                 */
+/* ============================================================ */
+
+/* Botão Compareceu */
+.btn-task-attend {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #94a3b8;
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: all var(--transition-fast);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.btn-task-attend:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.btn-task-attend.completed {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border: 1px solid #10b981 !important;
+  color: #34d399 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.25);
+  opacity: 1 !important;
+}
+
+.btn-task-attend.completed:hover {
+  background: rgba(245, 158, 11, 0.18) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  color: #fbbf24 !important;
+}
+
+/* Botão Não Compareceu */
+.btn-task-noshow {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #94a3b8;
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: all var(--transition-fast);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.btn-task-noshow:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+.btn-task-noshow.active {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border: 1px solid #ef4444 !important;
+  color: #f87171 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
+  opacity: 1 !important;
+}
+
+.btn-task-noshow.active:hover {
+  background: rgba(245, 158, 11, 0.18) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  color: #fbbf24 !important;
+}
+
+/* Linha de Tarefa com Não Compareceu */
+.comm-task-row.status-noshow {
+  background: rgba(239, 68, 68, 0.06) !important;
+  border-left: 3px solid #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.22) !important;
+}
+
+.comm-task-row.status-noshow .task-action-main {
+  color: #fca5a5 !important;
+  text-decoration: line-through;
+}
+
+/* Botão Não Compareceu no Modal de Tarefa */
+.btn-action-noshow-next {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #e2e8f0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.38rem 0.85rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-action-noshow-next:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+.btn-action-noshow-next.is-noshow {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border: 1.5px solid #ef4444 !important;
+  color: #f87171 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+/* ============================================================ */
+/* CLIENTE DESQUALIFICADO & POPOVER COMPACTO                   */
+/* ============================================================ */
+
+/* Linha da Tabela de Cliente Desqualificado: Fica vermelha */
+.comm-lead-row.disqualified {
+  background: rgba(239, 68, 68, 0.09) !important;
+  border-left: 3px solid #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+.comm-lead-row.disqualified:hover {
+  background: rgba(239, 68, 68, 0.14) !important;
+}
+
+.comm-lead-row.disqualified .comm-client-name {
+  color: #fca5a5 !important;
+}
+
+/* Badge de motivo da desqualificação na coluna do cliente */
+.badge-disqualified-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  font-size: 0.67rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 3px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Botão X Minimalista de Desqualificar */
+.btn-disqualify {
+  color: #64748b;
+  transition: all 0.18s ease;
+}
+
+.btn-disqualify:hover {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.btn-disqualify.active {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.2) !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.35);
+}
+
+/* Popover Flutuante Pequeno (SEM cobrir a tela) */
+.popover-disqualify {
+  position: absolute;
+  width: 290px;
+  background: #181c24;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65), 0 0 14px rgba(239, 68, 68, 0.22);
+  z-index: 10050;
+  box-sizing: border-box;
+  animation: popoverFadeIn 0.15s ease-out;
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popover-disqualify-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.popover-disqualify-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fca5a5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-popover-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.btn-popover-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.popover-disqualify-body {
+  margin-bottom: 0.65rem;
+}
+
+.popover-disqualify-input {
+  width: 100%;
+  height: 32px;
+  font-size: 0.78rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-radius: 5px;
+  padding: 0 0.55rem;
+  box-sizing: border-box;
+}
+
+.popover-disqualify-input:focus {
+  border-color: #ef4444;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+}
+
+.popover-disqualify-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.btn-popover-cancel {
+  font-size: 0.72rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+}
+
+.btn-popover-ok {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.95rem;
+  border-radius: 4px;
+  background: #ef4444 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.btn-popover-ok:hover {
+  background: #dc2626 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
 

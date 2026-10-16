@@ -1866,6 +1866,9 @@ function sanitizeCommercialClient(c) {
     }
   }
 
+  c.desqualificado = Boolean(c.desqualificado);
+  c.motivoDesqualificado = c.motivoDesqualificado ? String(c.motivoDesqualificado).trim() : '';
+
   return c;
 }
 
@@ -1899,6 +1902,16 @@ function loadCommercialData() {
 // Converte um objeto de cliente do COMMERCIAL_STATE para a linha da tabela Supabase
 function _commercialClientToRow(c) {
   const today = new Date().toISOString().split('T')[0];
+  let finalNotes = String(c.notes || '');
+  if (c.desqualificado) {
+    const tag = `[DESQUALIFICADO: ${c.motivoDesqualificado || 'Sem motivo'}]`;
+    if (!finalNotes.includes('[DESQUALIFICADO:')) {
+      finalNotes = finalNotes ? `${finalNotes} ${tag}` : tag;
+    }
+  } else {
+    finalNotes = finalNotes.replace(/\[DESQUALIFICADO:.*?\]\s*/g, '').trim();
+  }
+
   return {
     id: String(c.id || ('comm-' + Date.now())),
     name: String(c.name || 'Cliente Sem Nome'),
@@ -1906,7 +1919,7 @@ function _commercialClientToRow(c) {
     area: String(c.area || 'Trabalhista'),
     status: String(c.status || 'Lead Novo'),
     next_step: String(c.nextStep || 'Acompanhamento'),
-    notes: String(c.notes || ''),
+    notes: finalNotes,
     date: c.date || today,
     responsible: String(c.responsible || 'Augusto'),
     pronto_para_fechar: Boolean(c.prontoParaFechar || c.status === 'Pronto para Fechar'),
@@ -1918,6 +1931,19 @@ function _commercialClientToRow(c) {
 
 // Converte uma linha do banco Supabase para o formato do COMMERCIAL_STATE
 function _rowToCommercialClient(row) {
+  let rawNotes = String(row.notes || '');
+  let desqualificado = Boolean(row.desqualificado);
+  let motivoDesqualificado = row.motivo_desqualificado ? String(row.motivo_desqualificado) : '';
+
+  if (!desqualificado && rawNotes.includes('[DESQUALIFICADO:')) {
+    const match = rawNotes.match(/\[DESQUALIFICADO:\s*(.*?)\]/);
+    if (match) {
+      desqualificado = true;
+      motivoDesqualificado = match[1] || '';
+    }
+  }
+  const cleanNotes = rawNotes.replace(/\[DESQUALIFICADO:.*?\]\s*/g, '').trim();
+
   const client = {
     id: String(row.id),
     name: String(row.name || ''),
@@ -1925,10 +1951,12 @@ function _rowToCommercialClient(row) {
     area: String(row.area || 'Trabalhista'),
     status: String(row.status || 'Lead Novo'),
     nextStep: String(row.next_step || 'Acompanhamento'),
-    notes: String(row.notes || ''),
+    notes: cleanNotes,
     date: row.date ? String(row.date) : new Date().toISOString().split('T')[0],
     responsible: String(row.responsible || 'Augusto'),
     prontoParaFechar: Boolean(row.pronto_para_fechar),
+    desqualificado: desqualificado,
+    motivoDesqualificado: motivoDesqualificado,
     task: row.task || null,
     taskHistory: Array.isArray(row.task_history) ? row.task_history : []
   };
@@ -1990,6 +2018,10 @@ function mergeCommercialClients(localClients, cloudClients) {
       // Se cliente local possui histórico e a nuvem não tem ou tem menos itens, preserva histórico local
       if (Array.isArray(c.taskHistory) && c.taskHistory.length > (Array.isArray(merged.taskHistory) ? merged.taskHistory.length : 0)) {
         merged.taskHistory = c.taskHistory;
+      }
+      if (c.desqualificado !== undefined && c.desqualificado !== null) {
+        merged.desqualificado = c.desqualificado;
+        merged.motivoDesqualificado = c.motivoDesqualificado || '';
       }
     }
   });
@@ -3475,7 +3507,7 @@ function renderCommercialTable(clients) {
       const historyCount = Array.isArray(client.taskHistory) ? client.taskHistory.length : 0;
 
     return `
-      <div class="comm-lead-row" id="comm-row-${client.id}">
+      <div class="comm-lead-row ${client.desqualificado ? 'disqualified' : ''}" id="comm-row-${client.id}">
         <!-- Coluna 1: Data -->
         <div class="comm-col-date">
           <span class="comm-date-badge">${formatDateDisplay(client.date)}</span>
@@ -3484,6 +3516,11 @@ function renderCommercialTable(clients) {
         <!-- Coluna 2: Cliente -->
         <div class="comm-col-client">
           <span class="comm-client-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
+          ${client.desqualificado ? `
+            <span class="badge-disqualified-tag" title="Motivo: ${escapeHtml(client.motivoDesqualificado || 'Sem motivo')}">
+              ✕ ${escapeHtml(client.motivoDesqualificado || 'Desqualificado')}
+            </span>
+          ` : ''}
         </div>
 
         <!-- Coluna 3: Área (Select Interativo: Trabalhista [Amarela], Cível [Azul], Previdenciário [Roxo]) -->
@@ -3550,20 +3587,27 @@ function renderCommercialTable(clients) {
 
           <div class="comm-actions-right">
             <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-          </button>
-          
-          <button class="btn-icon-clean danger" onclick="deleteCommercialClient('${client.id}')" title="Excluir cliente">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-          </button>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            
+            <button class="btn-icon-clean btn-disqualify ${client.desqualificado ? 'active' : ''}" onclick="handleDisqualifyClick(event, '${client.id}')" title="${client.desqualificado ? `Cliente desqualificado: ${escapeHtml(client.motivoDesqualificado || 'Sem motivo')}. Clique para reativar` : 'Desqualificar cliente por algum motivo'}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            <button class="btn-icon-clean danger" onclick="deleteCommercialClient('${client.id}')" title="Excluir cliente">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -3648,6 +3692,126 @@ function getCommercialFecharCell(client) {
   `;
 }
 window.getCommercialFecharCell = getCommercialFecharCell;
+
+// ============================================================
+// CLIENTE DESQUALIFICADO & POPOVER COMPACTO FLUTUANTE
+// ============================================================
+let _currentDisqualifyClientId = null;
+
+function handleDisqualifyClick(event, clientId) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
+  if (!client) return;
+
+  // Se já estiver desqualificado: ao clicar novamente no X, volta ao normal e sai a anotação
+  if (client.desqualificado) {
+    client.desqualificado = false;
+    client.motivoDesqualificado = '';
+    closeDisqualifyPopover();
+    saveCommercialData();
+    renderCommercialApp();
+    if (typeof showToast === 'function') {
+      showToast(`Cliente "${client.name}" reativado (desqualificação removida).`, 'info', 2500);
+    }
+    return;
+  }
+
+  // Se ainda não estiver desqualificado: abre o pop-up pequeno flutuando exatamente em cima do X
+  openDisqualifyPopover(event ? event.currentTarget : null, clientId);
+}
+window.handleDisqualifyClick = handleDisqualifyClick;
+
+function openDisqualifyPopover(anchorBtn, clientId) {
+  _currentDisqualifyClientId = clientId;
+  const popover = document.getElementById('popover-disqualify');
+  const input = document.getElementById('disqualify-reason-input');
+  if (!popover || !input) return;
+
+  input.value = '';
+  popover.style.display = 'block';
+
+  if (anchorBtn && typeof anchorBtn.getBoundingClientRect === 'function') {
+    const rect = anchorBtn.getBoundingClientRect();
+    const popWidth = 290;
+    const popHeight = 125;
+
+    // Fica posicionado logo em cima do botão X
+    let top = rect.top + window.scrollY - popHeight - 8;
+    let left = rect.right + window.scrollX - popWidth;
+
+    if (top < window.scrollY + 10) {
+      // Se não couber em cima, abre logo abaixo
+      top = rect.bottom + window.scrollY + 8;
+    }
+    if (left < 10) left = 10;
+
+    popover.style.top = `${top}px`;
+    popover.style.left = `${left}px`;
+  } else {
+    popover.style.top = '120px';
+    popover.style.left = '50%';
+    popover.style.transform = 'translateX(-50%)';
+  }
+
+  setTimeout(() => {
+    input.focus();
+  }, 60);
+
+  // Fecha se clicar fora
+  setTimeout(() => {
+    document.addEventListener('click', _handleOutsideDisqualifyClick);
+  }, 100);
+}
+window.openDisqualifyPopover = openDisqualifyPopover;
+
+function closeDisqualifyPopover() {
+  const popover = document.getElementById('popover-disqualify');
+  if (popover) {
+    popover.style.display = 'none';
+  }
+  _currentDisqualifyClientId = null;
+  document.removeEventListener('click', _handleOutsideDisqualifyClick);
+}
+window.closeDisqualifyPopover = closeDisqualifyPopover;
+
+function _handleOutsideDisqualifyClick(e) {
+  const popover = document.getElementById('popover-disqualify');
+  if (popover && popover.style.display !== 'none' && !popover.contains(e.target)) {
+    closeDisqualifyPopover();
+  }
+}
+
+function confirmDisqualifyClient() {
+  if (!_currentDisqualifyClientId) {
+    closeDisqualifyPopover();
+    return;
+  }
+  const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(_currentDisqualifyClientId));
+  if (!client) {
+    closeDisqualifyPopover();
+    return;
+  }
+
+  const input = document.getElementById('disqualify-reason-input');
+  const motivo = input ? input.value.trim() : '';
+
+  client.desqualificado = true;
+  client.motivoDesqualificado = motivo || 'Sem motivo informado';
+  client.desqualificadoAt = new Date().toISOString();
+
+  closeDisqualifyPopover();
+  saveCommercialData();
+  renderCommercialApp();
+
+  if (typeof showToast === 'function') {
+    showToast(`❌ Cliente "${client.name}" marcado como desqualificado.`, 'warning', 2500);
+  }
+}
+window.confirmDisqualifyClient = confirmDisqualifyClient;
 
 // Botão de ação rápida na tabela: Pronto para Fechar (proporcional, clean e integrado)
 function getCommercialFecharButton(client) {
@@ -4312,13 +4476,36 @@ function setTaskTimeShortcut(timeStr) {
 }
 window.setTaskTimeShortcut = setTaskTimeShortcut;
 
-function toggleCommercialTaskStatus(clientId) {
+function setCommercialTaskAttendance(clientId, outcome) {
   const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
   if (!client || !client.task) return;
 
   const currentStatus = client.task.status || 'pending';
-  const newStatus = currentStatus === 'done' ? 'pending' : 'done';
+  const currentAttendance = client.task.attendance || (currentStatus === 'done' ? 'attended' : null);
+
+  let newStatus = 'pending';
+  let newAttendance = null;
+
+  if (outcome === 'attended') {
+    if (currentStatus === 'done' || currentAttendance === 'attended') {
+      newStatus = 'pending';
+      newAttendance = null;
+    } else {
+      newStatus = 'done';
+      newAttendance = 'attended';
+    }
+  } else if (outcome === 'noshow') {
+    if (currentStatus === 'noshow' || currentAttendance === 'noshow') {
+      newStatus = 'pending';
+      newAttendance = null;
+    } else {
+      newStatus = 'noshow';
+      newAttendance = 'noshow';
+    }
+  }
+
   client.task.status = newStatus;
+  client.task.attendance = newAttendance;
   client.task.updatedAt = new Date().toISOString();
 
   if (!Array.isArray(client.taskHistory)) client.taskHistory = [];
@@ -4328,7 +4515,9 @@ function toggleCommercialTaskStatus(clientId) {
     ...client.task,
     id: taskId,
     status: newStatus,
+    attendance: newAttendance,
     completedAt: newStatus === 'done' ? new Date().toISOString() : null,
+    noShowAt: newStatus === 'noshow' ? new Date().toISOString() : null,
     updatedAt: new Date().toISOString()
   };
 
@@ -4340,17 +4529,25 @@ function toggleCommercialTaskStatus(clientId) {
 
   saveCommercialData();
   renderCommercialApp();
+  renderCommercialTasksView();
   if (typeof window.renderCalendarGrid === 'function') {
     window.renderCalendarGrid();
   }
 
   if (typeof showToast === 'function') {
     if (newStatus === 'done') {
-      showToast(`Tarefa de "${client.name}" marcada como concluída! 🎉 Histórico atualizado.`, 'success', 3500);
+      showToast(`✅ "${client.name}" marcado como Compareceu!`, 'success', 2800);
+    } else if (newStatus === 'noshow') {
+      showToast(`⚠️ "${client.name}" marcado como Não Compareceu!`, 'warning', 2800);
     } else {
-      showToast(`Tarefa de "${client.name}" reaberta como pendente.`, 'info');
+      showToast(`Tarefa de "${client.name}" reaberta como pendente.`, 'info', 2200);
     }
   }
+}
+window.setCommercialTaskAttendance = setCommercialTaskAttendance;
+
+function toggleCommercialTaskStatus(clientId) {
+  setCommercialTaskAttendance(clientId, 'attended');
 }
 window.toggleCommercialTaskStatus = toggleCommercialTaskStatus;
 
@@ -4537,7 +4734,8 @@ function renderCommercialTasksView() {
 
   container.innerHTML = tasksList.map(client => {
     const task = client.task;
-    const isDone = task.status === 'done';
+    const isAttended = task.status === 'done' || task.status === 'attended' || task.attendance === 'attended';
+    const isNoShow = task.status === 'noshow' || task.attendance === 'noshow';
     const isToday = task.dueDate === todayStr;
     const startTime = task.dueTime || '10:00';
     const endTime = task.endTime || calculateEndTime30m(startTime);
@@ -4546,7 +4744,7 @@ function renderCommercialTasksView() {
     const waLink = waDigits ? `https://wa.me/${waDigits}?text=${encodeURIComponent(`Olá, ${client.name}! Tudo bem? Augusto da MVT Advogados por aqui.`)}` : '';
 
     return `
-      <div class="comm-task-row ${isDone ? 'status-done' : ''}" id="comm-task-row-${client.id}">
+      <div class="comm-task-row ${isAttended ? 'status-done' : ''} ${isNoShow ? 'status-noshow' : ''}" id="comm-task-row-${client.id}">
         <!-- Coluna 1: Horário com alteração de tempo rápida ao clicar -->
         <div class="col-task-time-box" onclick="openCommercialTaskModal('${client.id}', 'form', true)" style="cursor: pointer;" title="Clique para alterar data, horário ou duração deste compromisso">
           <span class="task-date-pill" style="${isToday ? 'color: #38bdf8;' : ''}">📅 ${dateBadge}</span>
@@ -4583,21 +4781,37 @@ function renderCommercialTasksView() {
 
         <!-- Coluna 5: O que Fazer (Próximo Passo) -->
         <div class="col-task-action-box">
-          <span class="task-action-main" style="${isDone ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">
+          <span class="task-action-main" style="${(isAttended || isNoShow) ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px; opacity:0.85;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg> ${escapeHtml(task.action)}
           </span>
-          ${task.notes ? `
+          ${isNoShow ? `
+            <span class="task-notes-sub" style="color: #fca5a5; font-weight: 600;">
+              ⚠️ Não Compareceu
+            </span>
+          ` : (task.notes ? `
             <span class="task-notes-sub" title="${escapeHtml(task.notes)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px; opacity:0.7;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> ${escapeHtml(task.notes)}
             </span>
-          ` : ''}
+          ` : '')}
         </div>
 
         <!-- Coluna 6: Status & Ações Rápidas -->
         <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.35rem; flex-wrap: nowrap;">
-          <button type="button" class="btn-task-done ${isDone ? 'completed' : ''}" onclick="toggleCommercialTaskStatus('${client.id}')" title="${isDone ? 'Tarefa concluída! Clique para reabrir como pendente' : 'Clique para marcar esta tarefa como concluída'}">
-            ${isDone ? '✓ Concluída' : '✓ Concluir'}
+          <button type="button" class="btn-task-attend ${isAttended ? 'completed' : ''}" onclick="setCommercialTaskAttendance('${client.id}', 'attended')" title="${isAttended ? 'Marcado como Compareceu! Clique para reabrir como pendente' : 'Marcar que o cliente compareceu'}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 2px;">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Compareceu</span>
           </button>
+
+          <button type="button" class="btn-task-noshow ${isNoShow ? 'active' : ''}" onclick="setCommercialTaskAttendance('${client.id}', 'noshow')" title="${isNoShow ? 'Marcado como Não Compareceu! Clique para reabrir como pendente' : 'Marcar que o cliente NÃO compareceu'}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 2px;">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Não Compareceu</span>
+          </button>
+
           ${Array.isArray(client.taskHistory) && client.taskHistory.length > 0 ? `
             <button type="button" class="btn-task-history-pill" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Ver histórico de ${client.taskHistory.length} tarefas deste cliente">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M12 8v4l3 3"></path><path d="M3.05 11a9 9 0 1 1 .5 4"></path><path d="M3 16h4v-4"></path></svg>${client.taskHistory.length}
@@ -4722,28 +4936,48 @@ function openCommercialTaskModal(clientId, initialTab = 'form', forceNew = false
       }
     }
 
-    // Botão de conclusão do modal: Fica verde apenas se já concluído, cinza se pendente
-    const isDone = client.task.status === 'done';
+    // Botões de Compareceu e Não Compareceu no Modal
+    const isAttended = client.task.status === 'done' || client.task.status === 'attended' || client.task.attendance === 'attended';
+    const isNoShow = client.task.status === 'noshow' || client.task.attendance === 'noshow';
+
     const btnConclude = document.querySelector('.btn-action-conclude-next');
     if (btnConclude) {
-      if (isDone) {
+      if (isAttended) {
         btnConclude.classList.add('is-done');
-        btnConclude.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>✓ Concluída</span>`;
-        btnConclude.title = 'Esta tarefa já foi concluída! Clique para reabrir como pendente se necessário.';
+        btnConclude.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>✓ Compareceu</span>`;
+        btnConclude.title = 'Marcado como Compareceu! Clique para reabrir como pendente se necessário.';
       } else {
         btnConclude.classList.remove('is-done');
-        btnConclude.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Concluir Tarefa</span>`;
-        btnConclude.title = 'Conclui esta tarefa e atualiza o histórico';
+        btnConclude.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Compareceu</span>`;
+        btnConclude.title = 'Marcar que o cliente compareceu e atualizar histórico';
+      }
+    }
+
+    const btnNoShow = document.querySelector('.btn-action-noshow-next');
+    if (btnNoShow) {
+      if (isNoShow) {
+        btnNoShow.classList.add('is-noshow');
+        btnNoShow.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> <span>Não Compareceu</span>`;
+        btnNoShow.title = 'Marcado como Não Compareceu! Clique para reabrir como pendente se necessário.';
+      } else {
+        btnNoShow.classList.remove('is-noshow');
+        btnNoShow.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> <span>Não Compareceu</span>`;
+        btnNoShow.title = 'Marcar que o cliente NÃO compareceu e atualizar histórico';
       }
     }
 
     const activePill = document.querySelector('.active-task-pill');
     if (activePill) {
-      if (isDone) {
+      if (isAttended) {
         activePill.style.background = 'rgba(16, 185, 129, 0.2)';
         activePill.style.color = '#34d399';
         activePill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-        activePill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg> Tarefa Concluída (30m)`;
+        activePill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg> Cliente Compareceu (30m)`;
+      } else if (isNoShow) {
+        activePill.style.background = 'rgba(239, 68, 68, 0.2)';
+        activePill.style.color = '#f87171';
+        activePill.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+        activePill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Não Compareceu (30m)`;
       } else {
         activePill.style.background = '';
         activePill.style.color = '';
@@ -4937,7 +5171,7 @@ window.deleteCommercialTaskFromHistory = deleteCommercialTaskFromHistory;
 
 
 
-// Concluir a tarefa ativa atual sem complicar ou forçar novo formulário
+// Marcar Compareceu na tarefa ativa do modal
 function concludeCurrentActiveTask() {
   const inputClientId = document.getElementById('comm-task-client-id');
   const clientId = inputClientId?.value;
@@ -4946,6 +5180,7 @@ function concludeCurrentActiveTask() {
 
   if (client.task.status === 'done') {
     client.task.status = 'pending';
+    client.task.attendance = null;
     delete client.task.completedAt;
     client.task.updatedAt = new Date().toISOString();
     saveCommercialData();
@@ -4962,6 +5197,7 @@ function concludeCurrentActiveTask() {
   }
 
   client.task.status = 'done';
+  client.task.attendance = 'attended';
   client.task.completedAt = new Date().toISOString();
   client.task.updatedAt = new Date().toISOString();
 
@@ -4972,6 +5208,7 @@ function concludeCurrentActiveTask() {
     ...client.task,
     id: taskId,
     status: 'done',
+    attendance: 'attended',
     completedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -4984,16 +5221,79 @@ function concludeCurrentActiveTask() {
 
   saveCommercialData();
   renderCommercialApp();
+  renderCommercialTasksView();
   if (typeof window.renderCalendarGrid === 'function') {
     window.renderCalendarGrid();
   }
 
   closeCommercialTaskModal();
   if (typeof showToast === 'function') {
-    showToast(`✅ Tarefa de "${client.name}" concluída com sucesso!`, 'success', 2800);
+    showToast(`✅ "${client.name}" marcado como Compareceu!`, 'success', 2800);
   }
 }
 window.concludeCurrentActiveTask = concludeCurrentActiveTask;
+
+// Marcar Não Compareceu na tarefa ativa do modal
+function noshowCurrentActiveTask() {
+  const inputClientId = document.getElementById('comm-task-client-id');
+  const clientId = inputClientId?.value;
+  const client = COMMERCIAL_STATE.clients.find(c => c.id === clientId);
+  if (!client || !client.task) return;
+
+  if (client.task.status === 'noshow') {
+    client.task.status = 'pending';
+    client.task.attendance = null;
+    delete client.task.noShowAt;
+    client.task.updatedAt = new Date().toISOString();
+    saveCommercialData();
+    renderCommercialApp();
+    renderCommercialTasksView();
+    if (typeof window.renderCalendarGrid === 'function') {
+      window.renderCalendarGrid();
+    }
+    openCommercialTaskModal(client.id);
+    if (typeof showToast === 'function') {
+      showToast(`⏳ Tarefa de "${client.name}" reaberta como em aberto.`, 'info', 2500);
+    }
+    return;
+  }
+
+  client.task.status = 'noshow';
+  client.task.attendance = 'noshow';
+  client.task.noShowAt = new Date().toISOString();
+  client.task.updatedAt = new Date().toISOString();
+
+  if (!Array.isArray(client.taskHistory)) client.taskHistory = [];
+  const taskId = client.task.id || ('task-noshow-' + Date.now());
+  const existingIndex = client.taskHistory.findIndex(h => h.id === taskId);
+  const archivedTask = {
+    ...client.task,
+    id: taskId,
+    status: 'noshow',
+    attendance: 'noshow',
+    noShowAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (existingIndex >= 0) {
+    client.taskHistory[existingIndex] = archivedTask;
+  } else {
+    client.taskHistory.unshift(archivedTask);
+  }
+
+  saveCommercialData();
+  renderCommercialApp();
+  renderCommercialTasksView();
+  if (typeof window.renderCalendarGrid === 'function') {
+    window.renderCalendarGrid();
+  }
+
+  closeCommercialTaskModal();
+  if (typeof showToast === 'function') {
+    showToast(`⚠️ "${client.name}" marcado como Não Compareceu!`, 'warning', 2800);
+  }
+}
+window.noshowCurrentActiveTask = noshowCurrentActiveTask;
 
 // Concluir a tarefa atual e abrir formulário para o novo próximo passo
 function concludeCurrentAndOpenNext() {
@@ -5573,6 +5873,17 @@ function setupCommercialEvents() {
       AGENDA_TAREFAS_STATE.search = e.target.value;
       renderAgendaTarefasView();
     }, 180);
+  });
+
+  // Input do popover de desqualificação: Enter confirma, Esc fecha
+  const disqInput = document.getElementById('disqualify-reason-input');
+  disqInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmDisqualifyClient();
+    } else if (e.key === 'Escape') {
+      closeDisqualifyPopover();
+    }
   });
 
   // Atalhos Globais: Ctrl+Z (Desfazer) e Ctrl+Y (Refazer) para histórico de alterações
