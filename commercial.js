@@ -5260,42 +5260,84 @@ function renderCommercialTaskHistory(client) {
     return;
   }
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Normaliza tarefas futuras/hoje que foram salvas como 'done' sem comparecimento manual
+  list.forEach(item => {
+    if (item && item.dueDate && item.dueDate >= todayStr && item.status === 'done' && !item.attendance) {
+      item.status = 'pending';
+    }
+  });
+
   timeline.innerHTML = list.map((item, idx) => {
     const itemKey = item.id || `idx-${idx}`;
     const startTime = item.dueTime || '10:00';
     const duration = item.duration || COMMERCIAL_STATE.defaultDuration || 30;
     const dateFormatted = item.dueDate ? formatDateDisplay(item.dueDate) : (item.completedAt ? formatDateDisplay(item.completedAt) : '');
 
-    const isCancelled = item.status === 'cancelled';
-    const isActiveNow = Boolean(client.task && client.task.id === item.id);
+    const itemDate = item.dueDate || '';
+    const isPast = Boolean(itemDate && itemDate < todayStr);
 
-    let dotColor = '#10b981';
-    let statusText = 'Concluída';
-    if (isCancelled) {
+    const isNoShow = item.status === 'noshow' || item.attendance === 'noshow';
+    const isCancelled = item.status === 'cancelled';
+    const isAttended = item.attendance === 'attended';
+
+    // Determina se a tarefa deve ficar cinza e meio apagada:
+    // Apenas se já passou da data OU foi marcado como Não Compareceu OU Desmarcada
+    const isDimmed = isPast || isNoShow || isCancelled;
+
+    let dotColor = '#38bdf8';
+    let statusText = 'Agendada';
+    let badgeStyle = 'color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25);';
+
+    if (isNoShow) {
+      dotColor = '#f87171';
+      statusText = 'Não Compareceu';
+      badgeStyle = 'color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25);';
+    } else if (isCancelled) {
       dotColor = '#94a3b8';
       statusText = 'Desmarcada';
-    } else if (item.status === 'pending') {
+      badgeStyle = 'color: #94a3b8; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);';
+    } else if (isAttended) {
+      if (isPast) {
+        dotColor = '#64748b';
+        statusText = 'Concluída';
+        badgeStyle = 'color: #94a3b8; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);';
+      } else {
+        dotColor = '#10b981';
+        statusText = 'Compareceu';
+        badgeStyle = 'color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25);';
+      }
+    } else if (isPast) {
+      dotColor = '#64748b';
+      statusText = 'Data Expirada';
+      badgeStyle = 'color: #94a3b8; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);';
+    } else {
+      // No prazo / agendada (futura ou hoje) - ambas ficam exatamente iguais
       dotColor = '#38bdf8';
       statusText = 'Agendada';
+      badgeStyle = 'color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25);';
     }
 
+    const isActiveNow = Boolean(client.task && client.task.id === item.id);
+
     return `
-      <div class="history-item-row ${isActiveNow ? 'is-active' : ''}" id="hist-card-${itemKey}">
+      <div class="history-item-row ${isDimmed ? 'is-dimmed' : ''}" id="hist-card-${itemKey}">
         <div class="history-item-left">
           <span class="history-status-indicator" style="background: ${dotColor};" title="${statusText}"></span>
           <div class="history-item-content">
             <div class="history-item-title-line">
               <strong class="history-item-action-title">${escapeHtml(item.action || 'Compromisso')}</strong>
               <span class="history-item-meta">${dateFormatted ? `${dateFormatted} às ${startTime}` : startTime} • ${duration}m</span>
-              ${isActiveNow ? `<span class="history-tag-active">Na Pauta Ativa</span>` : `<span class="history-tag-status" style="color: ${dotColor};">${statusText}</span>`}
+              <span class="history-tag-status" style="${badgeStyle}">${statusText}</span>
             </div>
             ${item.notes ? `<div class="history-item-notes-line">${escapeHtml(item.notes)}</div>` : ''}
           </div>
         </div>
         <div class="history-item-actions" style="display: flex; align-items: center; gap: 0.35rem;">
           ${!isActiveNow ? `
-            <button type="button" class="btn-history-reactivate" onclick="reopenCommercialTaskFromHistory('${client.id}', '${itemKey}')" title="Restaurar esta tarefa como ativa na pauta">
-              ↩ Reativar
+            <button type="button" class="btn-history-reactivate" onclick="reopenCommercialTaskFromHistory('${client.id}', '${itemKey}')" title="${isDimmed ? 'Reativar esta tarefa' : 'Definir como tarefa principal na pauta'}">
+              ${isDimmed ? '↩ Reativar' : 'Definir na Pauta'}
             </button>
           ` : ''}
           <button type="button" class="btn-icon-clean danger" onclick="deleteCommercialTaskFromHistory('${client.id}', '${itemKey}')" title="Excluir esta tarefa">
@@ -5835,13 +5877,19 @@ function handleCommercialTaskSubmit(e) {
     const taskColor = document.getElementById('comm-task-color')?.value || '#a855f7';
     // Se já havia uma tarefa ativa anterior, garante que ela permanece arquivada no histórico
     if (client.task && client.task.dueDate) {
+      const todayStr = new Date().toISOString().split('T')[0];
       const prevTaskId = client.task.id || ('task-' + Date.now() + '-prev');
       const prevHistIndex = client.taskHistory.findIndex(h => h.id === prevTaskId);
+      const isPrevPast = Boolean(client.task.dueDate && client.task.dueDate < todayStr);
+      const prevStatus = (client.task.status === 'done' || client.task.status === 'noshow')
+        ? client.task.status
+        : (isPrevPast ? 'done' : 'pending');
+
       const prevCompleted = {
         ...client.task,
         id: prevTaskId,
-        status: client.task.status === 'pending' ? 'done' : client.task.status,
-        completedAt: client.task.completedAt || new Date().toISOString(),
+        status: prevStatus,
+        completedAt: prevStatus === 'done' ? (client.task.completedAt || new Date().toISOString()) : null,
         updatedAt: new Date().toISOString()
       };
       if (prevHistIndex >= 0) {

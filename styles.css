@@ -7230,9 +7230,24 @@ body.light-theme .btn-contract-icon.active:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.history-item-row.is-active {
-  border-color: rgba(245, 158, 11, 0.35);
-  background: rgba(245, 158, 11, 0.04);
+/* Tarefas que já passaram da data, não comparecidas ou desmarcadas: ficam cinzas e meio apagadas */
+.history-item-row.is-dimmed {
+  opacity: 0.52 !important;
+  background: rgba(255, 255, 255, 0.012) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.history-item-row.is-dimmed:hover {
+  opacity: 0.88 !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.history-item-row.is-dimmed .history-item-action-title {
+  color: #94a3b8 !important;
+}
+
+.history-item-row.is-dimmed .history-item-meta {
+  color: #64748b !important;
 }
 
 .history-item-left {
@@ -7259,7 +7274,7 @@ body.light-theme .btn-contract-icon.active:hover {
 
 .history-item-title-line {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
 }
@@ -7276,18 +7291,11 @@ body.light-theme .btn-contract-icon.active:hover {
 }
 
 .history-tag-status {
-  font-size: 0.65rem;
+  font-size: 0.67rem;
   font-weight: 600;
-}
-
-.history-tag-active {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #fbbf24;
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 3px;
+  line-height: 1.2;
 }
 
 .history-item-notes-line {
