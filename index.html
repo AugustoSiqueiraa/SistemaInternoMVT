@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
   <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
-  <link rel="stylesheet" href="styles.css?v=2.8">
+  <link rel="stylesheet" href="styles.css?v=2.9">
 </head>
 <body>
   <div class="app-container">
@@ -942,6 +942,7 @@
           </div>
         </div>
         <!-- Fim do comm-sticky-top-bar -->
+        <div id="comm-sticky-placeholder" style="display: none;"></div>
 
 
 
@@ -1912,36 +1913,29 @@
       </div>
     </div>
 
-    <!-- Modal: Criar Nova Opção com Nome e Cor (Área, Tipo de Atendimento ou Próximo Passo) -->
+    <!-- Modal: Personalizar Etiquetas e Cores (Áreas, Tipos de Atendimento e Próximos Passos) -->
     <div class="modal-overlay" id="modal-create-custom-option" style="z-index: 10001;" onclick="if(event.target === this) closeCreateCustomOptionModal()">
-      <div class="modal-card" style="max-width: 460px; max-height: 90vh; overflow-y: auto;">
-        <div class="modal-header">
+      <div class="modal-card custom-tags-modal-card">
+        <div class="modal-header" style="margin-bottom: 0.85rem;">
           <div>
-            <h2 class="modal-title" id="custom-option-modal-title">Criar Nova Opção</h2>
-            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;" id="custom-option-modal-subtitle">Defina o nome e a cor para personalizar esta opção</p>
+            <h2 class="modal-title" id="custom-option-modal-title">Personalizar Etiquetas & Cores</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;" id="custom-option-modal-subtitle">Altere as cores padrão ou crie novas opções</p>
           </div>
           <button class="modal-close" id="modal-create-custom-option-close" type="button" onclick="closeCreateCustomOptionModal()">&times;</button>
         </div>
 
-        <div class="custom-option-tabs-bar" style="display: flex; gap: 0.35rem; margin: 0.4rem 0 0.85rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.6rem;">
-          <button type="button" class="btn-filter-pill active" id="tab-custom-opt-area" onclick="switchCustomOptionTab('area')" style="font-size: 0.72rem; padding: 0.28rem 0.65rem; display: inline-flex; align-items: center; gap: 4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-              <line x1="7" y1="7" x2="7.01" y2="7"></line>
-            </svg>
+        <!-- Abas Segmentadas Modernas -->
+        <div class="custom-tags-segmented-tabs">
+          <button type="button" class="tag-seg-tab active" id="tab-custom-opt-area" onclick="switchCustomOptionTab('area')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
             <span>Áreas</span>
           </button>
-          <button type="button" class="btn-filter-pill" id="tab-custom-opt-type" onclick="switchCustomOptionTab('type')" style="font-size: 0.72rem; padding: 0.28rem 0.65rem; display: inline-flex; align-items: center; gap: 4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-            </svg>
+          <button type="button" class="tag-seg-tab" id="tab-custom-opt-type" onclick="switchCustomOptionTab('type')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
             <span>Tipos de Atendimento</span>
           </button>
-          <button type="button" class="btn-filter-pill" id="tab-custom-opt-nextstep" onclick="switchCustomOptionTab('nextstep')" style="font-size: 0.72rem; padding: 0.28rem 0.65rem; display: inline-flex; align-items: center; gap: 4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
+          <button type="button" class="tag-seg-tab" id="tab-custom-opt-nextstep" onclick="switchCustomOptionTab('nextstep')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <span>Próximos Passos</span>
           </button>
         </div>
@@ -1950,14 +1944,26 @@
           <input type="hidden" id="custom-option-type" value="area">
           <input type="hidden" id="custom-option-client-id" value="">
 
-          <div class="form-group" style="margin-bottom: 0.85rem;">
-            <label class="form-label" for="custom-option-name" id="custom-option-name-label" style="font-size: 0.76rem; font-weight: 700;">Nome da Opção *</label>
-            <input type="text" id="custom-option-name" class="clean-input" placeholder="Digite o nome..." required style="height: 34px; font-size: 0.82rem;" oninput="updateCustomOptionPreview()">
-          </div>
+          <!-- Bloco Superior: Criar / Editar Etiqueta -->
+          <div class="custom-tag-create-box">
+            <div class="custom-tag-input-row">
+              <div class="custom-tag-input-wrap">
+                <label class="custom-tag-label" for="custom-option-name" id="custom-option-name-label">Nome da Etiqueta</label>
+                <input type="text" id="custom-option-name" class="clean-input custom-tag-text-input" placeholder="Ex: Tributário, Família, Imobiliário..." required autocomplete="off" oninput="updateCustomOptionPreview()">
+              </div>
+              <div class="custom-tag-preview-wrap">
+                <label class="custom-tag-label">Prévia</label>
+                <div class="custom-tag-preview-container">
+                  <span id="custom-option-preview-badge" class="custom-option-preview-pill">
+                    Nome da Opção
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          <div class="form-group" style="margin-bottom: 0.95rem;">
-            <label class="form-label" style="font-size: 0.76rem; font-weight: 700; margin-bottom: 0.35rem;">Escolha a Cor *</label>
-            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <!-- Paleta de Cores e Ações -->
+            <div class="custom-tag-palette-row">
+              <span class="custom-tag-palette-title">Cor da Etiqueta:</span>
               <div class="custom-option-swatches" id="custom-option-swatches">
                 <button type="button" class="color-swatch-circle active" data-color="#38bdf8" style="background:#38bdf8;" title="Azul claro" onclick="selectCustomOptionColor('#38bdf8', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#10b981" style="background:#10b981;" title="Verde esmeralda" onclick="selectCustomOptionColor('#10b981', this)"></button>
@@ -1970,38 +1976,37 @@
                 <button type="button" class="color-swatch-circle" data-color="#6366f1" style="background:#6366f1;" title="Índigo" onclick="selectCustomOptionColor('#6366f1', this)"></button>
                 <button type="button" class="color-swatch-circle" data-color="#f97316" style="background:#f97316;" title="Laranja" onclick="selectCustomOptionColor('#f97316', this)"></button>
               </div>
-              <div style="display: flex; align-items: center; gap: 0.35rem; margin-left: 0.2rem;">
-                <input type="color" id="custom-option-color-input" value="#38bdf8" style="width: 28px; height: 28px; border: none; border-radius: 4px; cursor: pointer; background: transparent; padding: 0;" oninput="selectCustomOptionColor(this.value)">
-                <span style="font-size: 0.7rem; color: var(--text-muted);">Personalizada</span>
-              </div>
+
+              <!-- Seletor de Cor Personalizada -->
+              <label class="custom-color-picker-label" title="Escolher qualquer cor personalizada">
+                <input type="color" id="custom-option-color-input" value="#38bdf8" oninput="selectCustomOptionColor(this.value)">
+                <span>Personalizada</span>
+              </label>
               <input type="hidden" id="custom-option-color-val" value="#38bdf8">
+
+              <div class="custom-tag-btn-actions">
+                <button type="button" class="btn-secondary" id="btn-cancel-tag-edit" style="display: none; padding: 0.35rem 0.75rem; font-size: 0.76rem;" onclick="resetCustomOptionForm()">Cancelar</button>
+                <button type="submit" class="btn-primary" id="btn-save-custom-tag" style="padding: 0.35rem 1.1rem; font-size: 0.76rem; font-weight: 700;">
+                  <span id="btn-save-custom-tag-text">+ Salvar Etiqueta</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 0.95rem; padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 6px;">
-            <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Prévia na tabela:</span>
-            <span id="custom-option-preview-badge" style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.76rem; font-weight: 600; color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35);">
-              Nome da Opção
-            </span>
-          </div>
+          <!-- Bloco Inferior: Etiquetas Existentes (Sem scrollbars duplas!) -->
+          <div class="custom-tag-list-section">
+            <div class="custom-tag-list-header">
+              <span class="custom-tag-list-title">Etiquetas Cadastradas</span>
+              <span class="custom-tag-list-hint">Clique em uma etiqueta para trocar sua cor ou editar</span>
+            </div>
 
-          <!-- Seção de opções já personalizadas para trocar a cor ou excluir -->
-          <div id="custom-option-existing-section" style="margin-bottom: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.75rem;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
-              <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">Opções Personalizadas Criadas:</span>
-              <span style="font-size: 0.68rem; color: var(--text-muted); font-style: italic;">Clique para editar a cor</span>
-            </div>
-            <div id="custom-option-existing-chips" class="custom-option-chips-container">
-              <!-- Gerado dinamicamente -->
-            </div>
-            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.3;">
-              🛡️ <em>As opções padrão do sistema (Trabalhista, Cível, Previdenciário / Lead Novo, Follow-up, Indicação / 10 Próximos Passos) permanecem preservadas intactas.</em>
+            <div id="custom-option-existing-chips" class="custom-tags-grid">
+              <!-- Renderizado de forma ultra clean -->
             </div>
           </div>
 
-          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.45rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-            <button type="button" class="btn-secondary" onclick="closeCreateCustomOptionModal()" style="padding: 0.35rem 0.85rem; font-size: 0.78rem;">Cancelar</button>
-            <button type="submit" class="btn-primary" style="padding: 0.35rem 1.25rem; font-size: 0.78rem; font-weight: 700;">Salvar Opção</button>
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; padding-top: 0.65rem; border-top: 1px solid rgba(255, 255, 255, 0.08); margin-top: 0.85rem;">
+            <button type="button" class="btn-secondary" onclick="closeCreateCustomOptionModal()" style="padding: 0.4rem 1.2rem; font-size: 0.8rem;">Concluir</button>
           </div>
         </form>
       </div>
@@ -2177,7 +2182,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
-  <script src="commercial.js?v=2.8"></script>
-  <script src="app.js?v=2.8"></script>
+  <script src="commercial.js?v=2.9"></script>
+  <script src="app.js?v=2.9"></script>
 </body>
 </html>

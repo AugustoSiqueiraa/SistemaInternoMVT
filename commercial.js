@@ -1252,6 +1252,7 @@ function syncCommercialNextStepDropdowns() {
 window.syncCommercialNextStepDropdowns = syncCommercialNextStepDropdowns;
 
 // Renderizar lista interativa de opções no modal com visualização de padrões e personalizadas
+// Renderizar lista interativa de opções no modal com visualização limpa e moderna
 function renderExistingCustomOptions(type) {
   const container = document.getElementById('custom-option-existing-chips');
   if (!container) return;
@@ -1286,74 +1287,79 @@ function renderExistingCustomOptions(type) {
       return n && !defaults.some(d => d.toLowerCase() === n.toLowerCase());
     });
 
-    let html = `
-      <div style="margin-bottom: 0.65rem;">
-        <div style="font-size: 0.69rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px;">
-          Opções Padrão (Clique para alterar o nome ou a cor):
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
-          ${defaults.map(defName => {
-            const col = (getColorFn ? getColorFn(defName) : '') || '#38bdf8';
-            return `
-              <span class="custom-option-chip" style="color: ${col}; border-color: ${col}55; background: ${col}18; cursor: pointer;" 
-                    onclick="editCustomOptionFromChip('${escapeHtml(defName)}', '${col}')" 
-                    title="Clique para escolher uma nova cor para '${escapeHtml(defName)}'">
-                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${col};"></span>
-                <span>${escapeHtml(defName)}</span>
-                <span style="font-size: 0.62rem; opacity: 0.65; margin-left: 2px;">(Padrão)</span>
-              </span>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
+    let chipsHtml = '';
 
-    if (pureCustom.length > 0) {
-      html += `
-        <div style="margin-top: 0.65rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255,255,255,0.08);">
-          <div style="font-size: 0.69rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px;">
-            Opções Adicionadas por Você:
-          </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
-            ${pureCustom.map(item => {
-              const iName = (item && item.name ? String(item.name) : (typeof item === 'string' ? item : '')).trim();
-              const col = (item && item.color) ? item.color : '#38bdf8';
-              if (!iName) return '';
-              return `
-                <span class="custom-option-chip" style="color: ${col}; border-color: ${col}55; background: ${col}18; cursor: pointer;" 
-                      onclick="editCustomOptionFromChip('${escapeHtml(iName)}', '${col}')" 
-                      title="Clique para editar a cor de '${escapeHtml(iName)}'">
-                  <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${col};"></span>
-                  <span>${escapeHtml(iName)}</span>
-                  <span class="custom-option-chip-del" onclick="event.stopPropagation(); deleteCommercialCustomOption('${type}', '${escapeHtml(iName)}')" title="Excluir esta opção">✕</span>
-                </span>
-              `;
-            }).join('')}
-          </div>
-        </div>
+    // 1. Opções Padrão com badge de cor e clique para personalizar
+    defaults.forEach(defName => {
+      const col = (getColorFn ? getColorFn(defName) : '') || '#38bdf8';
+      chipsHtml += `
+        <span class="custom-option-chip" style="color: ${col}; border-color: ${col}45; background: ${col}15; cursor: pointer;" 
+              onclick="editCustomOptionFromChip('${escapeHtml(defName)}', '${col}')" 
+              title="Clique para escolher uma nova cor para '${escapeHtml(defName)}'">
+          <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${col};"></span>
+          <span>${escapeHtml(defName)}</span>
+          <span style="font-size: 0.64rem; opacity: 0.55; margin-left: 2px;">(Padrão)</span>
+        </span>
       `;
-    }
+    });
 
-    container.innerHTML = html;
+    // 2. Opções Personalizadas Adicionadas pelo Usuário
+    pureCustom.forEach(item => {
+      const iName = (item && item.name ? String(item.name) : (typeof item === 'string' ? item : '')).trim();
+      const col = (item && item.color) ? item.color : '#38bdf8';
+      if (!iName) return;
+      chipsHtml += `
+        <span class="custom-option-chip" style="color: ${col}; border-color: ${col}55; background: ${col}18; cursor: pointer;" 
+              onclick="editCustomOptionFromChip('${escapeHtml(iName)}', '${col}')" 
+              title="Clique para editar a cor de '${escapeHtml(iName)}'">
+          <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${col};"></span>
+          <span>${escapeHtml(iName)}</span>
+          <span class="custom-option-chip-del" onclick="event.stopPropagation(); deleteCommercialCustomOption('${type}', '${escapeHtml(iName)}')" title="Excluir esta etiqueta">✕</span>
+        </span>
+      `;
+    });
+
+    container.innerHTML = chipsHtml || '<span style="color: var(--text-muted); font-size: 0.75rem;">Nenhuma etiqueta cadastrada.</span>';
   } catch (err) {
     console.warn('Erro ao renderizar opções existentes no modal:', err);
   }
 }
 window.renderExistingCustomOptions = renderExistingCustomOptions;
 
-// Ao clicar em uma opção existente, carrega no formulário para mudar a cor
+// Ao clicar em uma opção existente, carrega no formulário para mudar a cor ou nome
 function editCustomOptionFromChip(name, color) {
   const nameInput = document.getElementById('custom-option-name');
   if (nameInput) {
     nameInput.value = name;
+    nameInput.focus();
   }
   selectCustomOptionColor(color);
   updateCustomOptionPreview();
+
+  const btnText = document.getElementById('btn-save-custom-tag-text');
+  if (btnText) btnText.textContent = 'Salvar Alteração';
+  const cancelBtn = document.getElementById('btn-cancel-tag-edit');
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
   if (typeof showToast === 'function') {
-    showToast(`Editando "${name}". Escolha a nova cor e clique em "Salvar Opção".`, 'info', 2500);
+    showToast(`Editando "${name}". Escolha a nova cor e clique em "Salvar Alteração".`, 'info', 2200);
   }
 }
 window.editCustomOptionFromChip = editCustomOptionFromChip;
+
+// Resetar o formulário de personalização de etiquetas
+function resetCustomOptionForm() {
+  const nameInput = document.getElementById('custom-option-name');
+  if (nameInput) nameInput.value = '';
+  selectCustomOptionColor('#38bdf8');
+  updateCustomOptionPreview();
+
+  const btnText = document.getElementById('btn-save-custom-tag-text');
+  if (btnText) btnText.textContent = '+ Salvar Etiqueta';
+  const cancelBtn = document.getElementById('btn-cancel-tag-edit');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+}
+window.resetCustomOptionForm = resetCustomOptionForm;
 
 // 4. MODAL POPUP PARA CRIAR / EDITAR OPÇÃO COM NOME E COR
 function openCreateCustomOptionModal(type = 'area', clientId = '') {
@@ -1378,11 +1384,9 @@ function openCreateCustomOptionModal(type = 'area', clientId = '') {
     const nameInput = document.getElementById('custom-option-name');
     const nameLabel = document.getElementById('custom-option-name-label');
 
+    resetCustomOptionForm();
     if (typeInput) typeInput.value = type;
     if (clientInput) clientInput.value = clientId || '';
-    if (nameInput) {
-      nameInput.value = '';
-    }
 
     if (type === 'area') {
       if (title) title.textContent = 'Personalizar Área de Atuação';
@@ -1401,8 +1405,6 @@ function openCreateCustomOptionModal(type = 'area', clientId = '') {
       if (nameInput) nameInput.placeholder = 'Ex: Apresentar proposta, Enviar procuração...';
     }
 
-    selectCustomOptionColor('#38bdf8');
-    updateCustomOptionPreview();
     renderExistingCustomOptions(type);
 
     ['area', 'type', 'nextstep'].forEach(t => {
@@ -1533,7 +1535,12 @@ function handleSaveCustomOption(event) {
     }
   }
 
-  closeCreateCustomOptionModal();
+  if (clientId) {
+    closeCreateCustomOptionModal();
+  } else {
+    resetCustomOptionForm();
+    renderExistingCustomOptions(type);
+  }
   renderCommercialApp();
 }
 window.handleSaveCustomOption = handleSaveCustomOption;
@@ -5847,6 +5854,11 @@ function setupCommercialEvents() {
       collapse.style.display = 'none';
       btn?.classList.remove('open');
     }
+    setTimeout(() => {
+      if (typeof handleCommercialStickyScroll === 'function') {
+        handleCommercialStickyScroll();
+      }
+    }, 20);
   }
   window.toggleCommercialQuickAddAccordion = toggleCommercialQuickAddAccordion;
 
@@ -6362,15 +6374,72 @@ function syncNavbarHeightCssVar() {
 }
 window.syncNavbarHeightCssVar = syncNavbarHeightCssVar;
 
-// Controle suave de sombra e fixação da barra sticky do Comercial
+// Controle preciso de fixação da barra sticky do Comercial ao rolar a página
+let commInitialTop = 0;
+
 function handleCommercialStickyScroll() {
   const stickyBar = document.getElementById('comm-sticky-top-bar');
+  const placeholder = document.getElementById('comm-sticky-placeholder');
+  const mainContent = document.querySelector('.main-content');
   if (!stickyBar) return;
-  const isStuck = window.scrollY > 110;
-  stickyBar.classList.toggle('is-stuck', isStuck);
+
+  const navbar = document.querySelector('.navbar');
+  const isPanoramic = document.body.classList.contains('commercial-panoramic');
+  const navH = (!isPanoramic && navbar && navbar.offsetHeight > 0) ? navbar.offsetHeight : 0;
+
+  // Atualiza posição inicial quando a barra está no fluxo normal
+  if (!stickyBar.classList.contains('is-fixed-top')) {
+    const rect = stickyBar.getBoundingClientRect();
+    const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (rect.top + currentScroll > 0) {
+      commInitialTop = rect.top + currentScroll;
+    }
+  }
+
+  const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  const shouldStick = commInitialTop > 0 && (scrollY + navH >= commInitialTop);
+
+  if (shouldStick) {
+    const barHeight = stickyBar.offsetHeight;
+    if (placeholder) {
+      placeholder.style.height = `${barHeight}px`;
+      placeholder.style.display = 'block';
+    }
+
+    if (mainContent) {
+      const mainRect = mainContent.getBoundingClientRect();
+      const comp = window.getComputedStyle(mainContent);
+      const padLeft = parseFloat(comp.paddingLeft) || 0;
+      const padRight = parseFloat(comp.paddingRight) || 0;
+      const targetWidth = mainRect.width - padLeft - padRight;
+
+      stickyBar.style.left = `${mainRect.left + padLeft}px`;
+      stickyBar.style.width = `${targetWidth}px`;
+    }
+
+    stickyBar.style.top = `${navH}px`;
+    stickyBar.classList.add('is-fixed-top');
+    stickyBar.classList.add('is-stuck');
+  } else {
+    stickyBar.classList.remove('is-fixed-top');
+    stickyBar.classList.remove('is-stuck');
+    stickyBar.style.top = '';
+    stickyBar.style.left = '';
+    stickyBar.style.width = '';
+    if (placeholder) {
+      placeholder.style.display = 'none';
+      placeholder.style.height = '0px';
+    }
+  }
 }
-window.addEventListener('resize', syncNavbarHeightCssVar);
+window.handleCommercialStickyScroll = handleCommercialStickyScroll;
+
+window.addEventListener('resize', () => {
+  syncNavbarHeightCssVar();
+  handleCommercialStickyScroll();
+});
 window.addEventListener('scroll', handleCommercialStickyScroll, { passive: true });
+document.addEventListener('scroll', handleCommercialStickyScroll, { passive: true });
 
 // Inicializacao automatica ao carregar o DOM
 document.addEventListener('DOMContentLoaded', () => {
