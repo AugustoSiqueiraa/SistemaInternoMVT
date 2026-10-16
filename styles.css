@@ -7602,6 +7602,7 @@ body.light-theme .comm-quick-select option {
 .comm-task-kpi-item.today .task-kpi-val { color: #93c5fd; }
 .comm-task-kpi-item.pending .task-kpi-val { color: #fcd34d; }
 .comm-task-kpi-item.done .task-kpi-val { color: #86efac; }
+.comm-task-kpi-item.noshow .task-kpi-val { color: #f87171; }
 
 .comm-task-kpi-divider {
   width: 1px;
@@ -7631,7 +7632,7 @@ body.light-theme .comm-quick-select option {
 
 .comm-tasks-table-header {
   display: grid;
-  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 335px;
+  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 370px;
   gap: 0.75rem;
   padding: 0.75rem 1.15rem;
   background: rgba(0, 0, 0, 0.35);
@@ -7641,12 +7642,15 @@ body.light-theme .comm-quick-select option {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   text-transform: uppercase;
-  min-width: 1140px;
+  min-width: 1180px;
 }
 
 .comm-tasks-table-header .col-task-actions {
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  padding-left: 0.9rem;
   text-align: right;
   padding-right: 0.25rem;
+  box-sizing: border-box;
 }
 
 body.light-theme .comm-tasks-table-header {
@@ -7663,12 +7667,12 @@ body.light-theme .comm-tasks-table-header {
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 1.15rem;
   display: grid;
-  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 335px;
+  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 370px;
   gap: 0.75rem;
   align-items: center;
   transition: background var(--transition-fast);
   position: relative;
-  min-width: 1140px;
+  min-width: 1180px;
 }
 
 .comm-task-row:last-child {
@@ -7807,13 +7811,16 @@ body.light-theme .comm-tasks-table-header {
   max-width: 100%;
 }
 
-.comm-col-actions {
+.comm-task-row .comm-col-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.3rem;
+  gap: 0.35rem;
   min-width: 0;
   flex-wrap: nowrap;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  padding-left: 0.9rem;
+  box-sizing: border-box;
 }
 
 /* Botão de Tarefa Não Concluída: Fica em CINZA elegante por padrão */
@@ -8351,11 +8358,20 @@ body.light-theme .task-alarm-setting-box {
   color: #fbbf24 !important;
 }
 
-/* Linha de Tarefa com Não Compareceu: Não deixar a linha vermelha, apenas o botão fica vermelho */
+/* Linha de Tarefa com Não Compareceu: Fundo cinza claro elegante destacado */
 .comm-task-row.status-noshow {
-  background: transparent !important;
-  border-left: none !important;
-  border-color: var(--border-subtle) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  opacity: 1 !important;
+}
+
+.comm-task-row.status-noshow:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.light-theme .comm-task-row.status-noshow {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
 }
 
 .commercial-tasks-view,

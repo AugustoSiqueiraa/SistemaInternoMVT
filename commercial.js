@@ -4642,19 +4642,27 @@ function renderCommercialTasksView() {
   const todayStr = new Date().toISOString().split('T')[0];
   const totalTasks = clientsWithTask.length;
   const todayTasks = clientsWithTask.filter(c => c.task.dueDate === todayStr).length;
-  const pendingTasks = clientsWithTask.filter(c => c.task.status !== 'done').length;
-  const doneTasks = clientsWithTask.filter(c => c.task.status === 'done').length;
+  const doneTasks = clientsWithTask.filter(c => c.task.status === 'done' || c.task.attendance === 'attended').length;
+  const noShowTasks = clientsWithTask.filter(c => c.task.status === 'noshow' || c.task.attendance === 'noshow').length;
+  const pendingTasks = clientsWithTask.filter(c => 
+    c.task.status !== 'done' && 
+    c.task.status !== 'noshow' && 
+    c.task.attendance !== 'attended' && 
+    c.task.attendance !== 'noshow'
+  ).length;
 
   // Atualiza indicadores KPI no topo
   const kpiTotal = document.getElementById('comm-tasks-kpi-total');
   const kpiToday = document.getElementById('comm-tasks-kpi-today');
   const kpiPending = document.getElementById('comm-tasks-kpi-pending');
   const kpiDone = document.getElementById('comm-tasks-kpi-done');
+  const kpiNoShow = document.getElementById('comm-tasks-kpi-noshow');
 
   if (kpiTotal) kpiTotal.textContent = totalTasks;
   if (kpiToday) kpiToday.textContent = todayTasks;
   if (kpiPending) kpiPending.textContent = pendingTasks;
   if (kpiDone) kpiDone.textContent = doneTasks;
+  if (kpiNoShow) kpiNoShow.textContent = noShowTasks;
 
   // Atualiza contadores na barra de filtros dedicados
   const cntAll = document.getElementById('task-filter-count-all');
@@ -4669,7 +4677,7 @@ function renderCommercialTasksView() {
 
   // Sincroniza classes ativas nos botões de filtro e KPIs
   const activeStatus = COMMERCIAL_STATE.taskStatusFilter || 'all';
-  ['all', 'pending', 'today', 'done'].forEach(st => {
+  ['all', 'pending', 'today', 'done', 'noshow'].forEach(st => {
     const pill = document.getElementById(`btn-filter-task-${st}`);
     if (pill) {
       if (st === activeStatus) pill.classList.add('active');
@@ -4703,13 +4711,20 @@ function renderCommercialTasksView() {
   // Filtragem
   let tasksList = [...clientsWithTask];
 
-  // 1. Filtragem por Status da Tarefa (Todas, ⏳ Em Aberto, 📅 Hoje, ✓ Concluídas)
+  // 1. Filtragem por Status da Tarefa (Todas, ⏳ Em Aberto, 📅 Hoje, ✓ Concluídas, ✕ Não Compareceu)
   if (activeStatus === 'pending') {
-    tasksList = tasksList.filter(c => c.task.status !== 'done');
+    tasksList = tasksList.filter(c => 
+      c.task.status !== 'done' && 
+      c.task.status !== 'noshow' && 
+      c.task.attendance !== 'attended' && 
+      c.task.attendance !== 'noshow'
+    );
   } else if (activeStatus === 'today') {
     tasksList = tasksList.filter(c => c.task.dueDate === todayStr);
   } else if (activeStatus === 'done') {
-    tasksList = tasksList.filter(c => c.task.status === 'done');
+    tasksList = tasksList.filter(c => c.task.status === 'done' || c.task.attendance === 'attended');
+  } else if (activeStatus === 'noshow') {
+    tasksList = tasksList.filter(c => c.task.status === 'noshow' || c.task.attendance === 'noshow');
   }
 
   // 2. Filtragem por Área da Tarefa
@@ -4747,7 +4762,9 @@ function renderCommercialTasksView() {
     const statusNotice = activeStatus === 'pending'
       ? 'Não há tarefas em aberto pendentes de execução.'
       : activeStatus === 'done'
-      ? 'Nenhuma tarefa concluída nesta seleção.'
+      ? 'Nenhuma tarefa com presença confirmada nesta seleção.'
+      : activeStatus === 'noshow'
+      ? 'Nenhuma tarefa marcada como não compareceu nesta seleção.'
       : activeStatus === 'today'
       ? 'Nenhuma tarefa agendada para hoje.'
       : 'Nenhuma tarefa de 30 minutos agendada.';
