@@ -4614,7 +4614,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-table-header-row {
   display: grid;
-  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 135px 235px 145px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 185px 110px 145px;
   gap: 0.45rem;
   padding: 0.7rem 0.85rem;
   background: rgba(0, 0, 0, 0.35);
@@ -4662,7 +4662,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-lead-row {
   display: grid;
-  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 135px 235px 145px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 185px 110px 145px;
   gap: 0.45rem;
   padding: 0.8rem 0.85rem;
   border-bottom: 1px solid var(--border-subtle);
@@ -5089,8 +5089,8 @@ body.light-theme .comm-status-pill-select option {
 .comm-col-schedule {
   display: flex;
   align-items: center;
+  gap: 0.35rem;
   min-width: 0;
-  overflow: hidden;
 }
 
 .comm-table-header-row .comm-col-schedule {
@@ -5100,24 +5100,43 @@ body.light-theme .comm-status-pill-select option {
   text-overflow: ellipsis;
 }
 
-.comm-task-due-pill {
+/* Ambas as caixas (com tarefa agendada ou sem tarefa) possuem exatamente o mesmo tamanho */
+.comm-task-due-pill,
+.btn-schedule-shortcut {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  height: 26px;
+  box-sizing: border-box;
   font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0 0.45rem;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none !important;
+}
+
+.comm-task-due-pill span,
+.btn-schedule-shortcut span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comm-task-due-pill {
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.12);
   border: 1px solid rgba(56, 189, 248, 0.35);
-  padding: 0.16rem 0.55rem;
-  border-radius: 4px;
-  width: fit-content;
-  max-width: 100%;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
   line-height: 1.25;
   flex-shrink: 0;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all var(--transition-fast);
 }
 
 .comm-task-due-pill:hover,
@@ -5143,21 +5162,47 @@ body.light-theme .comm-status-pill-select option {
   border-color: rgba(239, 68, 68, 0.6) !important;
 }
 
+/* Botão minimalista de '+' ao lado da caixa de agendamento */
+.btn-schedule-add-plus {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.btn-schedule-add-plus:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
 /* Badge numerico de quantidade de tarefas / reunioes agendadas */
 .comm-task-count-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  border-radius: 11px;
-  font-size: 0.72rem;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  font-size: 0.7rem;
   font-weight: 800;
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.14);
   border: 1px solid rgba(56, 189, 248, 0.35);
-  padding: 0 5px;
-  margin-left: 6px;
+  padding: 0 4px;
+  margin-right: 2px;
   cursor: pointer;
   line-height: 1;
   box-sizing: border-box;
@@ -5183,33 +5228,22 @@ body.light-theme .comm-status-pill-select option {
 }
 
 .btn-schedule-shortcut {
-  background: transparent;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.16);
   color: var(--text-muted);
-  font-size: 0.72rem;
-  padding: 0.18rem 0.5rem;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-  height: 24px;
-  box-sizing: border-box;
 }
 
 .btn-schedule-shortcut:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.35);
   color: #ffffff;
 }
 
-/* Coluna 7: Ações & Tarefa (com Mini Divisória Vertical e Ações Fixas na Direita) */
+/* Coluna 7: Ações Rápidas (com Mini Divisória Vertical e Alinhamento Preciso) */
 .comm-col-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.3rem;
   flex-wrap: nowrap;
   border-left: 1px solid rgba(255, 255, 255, 0.12);
@@ -6233,7 +6267,7 @@ body.light-theme .btn-contract-icon.active:hover {
 
 /* Disposição Tabela Ampla / Planilha Executiva (Alta Densidade) */
 .commercial-table-view.density-compact .comm-table-header-row {
-  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 135px 225px 145px;
+  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 185px 110px 145px;
   gap: 0.45rem;
   padding: 0.42rem 0.75rem;
   font-size: 0.68rem;
@@ -6242,7 +6276,7 @@ body.light-theme .btn-contract-icon.active:hover {
 }
 
 .commercial-table-view.density-compact .comm-lead-row {
-  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 135px 225px 145px;
+  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 185px 110px 145px;
   gap: 0.45rem;
   padding: 0.38rem 0.75rem;
   min-height: 40px;
@@ -6523,10 +6557,25 @@ body.light-theme .btn-contract-icon.active:hover {
 .task-active-decision-actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.task-active-status-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 1;
+}
+
+.task-active-icon-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
 }
 
 /* Botão de Conclusão no Modal: Cinza por padrão, Verde apenas se já concluído */
@@ -6536,7 +6585,7 @@ body.light-theme .btn-contract-icon.active:hover {
   color: #e2e8f0;
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.38rem 0.85rem;
+  padding: 0.4rem 0.85rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
@@ -6565,45 +6614,76 @@ body.light-theme .btn-contract-icon.active:hover {
   color: #a7f3d0;
 }
 
-.btn-action-edit-current {
+/* Ícone minimalista para editar dados da tarefa */
+.btn-action-icon-edit {
+  width: 30px;
+  height: 30px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.38rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
   border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
   transition: all var(--transition-fast);
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.btn-action-edit-current:hover {
-  background: rgba(255, 255, 255, 0.12);
+.btn-action-icon-edit:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
   color: #ffffff;
+  transform: translateY(-1px);
 }
 
-.btn-action-delete-current {
+/* Ícone minimalista para excluir tarefa */
+.btn-action-icon-delete {
+  width: 30px;
+  height: 30px;
   background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.22);
   color: #f87171;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.38rem 0.65rem;
   border-radius: var(--radius-xs);
   cursor: pointer;
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
   transition: all var(--transition-fast);
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.btn-action-delete-current:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
+.btn-action-icon-delete:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+/* Barra inferior do card de tarefa com botão '+ Nova Tarefa' */
+.task-active-bottom-bar {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.task-active-bottom-bar .btn-action-schedule-new {
+  width: 100%;
+  justify-content: center;
+  height: 32px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  color: #cbd5e1;
+}
+
+.task-active-bottom-bar .btn-action-schedule-new:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
 }
 
 /* Timeline do Histórico de Tarefas */

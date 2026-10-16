@@ -3580,7 +3580,7 @@ function renderCommercialTable(clients) {
           ${getCommercialNextStepSelect(client)}
         </div>
 
-        <!-- Coluna 6: Agendamento de Tarefa (Horário & Data: Vermelho se fora do prazo, Azul Claro se dentro) -->
+        <!-- Coluna 6: Agendamento de Tarefa (Caixas de mesmo tamanho com ícone '+' minimalista ao lado) -->
         <div class="comm-col-schedule">
           ${(() => {
             const latestApt = getClientLatestAppointment(client);
@@ -3589,31 +3589,29 @@ function renderCommercialTable(clients) {
               const shortDt = formatDateTimeShort(latestApt.date, latestApt.time);
               return `
                 <span class="comm-task-due-pill ${pillClass}" onclick="openCommercialTaskModal('${client.id}')" title="Reunião/Tarefa: ${escapeHtml(latestApt.action)} em ${formatDateDisplay(latestApt.date)} às ${latestApt.time || '10:00'}${latestApt.isOverdue ? ' (Fora do prazo)' : ' (Dentro do prazo)'}. Clique para gerenciar.">
-                  📅 ${shortDt}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <span>${shortDt}</span>
                 </span>
+                <button type="button" class="btn-schedule-add-plus" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Agendar nova tarefa ou próximo passo">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
               `;
             }
             return `
               <button type="button" class="btn-schedule-shortcut" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Clique para agendar data e horário para este próximo passo">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>+ Agendar Tarefa</span>
+              </button>
+              <button type="button" class="btn-schedule-add-plus" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Agendar nova tarefa ou próximo passo">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
             `;
           })()}
         </div>
 
-        <!-- Coluna 7: Tarefa & Ações Rápidas (com contador numérico após Marcar Tarefa e Ações Fixas na Direita) -->
+        <!-- Coluna 7: Ações Rápidas (Editar Dados, Desqualificar e Excluir) -->
         <div class="comm-col-actions">
-          <div class="comm-actions-left">
-            <button class="btn-task-action ${hasTask ? 'has-task' : ''} ${isOverdue ? 'overdue' : ''}" onclick="openCommercialTaskModal('${client.id}')" title="Marcar ou gerenciar tarefa de 30 minutos na pauta">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              Marcar Tarefa
-            </button>
+          <div class="comm-actions-right">
             ${(() => {
               const aptCount = getClientAppointmentsCount(client);
               if (aptCount > 0) {
@@ -3625,9 +3623,6 @@ function renderCommercialTable(clients) {
               }
               return '';
             })()}
-          </div>
-
-          <div class="comm-actions-right">
             <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

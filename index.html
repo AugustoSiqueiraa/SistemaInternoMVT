@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
   <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
-  <link rel="stylesheet" href="styles.css?v=2.2">
+  <link rel="stylesheet" href="styles.css?v=2.3">
 </head>
 <body>
   <div class="app-container">
@@ -966,7 +966,7 @@
               <button type="button" class="btn-header-add-option" onclick="openCreateCustomOptionModal('nextstep')" title="Criar ou personalizar Próximo Passo (com cor)">+</button>
             </div>
             <div class="comm-col-schedule">AGENDAMENTO</div>
-            <div class="comm-col-actions">TAREFA & AÇÕES</div>
+            <div class="comm-col-actions">AÇÕES</div>
             <div class="comm-col-fechar">PRONTOS P/ FECHAR</div>
           </div>
           <div class="comm-leads-list" id="comm-leads-list"></div>
@@ -1782,27 +1782,42 @@
             <div class="task-active-meta-row" id="comm-task-active-meta">-</div>
             <div class="task-active-notes-row" id="comm-task-active-notes" style="display: none;"></div>
 
-            <!-- Botões de Ação Diretos e Transparentes -->
+            <!-- Botões de Ação Principais & Ícones Minimalistas -->
             <div class="task-active-decision-actions">
+              <div class="task-active-status-btns">
+                <button type="button" class="btn-action-conclude-next" onclick="concludeCurrentActiveTask()" title="Marcar que o cliente compareceu">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Compareceu</span>
+                </button>
+                <button type="button" class="btn-action-noshow-next" onclick="noshowCurrentActiveTask()" title="Marcar que o cliente NÃO compareceu">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  <span>Não Compareceu</span>
+                </button>
+              </div>
+
+              <div class="task-active-icon-actions">
+                <button type="button" class="btn-action-icon-edit" onclick="editCurrentActiveTaskFields()" title="Editar dados da tarefa">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button type="button" class="btn-action-icon-delete" onclick="removeCurrentActiveTask()" title="Excluir ou desmarcar esta tarefa da pauta">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Botão na Parte Inferior: + Nova Tarefa -->
+            <div class="task-active-bottom-bar">
               <button type="button" class="btn-action-schedule-new" onclick="prepareScheduleNewTask(true)" title="Agendar uma nova tarefa para este cliente">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                <span>Nova Tarefa</span>
-              </button>
-              <button type="button" class="btn-action-conclude-next" onclick="concludeCurrentActiveTask()" title="Marcar que o cliente compareceu">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Compareceu</span>
-              </button>
-              <button type="button" class="btn-action-noshow-next" onclick="noshowCurrentActiveTask()" title="Marcar que o cliente NÃO compareceu">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                <span>Não Compareceu</span>
-              </button>
-              <button type="button" class="btn-action-edit-current" onclick="editCurrentActiveTaskFields()" title="Alterar o que fazer, data ou horário">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                <span>Editar Dados</span>
-              </button>
-              <button type="button" class="btn-action-delete-current" onclick="removeCurrentActiveTask()" title="Excluir ou desmarcar esta tarefa da pauta">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                <span>Excluir Tarefa</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ Nova Tarefa</span>
               </button>
             </div>
           </div>
@@ -2174,7 +2189,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
-  <script src="commercial.js?v=2.2"></script>
-  <script src="app.js?v=2.2"></script>
+  <script src="commercial.js?v=2.3"></script>
+  <script src="app.js?v=2.3"></script>
 </body>
 </html>
