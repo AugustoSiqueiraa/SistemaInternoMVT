@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
   <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
-  <link rel="stylesheet" href="styles.css?v=2.6">
+  <link rel="stylesheet" href="styles.css?v=2.8">
 </head>
 <body>
   <div class="app-container">
@@ -625,8 +625,10 @@
           </div>
         </div>
 
-        <!-- Bloco Retrátil de Cadastro Rápido de Clientes (Recuado por Padrão para Limpeza Visual) -->
-        <div class="comm-quick-add-accordion" id="comm-quick-add-wrapper">
+        <!-- Bloco Fixo no Topo: Cadastro Rápido e Barra de Ferramentas (Sticky Header que acompanha a rolagem) -->
+        <div class="comm-sticky-top-bar" id="comm-sticky-top-bar">
+          <!-- Bloco Retrátil de Cadastro Rápido de Clientes (Recuado por Padrão para Limpeza Visual) -->
+          <div class="comm-quick-add-accordion" id="comm-quick-add-wrapper">
           <button type="button" class="btn-quick-add-accordion-toggle" id="btn-toggle-comm-quick-add" onclick="toggleCommercialQuickAddAccordion()" title="Clique para abrir ou recolher o formulário de novo cliente">
             <div class="quick-add-toggle-left">
               <span class="quick-add-toggle-icon">+</span>
@@ -939,6 +941,7 @@
             </div>
           </div>
         </div>
+        <!-- Fim do comm-sticky-top-bar -->
 
 
 
@@ -2174,7 +2177,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
-  <script src="commercial.js?v=2.6"></script>
-  <script src="app.js?v=2.6"></script>
+  <script src="commercial.js?v=2.8"></script>
+  <script src="app.js?v=2.8"></script>
 </body>
 </html>

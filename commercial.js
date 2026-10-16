@@ -3382,7 +3382,7 @@ function getCommercialNextStepSelect(client) {
 
   return `
     <div class="comm-nextstep-badge-container">
-      <select class="comm-nextstep-pill-select" style="${customStyle}" onchange="changeCommercialNextStep('${client.id}', this.value, this)" oninput="changeCommercialNextStep('${client.id}', this.value, this)" title="Clique para alterar o próximo passo ou criar um novo com cor personalizada">
+      <select class="comm-nextstep-pill-select" style="${customStyle}" onchange="changeCommercialNextStep('${client.id}', this.value, this)" oninput="changeCommercialNextStep('${client.id}', this.value, this)" title="${escapeHtml(currentStep || 'Fazer ligação')} (Clique para alterar o próximo passo)">
         ${optionsHtml}
         <option value="__CREATE_NEXTSTEP__">➕ Criar Próximo Passo...</option>
       </select>
@@ -6350,16 +6350,42 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
+// Sincronização dinâmica da altura da Navbar com a variável CSS --navbar-height
+function syncNavbarHeightCssVar() {
+  const navbar = document.querySelector('.navbar');
+  if (navbar) {
+    const h = navbar.offsetHeight;
+    if (h > 0) {
+      document.documentElement.style.setProperty('--navbar-height', `${h}px`);
+    }
+  }
+}
+window.syncNavbarHeightCssVar = syncNavbarHeightCssVar;
+
+// Controle suave de sombra e fixação da barra sticky do Comercial
+function handleCommercialStickyScroll() {
+  const stickyBar = document.getElementById('comm-sticky-top-bar');
+  if (!stickyBar) return;
+  const isStuck = window.scrollY > 110;
+  stickyBar.classList.toggle('is-stuck', isStuck);
+}
+window.addEventListener('resize', syncNavbarHeightCssVar);
+window.addEventListener('scroll', handleCommercialStickyScroll, { passive: true });
+
 // Inicializacao automatica ao carregar o DOM
 document.addEventListener('DOMContentLoaded', () => {
+  syncNavbarHeightCssVar();
   loadCommercialData();
   setupCommercialEvents();
   updateCommercialMindChatButtonUi();
   renderCommercialApp();
   startCommercialRealtimeMonitoring();
   startCommercialTaskAlarmMonitor();
+  handleCommercialStickyScroll();
 });
 
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  syncNavbarHeightCssVar();
   startCommercialTaskAlarmMonitor();
+  handleCommercialStickyScroll();
 }

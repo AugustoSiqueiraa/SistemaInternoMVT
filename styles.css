@@ -8,6 +8,8 @@
   /* Escala visual aumentada (zoom maior solicitado) */
   font-size: 15px;
 
+  --navbar-height: 78px;
+
   --bg-primary: #101114;
   --bg-secondary: #1a1b1e;
   --bg-row: rgba(26, 27, 30, 0.75);
@@ -3965,7 +3967,7 @@ body.light-theme .modal-confirm-desc {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 0.65rem 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.25rem;
 }
 
 .commercial-filter-tools {
@@ -4363,9 +4365,37 @@ body.light-theme .comm-view-btn.active svg {
   color: #0284c7 !important;
 }
 
+/* Container Superior Fixo no Topo (Sticky Header) para Cadastro Rápido e Barra de Ferramentas */
+.comm-sticky-top-bar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: var(--navbar-height, 78px);
+  z-index: 40;
+  background: var(--bg-primary);
+  padding-top: 0.35rem;
+  padding-bottom: 0.25rem;
+  margin-top: -0.25rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid transparent;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.comm-sticky-top-bar.is-stuck {
+  border-bottom-color: var(--border-subtle);
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.45);
+}
+
+body.light-theme .comm-sticky-top-bar.is-stuck {
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+.commercial-panoramic .comm-sticky-top-bar {
+  margin-top: 0;
+}
+
 /* Bloco Retrátil de Cadastro Rápido de Leads / Clientes */
 .comm-quick-add-accordion {
-  margin-bottom: 1.15rem; /* Espaçamento diferenciado da barra de pesquisa */
+  margin-bottom: 0.55rem;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -4614,7 +4644,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-table-header-row {
   display: grid;
-  grid-template-columns: 80px minmax(130px, 1fr) 115px 145px minmax(160px, 1.25fr) 205px 90px 145px;
+  grid-template-columns: 80px minmax(140px, 1.1fr) minmax(115px, 0.9fr) minmax(140px, 1.05fr) 200px minmax(205px, 1.35fr) 95px minmax(145px, 1.1fr);
   gap: 0.45rem;
   padding: 0.7rem 0.85rem;
   background: rgba(0, 0, 0, 0.35);
@@ -4624,7 +4654,7 @@ body.light-theme .comm-quick-add-title {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   text-transform: uppercase;
-  min-width: 1080px;
+  min-width: 1140px;
   align-items: center;
   box-sizing: border-box;
 }
@@ -4662,13 +4692,13 @@ body.light-theme .comm-quick-add-title {
 
 .comm-lead-row {
   display: grid;
-  grid-template-columns: 80px minmax(130px, 1fr) 115px 145px minmax(160px, 1.25fr) 205px 90px 145px;
+  grid-template-columns: 80px minmax(140px, 1.1fr) minmax(115px, 0.9fr) minmax(140px, 1.05fr) 200px minmax(205px, 1.35fr) 95px minmax(145px, 1.1fr);
   gap: 0.45rem;
   padding: 0.8rem 0.85rem;
   border-bottom: 1px solid var(--border-subtle);
   align-items: center;
   transition: background var(--transition-fast);
-  min-width: 1080px;
+  min-width: 1140px;
   box-sizing: border-box;
 }
 
@@ -5030,7 +5060,7 @@ body.light-theme .comm-status-pill-select option {
   color: #0f172a;
 }
 
-/* Coluna 5: Próximo Passo (Badge Interativo com Seleção Rápida) */
+/* Coluna 5: Próximo Passo (Badge Interativo com Seleção Rápida e Tamanho Padronizado) */
 .comm-col-nextstep,
 .comm-col-next {
   display: flex;
@@ -5039,6 +5069,7 @@ body.light-theme .comm-status-pill-select option {
   min-width: 0;
   overflow: hidden;
   width: 100%;
+  max-width: 200px;
 }
 
 .comm-table-header-row .comm-col-nextstep,
@@ -5047,6 +5078,7 @@ body.light-theme .comm-status-pill-select option {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .comm-nextstep-badge-container {
@@ -5054,7 +5086,9 @@ body.light-theme .comm-status-pill-select option {
   display: inline-flex;
   align-items: center;
   width: 100%;
-  max-width: 100%;
+  max-width: 200px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .comm-nextstep-pill-select {
@@ -6295,20 +6329,20 @@ body.light-theme .btn-contract-icon.active:hover {
 
 /* Disposição Tabela Ampla / Planilha Executiva (Alta Densidade) */
 .commercial-table-view.density-compact .comm-table-header-row {
-  grid-template-columns: 80px minmax(130px, 1fr) 115px 145px minmax(160px, 1.25fr) 205px 90px 145px;
+  grid-template-columns: 80px minmax(140px, 1.1fr) minmax(115px, 0.9fr) minmax(140px, 1.05fr) 200px minmax(205px, 1.35fr) 95px minmax(145px, 1.1fr);
   gap: 0.45rem;
   padding: 0.42rem 0.75rem;
   font-size: 0.68rem;
-  min-width: 1080px;
+  min-width: 1140px;
   box-sizing: border-box;
 }
 
 .commercial-table-view.density-compact .comm-lead-row {
-  grid-template-columns: 80px minmax(130px, 1fr) 115px 145px minmax(160px, 1.25fr) 205px 90px 145px;
+  grid-template-columns: 80px minmax(140px, 1.1fr) minmax(115px, 0.9fr) minmax(140px, 1.05fr) 200px minmax(205px, 1.35fr) 95px minmax(145px, 1.1fr);
   gap: 0.45rem;
   padding: 0.38rem 0.75rem;
   min-height: 40px;
-  min-width: 1080px;
+  min-width: 1140px;
   box-sizing: border-box;
 }
 
@@ -7307,7 +7341,7 @@ body.light-theme .comm-quick-select option {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 0.85rem 1.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.55rem;
   flex-wrap: wrap;
 }
 
