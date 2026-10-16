@@ -1181,27 +1181,88 @@ function deleteCommercialCustomOption(type, name) {
   if (!name) return;
   const clean = name.trim().toLowerCase();
 
+  const matchesTarget = (val) => {
+    if (!val) return false;
+    const v = String(val).trim().toLowerCase();
+    if (v === clean) return true;
+    if (clean.includes('reuni') && v.includes('reuni')) return true;
+    if (clean.includes('resondeu') && v.includes('resondeu')) return true;
+    return false;
+  };
+
   if (type === 'area') {
     let list = getCommercialCustomAreas();
-    list = list.filter(a => a && a.name && a.name.toLowerCase() !== clean);
+    list = list.filter(a => {
+      const aName = (a && a.name ? a.name : (typeof a === 'string' ? a : '')).trim();
+      return !matchesTarget(aName);
+    });
     localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(list));
+
+    // Atualiza clientes que tinham essa área para o padrão Trabalhista
+    if (Array.isArray(COMMERCIAL_STATE.clients)) {
+      COMMERCIAL_STATE.clients.forEach(c => {
+        if (c && matchesTarget(c.area)) {
+          c.area = 'Trabalhista';
+          c.updatedAt = new Date().toISOString();
+        }
+      });
+    }
     syncCommercialAreaDropdowns();
   } else if (type === 'type') {
     let list = getCommercialCustomTypes();
-    list = list.filter(t => t && t.name && t.name.toLowerCase() !== clean);
+    list = list.filter(t => {
+      const tName = (t && t.name ? t.name : (typeof t === 'string' ? t : '')).trim();
+      return !matchesTarget(tName);
+    });
     localStorage.setItem('mvt_commercial_custom_types', JSON.stringify(list));
+
+    // Atualiza clientes que tinham esse tipo/status para Follow-up
+    if (Array.isArray(COMMERCIAL_STATE.clients)) {
+      COMMERCIAL_STATE.clients.forEach(c => {
+        if (!c) return;
+        if (matchesTarget(c.status) || matchesTarget(c.tipoAtendimento)) {
+          c.status = 'Follow-up';
+          c.tipoAtendimento = 'Follow-up';
+          c.updatedAt = new Date().toISOString();
+        }
+      });
+    }
     syncCommercialStatusDropdowns();
   } else if (type === 'nextstep') {
     let list = getCommercialCustomNextSteps();
-    list = list.filter(s => s && s.name && s.name.toLowerCase() !== clean);
+    list = list.filter(s => {
+      const sName = (s && s.name ? s.name : (typeof s === 'string' ? s : '')).trim();
+      return !matchesTarget(sName);
+    });
     localStorage.setItem('mvt_commercial_custom_nextsteps', JSON.stringify(list));
+
+    // Atualiza clientes que tinham esse próximo passo
+    if (Array.isArray(COMMERCIAL_STATE.clients)) {
+      COMMERCIAL_STATE.clients.forEach(c => {
+        if (c && matchesTarget(c.nextStep)) {
+          c.nextStep = 'Fazer ligação';
+          if (c.task && matchesTarget(c.task.action)) {
+            c.task.action = 'Fazer ligação';
+          }
+          c.updatedAt = new Date().toISOString();
+        }
+      });
+    }
     syncCommercialNextStepDropdowns();
   }
 
+  // Se o formulário do modal estava preenchido com essa opção sendo editada, reseta
+  const nameInput = document.getElementById('custom-option-name');
+  if (nameInput && matchesTarget(nameInput.value)) {
+    resetCustomOptionForm();
+  }
+
+  saveCommercialData();
   renderExistingCustomOptions(type);
   renderCommercialApp();
+
   if (typeof showToast === 'function') {
-    showToast(`Opção "${name}" atualizada com sucesso.`, 'info', 2200);
+    showToast(`Etiqueta "${name}" excluída com sucesso.`, 'info', 2200);
   }
 }
 window.deleteCommercialCustomOption = deleteCommercialCustomOption;
@@ -1326,7 +1387,7 @@ function renderExistingCustomOptions(type) {
               title="Clique para editar a cor de '${escapeHtml(iName)}'">
           <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${col};"></span>
           <span>${escapeHtml(iName)}</span>
-          <span class="custom-option-chip-del" onclick="event.stopPropagation(); deleteCommercialCustomOption('${type}', '${escapeHtml(iName)}')" title="Excluir esta etiqueta">✕</span>
+          <span class="custom-option-chip-del" onclick="event.stopPropagation(); event.stopImmediatePropagation(); event.preventDefault(); deleteCommercialCustomOption('${type}', this.getAttribute('data-tag-name'))" data-tag-name="${escapeHtml(iName)}" title="Excluir esta etiqueta">✕</span>
         </span>
       `;
     });
@@ -1778,10 +1839,23 @@ function cleanupDirtyCustomOptions() {
     if (rawTypes) {
       let parsed = JSON.parse(rawTypes);
       if (Array.isArray(parsed)) {
-        parsed = parsed.filter(item => {
-          const name = typeof item === 'string' ? item : (item && item.name);
-          return name && !name.startsWith('__') && !name.toUpperCase().includes('CREATE_');
-        });
+        const defaultNames = ['lead novo', 'follow-up', 'indicação', 'indicao', 'pronto para fechar', 'contrato assinado'];
+        const seen = new Set();
+        parsed = parsed.map(item => {
+          let name = typeof item === 'string' ? item : (item && item.name);
+          if (!name) return null;
+          name = String(name).trim();
+          if (name.startsWith('__') || name.toUpperCase().includes('CREATE_')) return null;
+          if (name.includes('Ã£') || name.includes('Ã') || name.includes('')) {
+            if (name.toLowerCase().includes('reuni')) name = 'Aguardando Reunião';
+          }
+          const lower = name.toLowerCase();
+          if (defaultNames.includes(lower)) return null;
+          if (seen.has(lower)) return null;
+          seen.add(lower);
+          const col = (typeof item === 'object' && item.color) ? item.color : '#38bdf8';
+          return { name, color: col };
+        }).filter(Boolean);
         localStorage.setItem('mvt_commercial_custom_types', JSON.stringify(parsed));
       }
     }
@@ -1866,9 +1940,16 @@ function sanitizeCommercialClient(c) {
   } else if (aLower.includes('trab')) {
     c.area = 'Trabalhista';
   } else if (aTrimmed) {
-    // Preserva área personalizada criada dinamicamente pelo usuário
-    c.area = aTrimmed;
-    saveCommercialCustomArea(aTrimmed);
+    const customAreas = getCommercialCustomAreas();
+    const matchArea = customAreas.find(ca => {
+      const caName = (ca.name || ca || '').trim().toLowerCase();
+      return caName === aLower;
+    });
+    if (matchArea) {
+      c.area = matchArea.name || matchArea;
+    } else {
+      c.area = 'Trabalhista';
+    }
   } else {
     c.area = 'Trabalhista';
   }
@@ -1895,7 +1976,10 @@ function sanitizeCommercialClient(c) {
     c.contratoAssinado = true;
   } else {
     const customTypes = getCommercialCustomTypes();
-    const matchCustomType = customTypes.find(ct => (ct.name || ct).toLowerCase() === sLower);
+    const matchCustomType = customTypes.find(ct => {
+      const ctName = (ct.name || ct || '').trim().toLowerCase();
+      return ctName === sLower;
+    });
     if (matchCustomType) {
       c.status = matchCustomType.name || matchCustomType;
       c.tipoAtendimento = c.status;
@@ -1917,10 +2001,6 @@ function sanitizeCommercialClient(c) {
     } else if (sLower.includes('indica')) {
       c.status = 'Indicação';
       c.tipoAtendimento = 'Indicação';
-    } else if (sTrimmed && sTrimmed !== 'Follow-up') {
-      c.status = sTrimmed;
-      c.tipoAtendimento = sTrimmed;
-      saveCommercialCustomType(sTrimmed);
     } else {
       c.status = 'Follow-up';
       c.tipoAtendimento = 'Follow-up';
@@ -2258,12 +2338,26 @@ async function syncCommercialWithSupabase(force = false) {
     }
 
     if (cloudLoadedClients && cloudLoadedClients.length > 0) {
+      const prevJson = JSON.stringify(COMMERCIAL_STATE.clients);
       const merged = mergeCommercialClients(COMMERCIAL_STATE.clients, cloudLoadedClients);
       COMMERCIAL_STATE.clients = merged;
-      localStorage.setItem('mvt_commercial_clients', JSON.stringify(COMMERCIAL_STATE.clients));
+      const nextJson = JSON.stringify(COMMERCIAL_STATE.clients);
+      localStorage.setItem('mvt_commercial_clients', nextJson);
 
-      if (typeof renderCommercialApp === 'function') {
-        renderCommercialApp();
+      // Só re-renderiza se os dados realmente mudaram e o usuário não está interagindo com selects/inputs
+      if (prevJson !== nextJson) {
+        const activeEl = document.activeElement;
+        const isInteracting = activeEl && (
+          activeEl.tagName === 'SELECT' || 
+          activeEl.tagName === 'INPUT' || 
+          activeEl.tagName === 'TEXTAREA' ||
+          Boolean(activeEl.closest && activeEl.closest('#comm-table-view-container'))
+        );
+        const isModalOpen = document.querySelector('.modal.active, .commercial-modal.active, #modal-create-custom-option[style*="display: flex"]');
+
+        if (!isInteracting && !isModalOpen && typeof renderCommercialApp === 'function') {
+          renderCommercialApp();
+        }
       }
       console.log(`☁️ Planilha Comercial 100% online! ${COMMERCIAL_STATE.clients.length} clientes sincronizados.`);
       return true;
@@ -3406,7 +3500,7 @@ function getCommercialStatusSelect(client) {
 
   return `
     <div class="comm-status-badge-container">
-      <select class="comm-status-pill-select ${statusClass}" style="${customStyle}" onchange="changeCommercialStatus('${client.id}', this.value, this)" oninput="changeCommercialStatus('${client.id}', this.value, this)" title="Tipo de Atendimento: escolha uma opção ou crie uma nova com cor personalizada">
+      <select class="comm-status-pill-select ${statusClass}" style="${customStyle}" onchange="changeCommercialStatus('${client.id}', this.value, this)" title="Tipo de Atendimento: escolha uma opção ou crie uma nova com cor personalizada">
         ${optionsHtml}
         <option value="__CREATE_TYPE__">➕ Criar Tipo de Atendimento...</option>
       </select>
@@ -3431,6 +3525,9 @@ function changeCommercialStatus(clientId, newStatus, selectEl) {
 
   const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
   if (!client) return;
+  if ((client.status || '').trim() === (newStatus || '').trim() && (client.tipoAtendimento || '').trim() === (newStatus || '').trim()) {
+    return;
+  }
 
   recordCommercialUndo(`Tipo de atendimento de ${client.name} para "${newStatus}"`);
   const cNameLower = (client.name || '').trim().toLowerCase();
@@ -3497,7 +3594,7 @@ function getCommercialAreaSelect(client) {
 
   return `
     <div class="comm-area-badge-container">
-      <select class="comm-area-pill-select area-${areaClass}" style="${customStyle}" onchange="changeCommercialArea('${client.id}', this.value, this)" oninput="changeCommercialArea('${client.id}', this.value, this)" title="Clique para alterar a área ou criar uma nova área com cor personalizada">
+      <select class="comm-area-pill-select area-${areaClass}" style="${customStyle}" onchange="changeCommercialArea('${client.id}', this.value, this)" title="Clique para alterar a área ou criar uma nova área com cor personalizada">
         ${optionsHtml}
         <option value="__CREATE_AREA__">➕ Criar Área...</option>
       </select>
@@ -3522,12 +3619,14 @@ function changeCommercialArea(clientId, newArea, selectEl) {
 
   const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
   if (!client) return;
+  if ((client.area || '').trim() === (newArea || '').trim()) return;
 
   recordCommercialUndo(`Área de ${client.name} para "${newArea}"`);
   const cNameLower = (client.name || '').trim().toLowerCase();
   COMMERCIAL_STATE.clients.forEach(c => {
     if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
       c.area = newArea;
+      c.updatedAt = new Date().toISOString();
     }
   });
 
@@ -3567,7 +3666,7 @@ function getCommercialNextStepSelect(client) {
 
   return `
     <div class="comm-nextstep-badge-container">
-      <select class="comm-nextstep-pill-select" style="${customStyle}" onchange="changeCommercialNextStep('${client.id}', this.value, this)" oninput="changeCommercialNextStep('${client.id}', this.value, this)" title="${escapeHtml(currentStep || 'Fazer ligação')} (Clique para alterar o próximo passo)">
+      <select class="comm-nextstep-pill-select" style="${customStyle}" onchange="changeCommercialNextStep('${client.id}', this.value, this)" title="${escapeHtml(currentStep || 'Fazer ligação')} (Clique para alterar o próximo passo)">
         ${optionsHtml}
         <option value="__CREATE_NEXTSTEP__">➕ Criar Próximo Passo...</option>
       </select>
@@ -3592,12 +3691,14 @@ function changeCommercialNextStep(clientId, newStep, selectEl) {
 
   const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
   if (!client) return;
+  if ((client.nextStep || '').trim() === (newStep || '').trim()) return;
 
   recordCommercialUndo(`Próximo passo de ${client.name} para "${newStep}"`);
   const cNameLower = (client.name || '').trim().toLowerCase();
   COMMERCIAL_STATE.clients.forEach(c => {
     if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
       c.nextStep = newStep;
+      c.updatedAt = new Date().toISOString();
       if (c.task) {
         c.task.action = newStep;
       }
