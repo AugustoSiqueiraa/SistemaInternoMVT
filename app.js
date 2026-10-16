@@ -326,7 +326,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   setupSimulationClock();
   renderApp();
-  switchTab('tab-comercial');
+  const savedTab = sessionStorage.getItem('mvt_active_tab') || 'tab-comercial';
+  const savedSubtab = sessionStorage.getItem('mvt_active_subtab') || (savedTab === 'tab-comercial' ? (sessionStorage.getItem('mvt_comm_active_subtab') || 'leads') : null);
+  switchTab(savedTab, savedSubtab);
 
   // Tenta carregar do Supabase em background (sobrescreve o localStorage)
   const loadedFromCloud = await loadMeetingsFromSupabase();
@@ -2075,6 +2077,14 @@ function setupFilterModal() {
 function switchTab(tabId, subtab) {
   if (!tabId) return;
 
+  try {
+    sessionStorage.setItem('mvt_active_tab', tabId);
+    if (subtab) {
+      sessionStorage.setItem('mvt_active_subtab', subtab);
+      sessionStorage.setItem('mvt_comm_active_subtab', subtab);
+    }
+  } catch (e) {}
+
   // Atualizar estado de todos os botões que apontam para abas
   document.querySelectorAll('[data-tab]').forEach(btn => {
     if (subtab && btn.dataset.subtab) {
@@ -2116,8 +2126,9 @@ function switchTab(tabId, subtab) {
 
   // Se a aba for a Planilha Comercial, acionar renderização ou mudar sub-aba
   if (tabId === 'tab-comercial') {
-    if (subtab && typeof window.setCommercialSubtab === 'function') {
-      window.setCommercialSubtab(subtab);
+    const targetSub = subtab || sessionStorage.getItem('mvt_active_subtab') || sessionStorage.getItem('mvt_comm_active_subtab') || 'leads';
+    if (typeof window.setCommercialSubtab === 'function') {
+      window.setCommercialSubtab(targetSub, false, false);
     } else if (typeof window.renderCommercialApp === 'function') {
       window.renderCommercialApp();
     }

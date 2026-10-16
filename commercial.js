@@ -2657,20 +2657,22 @@ window.isClientContratoAssinado = isClientContratoAssinado;
 
 // Alternar sub-aba comercial ('fechar', 'assinado', 'leads', 'kanban', 'tarefas') com histórico e toggle para retorno
 let _subtabNavigating = false;
-function setCommercialSubtab(subtab, recordHistory = true) {
+function setCommercialSubtab(subtab, recordHistory = true, allowToggle = false) {
   if (!subtab) return;
   if (_subtabNavigating) return;
   _subtabNavigating = true;
   setTimeout(() => { _subtabNavigating = false; }, 80);
 
-  // Se o usuário clicar novamente na mesma sub-aba que já está aberta (ex: 'assinado', 'fechar', 'tarefas', 'kanban'),
-  // ele volta / sai da aba retornando para a lista geral de Clientes ('leads')
-  if (COMMERCIAL_STATE.subtab === subtab && subtab !== 'leads') {
+  // Se o usuário clicar novamente na mesma sub-aba que já está aberta,
+  // ele volta / sai da aba retornando para a lista geral de Clientes ('leads') SOMENTE se allowToggle for true
+  if (allowToggle && COMMERCIAL_STATE.subtab === subtab && subtab !== 'leads') {
     subtab = 'leads';
   }
 
   COMMERCIAL_STATE.subtab = subtab;
   try {
+    sessionStorage.setItem('mvt_active_tab', 'tab-comercial');
+    sessionStorage.setItem('mvt_active_subtab', subtab);
     sessionStorage.setItem('mvt_comm_active_subtab', subtab);
   } catch (e) {}
 
@@ -4787,7 +4789,9 @@ function renderCommercialTasksView() {
       <div class="comm-task-row ${isAttended ? 'status-done' : ''} ${isNoShow ? 'status-noshow' : ''}" id="comm-task-row-${client.id}">
         <!-- Coluna 1: Horário com alteração de tempo rápida ao clicar -->
         <div class="col-task-time-box" onclick="openCommercialTaskModal('${client.id}', 'form', true)" style="cursor: pointer;" title="Clique para alterar data, horário ou duração deste compromisso">
-          <span class="task-date-pill" style="${isToday ? 'color: #38bdf8;' : ''}">📅 ${dateBadge}</span>
+          <span class="task-date-pill" style="${isToday ? 'color: #38bdf8;' : ''}">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>${dateBadge}
+          </span>
           <span class="task-time-span">
             ${startTime} - ${endTime}
             <span class="task-duration-tag">${task.duration || COMMERCIAL_STATE.defaultDuration || 30}m</span>
@@ -4825,15 +4829,11 @@ function renderCommercialTasksView() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; opacity: 0.85;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
             <span class="task-action-text">${escapeHtml(task.action)}</span>
           </span>
-          ${isNoShow ? `
-            <span class="task-notes-sub" style="color: #fca5a5; font-weight: 600;">
-              ⚠️ Não Compareceu
-            </span>
-          ` : (task.notes ? `
+          ${task.notes ? `
             <span class="task-notes-sub" title="${escapeHtml(task.notes)}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px; opacity:0.7; flex-shrink: 0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>${escapeHtml(task.notes)}
             </span>
-          ` : '')}
+          ` : ''}
         </div>
 
         <!-- Coluna 6: Status & Ações Rápidas -->
@@ -4859,7 +4859,12 @@ function renderCommercialTasksView() {
             </button>
           ` : ''}
           <button type="button" class="btn-icon-clean" onclick="jumpToCalendarTask('${task.dueDate}', '${startTime}')" title="Ver esta tarefa de 30m na Grade da Agenda Oficial">
-            <span style="font-size: 0.85rem;">📅</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
           </button>
           <button type="button" class="btn-icon-clean" onclick="openCommercialTaskModal('${client.id}')" title="Editar horário de 30m ou detalhes da tarefa">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -6171,10 +6176,19 @@ function closeTaskAlarmSettingsModal() {
 }
 window.closeTaskAlarmSettingsModal = closeTaskAlarmSettingsModal;
 
-// Recarregar a página e sincronizar dados com animação no botão
+// Recarregar a página mantendo a aba e subaba ativas e sincronizando dados
 function reloadCommercialPage() {
   const btn = document.getElementById('btn-header-reload-page');
   if (btn) btn.classList.add('is-spinning');
+  try {
+    const curMain = sessionStorage.getItem('mvt_active_tab') || 'tab-comercial';
+    sessionStorage.setItem('mvt_active_tab', curMain);
+    const curSub = curMain === 'tab-comercial' ? (COMMERCIAL_STATE.subtab || 'leads') : (sessionStorage.getItem('mvt_active_subtab') || null);
+    if (curSub) {
+      sessionStorage.setItem('mvt_active_subtab', curSub);
+      sessionStorage.setItem('mvt_comm_active_subtab', curSub);
+    }
+  } catch (e) {}
   window.location.reload();
 }
 window.reloadCommercialPage = reloadCommercialPage;
