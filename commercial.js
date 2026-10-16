@@ -6364,73 +6364,28 @@ function escapeHtml(text) {
 
 // Sincronização dinâmica da altura da Navbar com a variável CSS --navbar-height
 function syncNavbarHeightCssVar() {
+  const isPanoramic = document.body.classList.contains('commercial-panoramic');
+  if (isPanoramic) {
+    document.documentElement.style.setProperty('--navbar-height', '0px');
+    return;
+  }
   const navbar = document.querySelector('.navbar');
   if (navbar) {
     const h = navbar.offsetHeight;
-    if (h > 0) {
-      document.documentElement.style.setProperty('--navbar-height', `${h}px`);
-    }
+    const validH = (h >= 50 && h <= 110) ? h : 78;
+    document.documentElement.style.setProperty('--navbar-height', `${validH}px`);
+  } else {
+    document.documentElement.style.setProperty('--navbar-height', '78px');
   }
 }
 window.syncNavbarHeightCssVar = syncNavbarHeightCssVar;
 
-// Controle preciso de fixação da barra sticky do Comercial ao rolar a página
-let commInitialTop = 0;
-
+// Controle suave de sombra da barra sticky do Comercial ao rolar
 function handleCommercialStickyScroll() {
   const stickyBar = document.getElementById('comm-sticky-top-bar');
-  const placeholder = document.getElementById('comm-sticky-placeholder');
-  const mainContent = document.querySelector('.main-content');
   if (!stickyBar) return;
-
-  const navbar = document.querySelector('.navbar');
-  const isPanoramic = document.body.classList.contains('commercial-panoramic');
-  const navH = (!isPanoramic && navbar && navbar.offsetHeight > 0) ? navbar.offsetHeight : 0;
-
-  // Atualiza posição inicial quando a barra está no fluxo normal
-  if (!stickyBar.classList.contains('is-fixed-top')) {
-    const rect = stickyBar.getBoundingClientRect();
-    const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-    if (rect.top + currentScroll > 0) {
-      commInitialTop = rect.top + currentScroll;
-    }
-  }
-
   const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-  const shouldStick = commInitialTop > 0 && (scrollY + navH >= commInitialTop);
-
-  if (shouldStick) {
-    const barHeight = stickyBar.offsetHeight;
-    if (placeholder) {
-      placeholder.style.height = `${barHeight}px`;
-      placeholder.style.display = 'block';
-    }
-
-    if (mainContent) {
-      const mainRect = mainContent.getBoundingClientRect();
-      const comp = window.getComputedStyle(mainContent);
-      const padLeft = parseFloat(comp.paddingLeft) || 0;
-      const padRight = parseFloat(comp.paddingRight) || 0;
-      const targetWidth = mainRect.width - padLeft - padRight;
-
-      stickyBar.style.left = `${mainRect.left + padLeft}px`;
-      stickyBar.style.width = `${targetWidth}px`;
-    }
-
-    stickyBar.style.top = `${navH}px`;
-    stickyBar.classList.add('is-fixed-top');
-    stickyBar.classList.add('is-stuck');
-  } else {
-    stickyBar.classList.remove('is-fixed-top');
-    stickyBar.classList.remove('is-stuck');
-    stickyBar.style.top = '';
-    stickyBar.style.left = '';
-    stickyBar.style.width = '';
-    if (placeholder) {
-      placeholder.style.display = 'none';
-      placeholder.style.height = '0px';
-    }
-  }
+  stickyBar.classList.toggle('is-stuck', scrollY > 40);
 }
 window.handleCommercialStickyScroll = handleCommercialStickyScroll;
 
@@ -6439,7 +6394,6 @@ window.addEventListener('resize', () => {
   handleCommercialStickyScroll();
 });
 window.addEventListener('scroll', handleCommercialStickyScroll, { passive: true });
-document.addEventListener('scroll', handleCommercialStickyScroll, { passive: true });
 
 // Inicializacao automatica ao carregar o DOM
 document.addEventListener('DOMContentLoaded', () => {
