@@ -957,7 +957,7 @@ const DEFAULT_COMMERCIAL_CLIENTS = [
 // ESTADO DO MODULO COMERCIAL
 const COMMERCIAL_STATE = {
   clients: [],
-  subtab: 'leads', // 'leads' como padrão para exibir todos os clientes
+  subtab: sessionStorage.getItem('mvt_comm_active_subtab') || 'leads', // Lembra sub-aba ativa após recarregar
   search: '',
   area: 'all',
   density: localStorage.getItem('mvt_comm_density') || 'comfortable',
@@ -2633,6 +2633,9 @@ function setCommercialSubtab(subtab, recordHistory = true) {
   }
 
   COMMERCIAL_STATE.subtab = subtab;
+  try {
+    sessionStorage.setItem('mvt_comm_active_subtab', subtab);
+  } catch (e) {}
 
   if (recordHistory !== false) {
     if (!COMMERCIAL_NAV.history.length || COMMERCIAL_NAV.history[COMMERCIAL_NAV.index] !== subtab) {
@@ -4781,8 +4784,9 @@ function renderCommercialTasksView() {
 
         <!-- Coluna 5: O que Fazer (Próximo Passo) -->
         <div class="col-task-action-box">
-          <span class="task-action-main" style="${(isAttended || isNoShow) ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px; opacity:0.85;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg> ${escapeHtml(task.action)}
+          <span class="task-action-main" title="${escapeHtml(task.action)}" style="${(isAttended || isNoShow) ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; opacity: 0.85;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+            <span class="task-action-text">${escapeHtml(task.action)}</span>
           </span>
           ${isNoShow ? `
             <span class="task-notes-sub" style="color: #fca5a5; font-weight: 600;">
@@ -4790,22 +4794,22 @@ function renderCommercialTasksView() {
             </span>
           ` : (task.notes ? `
             <span class="task-notes-sub" title="${escapeHtml(task.notes)}">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px; opacity:0.7;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> ${escapeHtml(task.notes)}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px; opacity:0.7; flex-shrink: 0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>${escapeHtml(task.notes)}
             </span>
           ` : '')}
         </div>
 
         <!-- Coluna 6: Status & Ações Rápidas -->
-        <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.35rem; flex-wrap: nowrap;">
+        <div class="comm-col-actions" style="justify-content: flex-end; gap: 0.3rem; flex-wrap: nowrap;">
           <button type="button" class="btn-task-attend ${isAttended ? 'completed' : ''}" onclick="setCommercialTaskAttendance('${client.id}', 'attended')" title="${isAttended ? 'Marcado como Compareceu! Clique para reabrir como pendente' : 'Marcar que o cliente compareceu'}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 2px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
             <span>Compareceu</span>
           </button>
 
           <button type="button" class="btn-task-noshow ${isNoShow ? 'active' : ''}" onclick="setCommercialTaskAttendance('${client.id}', 'noshow')" title="${isNoShow ? 'Marcado como Não Compareceu! Clique para reabrir como pendente' : 'Marcar que o cliente NÃO compareceu'}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 2px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -6129,6 +6133,14 @@ function closeTaskAlarmSettingsModal() {
   if (m) m.classList.remove('active');
 }
 window.closeTaskAlarmSettingsModal = closeTaskAlarmSettingsModal;
+
+// Recarregar a página e sincronizar dados com animação no botão
+function reloadCommercialPage() {
+  const btn = document.getElementById('btn-header-reload-page');
+  if (btn) btn.classList.add('is-spinning');
+  window.location.reload();
+}
+window.reloadCommercialPage = reloadCommercialPage;
 
 // Filtros da Pauta de Tarefas
 function setCommercialTaskStatusFilter(status) {

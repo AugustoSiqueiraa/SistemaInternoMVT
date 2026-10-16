@@ -6710,7 +6710,7 @@ body.light-theme .btn-contract-icon.active:hover {
   color: #94a3b8;
 }
 
-/* Botão Ícone Minimalista do Sino de Alarme */
+/* Botão Ícone Minimalista do Sino de Alarme e Ações do Header */
 .btn-comm-alarm-trigger {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
@@ -6732,6 +6732,26 @@ body.light-theme .btn-contract-icon.active:hover {
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.28);
   transform: translateY(-1px);
+}
+
+.btn-comm-alarm-trigger:hover svg {
+  transform: scale(1.08);
+  transition: transform 0.15s ease;
+}
+
+#btn-header-reload-page:hover svg {
+  transform: rotate(45deg);
+  transition: transform 0.25s ease;
+}
+
+#btn-header-reload-page:active svg,
+#btn-header-reload-page.is-spinning svg {
+  animation: spinReload 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes spinReload {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Histórico de Tarefas Minimalista e Objetivo (Sem Ruído Visual) */
@@ -7226,7 +7246,8 @@ body.light-theme .comm-quick-select option {
 
 .comm-tasks-table-header {
   display: grid;
-  grid-template-columns: 155px 1.25fr 110px 120px 1.4fr 225px;
+  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 335px;
+  gap: 0.75rem;
   padding: 0.75rem 1.15rem;
   background: rgba(0, 0, 0, 0.35);
   border-bottom: 1px solid var(--border-subtle);
@@ -7235,7 +7256,12 @@ body.light-theme .comm-quick-select option {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   text-transform: uppercase;
-  min-width: 1040px;
+  min-width: 1140px;
+}
+
+.comm-tasks-table-header .col-task-actions {
+  text-align: right;
+  padding-right: 0.25rem;
 }
 
 body.light-theme .comm-tasks-table-header {
@@ -7252,12 +7278,12 @@ body.light-theme .comm-tasks-table-header {
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 1.15rem;
   display: grid;
-  grid-template-columns: 155px 1.25fr 110px 120px 1.4fr 225px;
+  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 335px;
   gap: 0.75rem;
   align-items: center;
   transition: background var(--transition-fast);
   position: relative;
-  min-width: 1040px;
+  min-width: 1140px;
 }
 
 .comm-task-row:last-child {
@@ -7366,18 +7392,50 @@ body.light-theme .comm-tasks-table-header {
   border-radius: 3px;
 }
 
+.col-task-action-box {
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .task-action-main {
-  font-size: 0.84rem;
+  font-size: 0.83rem;
   font-weight: 700;
   color: var(--text-main);
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.task-action-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .task-notes-sub {
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   margin-top: 0.15rem;
   display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.comm-col-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 /* Botão de Tarefa Não Concluída: Fica em CINZA elegante por padrão */
@@ -7831,21 +7889,24 @@ body.light-theme .task-alarm-setting-box {
 
 /* Botão Compareceu */
 .btn-task-attend {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #94a3b8;
-  font-size: 0.73rem;
+  font-size: 0.69rem;
   font-weight: 600;
-  padding: 0.3rem 0.65rem;
+  padding: 0.2rem 0.5rem;
+  height: 25px;
   border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.22rem;
   transition: all var(--transition-fast);
   box-sizing: border-box;
   flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .btn-task-attend:hover {
@@ -7871,21 +7932,24 @@ body.light-theme .task-alarm-setting-box {
 
 /* Botão Não Compareceu */
 .btn-task-noshow {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #94a3b8;
-  font-size: 0.73rem;
+  font-size: 0.69rem;
   font-weight: 600;
-  padding: 0.3rem 0.65rem;
+  padding: 0.2rem 0.5rem;
+  height: 25px;
   border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.22rem;
   transition: all var(--transition-fast);
   box-sizing: border-box;
   flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .btn-task-noshow:hover {
