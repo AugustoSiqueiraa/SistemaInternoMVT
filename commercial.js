@@ -988,7 +988,8 @@ function getCommercialAreaColor(areaName) {
   if (clean.includes('cív') || clean.includes('civ')) return '#38bdf8';
   if (clean.includes('prev') || clean.includes('aposent') || clean.includes('aux')) return '#a855f7';
   if (clean.includes('trab')) return '#f59e0b';
-  return '#38bdf8';
+  if (clean.includes('estatut') || clean.includes('estatur')) return '#ec4899';
+  return '#ec4899';
 }
 window.getCommercialAreaColor = getCommercialAreaColor;
 
@@ -1033,11 +1034,16 @@ function getCommercialCustomAreas() {
         return parsed.map(item => {
           if (typeof item === 'string') {
             const clean = item.trim();
-            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: '#38bdf8' } : null;
+            const defCol = (clean.toLowerCase().includes('estatut') || clean.toLowerCase().includes('estatur')) ? '#ec4899' : '#ec4899';
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: defCol } : null;
           }
           if (item && item.name) {
             const clean = String(item.name).trim();
-            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: item.color || '#38bdf8' } : null;
+            let col = item.color;
+            if ((clean.toLowerCase().includes('estatut') || clean.toLowerCase().includes('estatur')) && (col === '#38bdf8' || !col)) {
+              col = '#ec4899';
+            }
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: col || '#ec4899' } : null;
           }
           return null;
         }).filter(Boolean);
@@ -1048,17 +1054,22 @@ function getCommercialCustomAreas() {
 }
 window.getCommercialCustomAreas = getCommercialCustomAreas;
 
-function saveCommercialCustomArea(areaName, color = '#38bdf8') {
+function saveCommercialCustomArea(areaName, color = null) {
   if (!areaName || typeof areaName !== 'string') return;
   const clean = areaName.trim();
   if (!clean || clean.startsWith('__') || clean.toUpperCase().includes('CREATE_')) return;
 
   const list = getCommercialCustomAreas();
   const idx = list.findIndex(a => a && a.name && a.name.toLowerCase() === clean.toLowerCase());
+  const fallbackColor = (clean.toLowerCase().includes('estatut') || clean.toLowerCase().includes('estatur')) ? '#ec4899' : '#ec4899';
   if (idx >= 0) {
-    list[idx].color = color;
+    // Se já existe e foi passada uma nova cor explicitamente, atualiza a cor.
+    // Se NENHUMA cor foi passada (color === null), PRESERVA a cor existente!
+    if (color) {
+      list[idx].color = color;
+    }
   } else {
-    list.push({ name: clean, color: color || '#38bdf8' });
+    list.push({ name: clean, color: color || fallbackColor });
   }
   localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(list));
   syncCommercialAreaDropdowns();
@@ -1090,7 +1101,7 @@ function getCommercialCustomTypes() {
 }
 window.getCommercialCustomTypes = getCommercialCustomTypes;
 
-function saveCommercialCustomType(typeName, color = '#38bdf8') {
+function saveCommercialCustomType(typeName, color = null) {
   if (!typeName || typeof typeName !== 'string') return;
   const clean = typeName.trim();
   if (!clean || clean.startsWith('__') || clean.toUpperCase().includes('CREATE_')) return;
@@ -1098,7 +1109,9 @@ function saveCommercialCustomType(typeName, color = '#38bdf8') {
   const list = getCommercialCustomTypes();
   const idx = list.findIndex(t => t && t.name && t.name.toLowerCase() === clean.toLowerCase());
   if (idx >= 0) {
-    list[idx].color = color;
+    if (color) {
+      list[idx].color = color;
+    }
   } else {
     list.push({ name: clean, color: color || '#38bdf8' });
   }
@@ -1132,7 +1145,7 @@ function getCommercialCustomNextSteps() {
 }
 window.getCommercialCustomNextSteps = getCommercialCustomNextSteps;
 
-function saveCommercialCustomNextStep(stepName, color = '#38bdf8') {
+function saveCommercialCustomNextStep(stepName, color = null) {
   if (!stepName || typeof stepName !== 'string') return;
   const clean = stepName.trim();
   if (!clean || clean.startsWith('__') || clean.toUpperCase().includes('CREATE_')) return;
@@ -1140,7 +1153,9 @@ function saveCommercialCustomNextStep(stepName, color = '#38bdf8') {
   const list = getCommercialCustomNextSteps();
   const idx = list.findIndex(s => s && s.name && s.name.toLowerCase() === clean.toLowerCase());
   if (idx >= 0) {
-    list[idx].color = color;
+    if (color) {
+      list[idx].color = color;
+    }
   } else {
     list.push({ name: clean, color: color || '#38bdf8' });
   }
@@ -1390,12 +1405,22 @@ function openCreateCustomOptionModal(type = 'area', clientId = '') {
     updateCustomOptionPreview();
     renderExistingCustomOptions(type);
 
+    ['area', 'type', 'nextstep'].forEach(t => {
+      const tabBtn = document.getElementById(`tab-custom-opt-${t}`);
+      if (tabBtn) tabBtn.classList.toggle('active', t === type);
+    });
+
     setTimeout(() => nameInput?.focus(), 150);
   } catch (err) {
     console.warn('Erro ao configurar campos do modal de opção:', err);
   }
 }
 window.openCreateCustomOptionModal = openCreateCustomOptionModal;
+
+function switchCustomOptionTab(type) {
+  openCreateCustomOptionModal(type);
+}
+window.switchCustomOptionTab = switchCustomOptionTab;
 
 function closeCreateCustomOptionModal() {
   const modal = document.getElementById('modal-create-custom-option');
@@ -1742,15 +1767,27 @@ function cleanupDirtyCustomOptions() {
       }
     }
 
-    // 2. Limpar áreas customizadas salvas
+    // 2. Limpar áreas customizadas salvas e restaurar cor caso tenha sido indevidamente resetada
     const rawAreas = localStorage.getItem('mvt_commercial_custom_areas');
     if (rawAreas) {
       let parsed = JSON.parse(rawAreas);
       if (Array.isArray(parsed)) {
-        parsed = parsed.filter(item => {
-          const name = typeof item === 'string' ? item : (item && item.name);
-          return name && !name.startsWith('__') && !name.toUpperCase().includes('CREATE_');
-        });
+        parsed = parsed.map(item => {
+          if (typeof item === 'string') {
+            const clean = item.trim();
+            const col = (clean.toLowerCase().includes('estatut') || clean.toLowerCase().includes('estatur')) ? '#ec4899' : '#ec4899';
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: col } : null;
+          }
+          if (item && item.name) {
+            const clean = String(item.name).trim();
+            let col = item.color;
+            if ((clean.toLowerCase().includes('estatut') || clean.toLowerCase().includes('estatur')) && (col === '#38bdf8' || !col)) {
+              col = '#ec4899';
+            }
+            return (clean && !clean.startsWith('__') && !clean.toUpperCase().includes('CREATE_')) ? { name: clean, color: col || '#ec4899' } : null;
+          }
+          return null;
+        }).filter(Boolean);
         localStorage.setItem('mvt_commercial_custom_areas', JSON.stringify(parsed));
       }
     }
@@ -4784,7 +4821,7 @@ function renderCommercialTasksView() {
 
         <!-- Coluna 5: O que Fazer (Próximo Passo) -->
         <div class="col-task-action-box">
-          <span class="task-action-main" title="${escapeHtml(task.action)}" style="${(isAttended || isNoShow) ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">
+          <span class="task-action-main" title="${escapeHtml(task.action)}" style="${(isAttended || isNoShow) ? 'color: var(--text-muted);' : ''}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; opacity: 0.85;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
             <span class="task-action-text">${escapeHtml(task.action)}</span>
           </span>

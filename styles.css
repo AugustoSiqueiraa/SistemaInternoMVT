@@ -6749,6 +6749,12 @@ body.light-theme .btn-contract-icon.active:hover {
   animation: spinReload 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+#btn-header-edit-tags:hover svg {
+  transform: rotate(-12deg) scale(1.1);
+  transition: transform 0.2s ease;
+  color: #fbbf24;
+}
+
 @keyframes spinReload {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -7980,9 +7986,13 @@ body.light-theme .task-alarm-setting-box {
   border-color: rgba(239, 68, 68, 0.22) !important;
 }
 
+.comm-task-row.status-noshow .task-action-main,
+.comm-task-row.status-done .task-action-main {
+  text-decoration: none !important;
+}
+
 .comm-task-row.status-noshow .task-action-main {
   color: #fca5a5 !important;
-  text-decoration: line-through;
 }
 
 /* Botão Não Compareceu no Modal de Tarefa */

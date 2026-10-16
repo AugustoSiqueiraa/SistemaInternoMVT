@@ -878,6 +878,14 @@
               </svg>
             </button>
 
+            <!-- Botão Ícone de Editar Etiquetas e Cores (Lápis) -->
+            <button type="button" class="btn-comm-alarm-trigger" id="btn-header-edit-tags" onclick="openCreateCustomOptionModal('area')" title="Editar cores e nomes das etiquetas (Áreas, Tipos e Próximos Passos)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+            </button>
+
             <!-- Botão Ícone de Configuração de Visualização da Tabela (Limpo e Minimalista) -->
             <div class="comm-view-settings-dropdown-wrapper">
               <button type="button" class="btn-table-settings-trigger" id="btn-table-view-config" onclick="toggleTableViewConfigDropdown(event)" title="Configurações de visualização da tabela (Proporção, Zoom e Panorâmica)">
@@ -1910,6 +1918,18 @@
             <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;" id="custom-option-modal-subtitle">Defina o nome e a cor para personalizar esta opção</p>
           </div>
           <button class="modal-close" id="modal-create-custom-option-close" type="button" onclick="closeCreateCustomOptionModal()">&times;</button>
+        </div>
+
+        <div class="custom-option-tabs-bar" style="display: flex; gap: 0.35rem; margin: 0.4rem 0 0.85rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.6rem;">
+          <button type="button" class="btn-filter-pill active" id="tab-custom-opt-area" onclick="switchCustomOptionTab('area')" style="font-size: 0.72rem; padding: 0.25rem 0.65rem;">
+            🏷️ Áreas
+          </button>
+          <button type="button" class="btn-filter-pill" id="tab-custom-opt-type" onclick="switchCustomOptionTab('type')" style="font-size: 0.72rem; padding: 0.25rem 0.65rem;">
+            📌 Tipos de Atendimento
+          </button>
+          <button type="button" class="btn-filter-pill" id="tab-custom-opt-nextstep" onclick="switchCustomOptionTab('nextstep')" style="font-size: 0.72rem; padding: 0.25rem 0.65rem;">
+            🎯 Próximos Passos
+          </button>
         </div>
 
         <form id="form-create-custom-option" onsubmit="handleSaveCustomOption(event)">
