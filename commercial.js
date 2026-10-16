@@ -3467,7 +3467,7 @@ function cleanPhoneForWa(phone) {
 window.cleanPhoneForWa = cleanPhoneForWa;
 
 function formatPhoneDisplay(phone) {
-  if (!phone) return '<span style="color: var(--text-muted); font-size: 0.74rem; font-style: italic;">Sem contato</span>';
+  if (!phone) return '';
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 13 && digits.startsWith('55')) {
     return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9)}`;
@@ -4818,24 +4818,19 @@ function renderCommercialTasksView() {
         <!-- Coluna 2: Cliente & Contato -->
         <div class="comm-col-client">
           <span class="comm-client-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-          <div style="display: flex; align-items: center; gap: 0.35rem;">
-            <span class="comm-client-phone">${formatPhoneDisplay(client.phone)}</span>
-            ${waLink ? `
-              <a href="${waLink}" target="_blank" rel="noopener" class="btn-whatsapp-sm" title="Conversar no WhatsApp com ${escapeHtml(client.name)}" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">
-                💬
-              </a>
-            ` : ''}
-          </div>
+          ${client.phone ? `
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <span class="comm-client-phone">${formatPhoneDisplay(client.phone)}</span>
+              ${waLink ? `
+                <a href="${waLink}" target="_blank" rel="noopener" class="btn-whatsapp-sm" title="Conversar no WhatsApp com ${escapeHtml(client.name)}" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">
+                  💬
+                </a>
+              ` : ''}
+            </div>
+          ` : ''}
         </div>
 
-        <!-- Coluna 3: Comercial -->
-        <div class="comm-col-comm">
-          <span class="badge" style="background: rgba(255, 255, 255, 0.06); color: var(--text-main); font-size: 0.73rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px; opacity:0.7;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${escapeHtml(client.responsible || 'Augusto')}
-          </span>
-        </div>
-
-        <!-- Coluna 4: Área -->
+        <!-- Coluna 3: Área -->
         <div class="comm-col-area">
           ${getAreaBadge(client.area)}
         </div>

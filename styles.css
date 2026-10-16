@@ -7632,7 +7632,7 @@ body.light-theme .comm-quick-select option {
 
 .comm-tasks-table-header {
   display: grid;
-  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 370px;
+  grid-template-columns: 140px minmax(140px, 1.25fr) 100px minmax(180px, 1.4fr) 370px;
   gap: 0.75rem;
   padding: 0.75rem 1.15rem;
   background: rgba(0, 0, 0, 0.35);
@@ -7642,7 +7642,7 @@ body.light-theme .comm-quick-select option {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   text-transform: uppercase;
-  min-width: 1180px;
+  min-width: 1080px;
 }
 
 .comm-tasks-table-header .col-task-actions {
@@ -7667,12 +7667,12 @@ body.light-theme .comm-tasks-table-header {
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 1.15rem;
   display: grid;
-  grid-template-columns: 140px minmax(130px, 1.15fr) 90px 100px minmax(150px, 1.25fr) 370px;
+  grid-template-columns: 140px minmax(140px, 1.25fr) 100px minmax(180px, 1.4fr) 370px;
   gap: 0.75rem;
   align-items: center;
   transition: background var(--transition-fast);
   position: relative;
-  min-width: 1180px;
+  min-width: 1080px;
 }
 
 .comm-task-row:last-child {
@@ -7686,35 +7686,45 @@ body.light-theme .comm-tasks-table-header {
   content: none !important;
 }
 
-/* Linha da Tarefa Concluída: Fica bem acinzentada, atenuada e diferenciada das ativas */
-.comm-task-row.status-done {
-  background: rgba(255, 255, 255, 0.015);
-  opacity: 0.55;
+/* Linha da Tarefa Concluída ou Não Compareceu: Fica bem acinzentada, apagada, atenuada e diferenciada das ativas */
+.comm-task-row.status-done,
+.comm-task-row.status-noshow {
+  background: rgba(255, 255, 255, 0.015) !important;
+  opacity: 0.55 !important;
   transition: all var(--transition-fast);
 }
 
-.comm-task-row.status-done:hover {
-  opacity: 0.9;
-  background: rgba(255, 255, 255, 0.04);
+.comm-task-row.status-done:hover,
+.comm-task-row.status-noshow:hover {
+  opacity: 0.9 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
 
-.comm-task-row.status-done .comm-client-name {
-  color: #94a3b8;
+.comm-task-row.status-done .comm-client-name,
+.comm-task-row.status-noshow .comm-client-name {
+  color: #94a3b8 !important;
 }
 
-.comm-task-row.status-done .task-time-span {
-  color: #64748b;
+.comm-task-row.status-done .task-time-span,
+.comm-task-row.status-noshow .task-time-span {
+  color: #64748b !important;
 }
 
-.comm-task-row.status-done .task-duration-tag {
-  background: rgba(255, 255, 255, 0.05);
-  color: #64748b;
+.comm-task-row.status-done .task-duration-tag,
+.comm-task-row.status-noshow .task-duration-tag {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #64748b !important;
 }
 
-.comm-task-row.status-done .comm-col-comm .badge,
-.comm-task-row.status-done .comm-col-area .badge {
+.comm-task-row.status-done .comm-col-area .badge,
+.comm-task-row.status-noshow .comm-col-area .badge {
   opacity: 0.65;
   filter: grayscale(0.2);
+}
+
+.comm-task-row.status-done .task-action-main,
+.comm-task-row.status-noshow .task-action-main {
+  color: var(--text-muted) !important;
 }
 
 .comm-task-row:hover {
@@ -8358,31 +8368,11 @@ body.light-theme .task-alarm-setting-box {
   color: #fbbf24 !important;
 }
 
-/* Linha de Tarefa com Não Compareceu: Fundo cinza claro elegante destacado */
-.comm-task-row.status-noshow {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  opacity: 1 !important;
-}
-
-.comm-task-row.status-noshow:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-}
-
-body.light-theme .comm-task-row.status-noshow {
-  background: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-}
-
 .commercial-tasks-view,
 .commercial-tasks-view *,
 .comm-task-row,
 .comm-task-row * {
   text-decoration: none !important;
-}
-
-.comm-task-row.status-noshow .task-action-main {
-  color: var(--text-main) !important;
 }
 
 /* Botão Não Compareceu no Modal de Tarefa */
