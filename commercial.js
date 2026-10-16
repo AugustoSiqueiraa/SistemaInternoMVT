@@ -12,6 +12,8 @@ const DEFAULT_COMMERCIAL_CLIENTS = [
         "phone":  "",
         "area":  "Trabalhista",
         "status":  "Pronto para Fechar",
+        "prontoParaFechar": true,
+        "originalStatus": "Follow-up",
         "nextStep":  "Acompanhamento comercial",
         "notes":  "",
         "date":  "2026-10-11",
@@ -23,6 +25,8 @@ const DEFAULT_COMMERCIAL_CLIENTS = [
         "phone":  "",
         "area":  "Trabalhista",
         "status":  "Pronto para Fechar",
+        "prontoParaFechar": true,
+        "originalStatus": "Follow-up",
         "nextStep":  "Acompanhamento comercial",
         "notes":  "",
         "date":  "2026-10-11",
@@ -1825,6 +1829,25 @@ function cleanupDirtyCustomOptions() {
 }
 window.cleanupDirtyCustomOptions = cleanupDirtyCustomOptions;
 
+// Helper unificado para verificar se o cliente possui contrato assinado
+function isClientContratoAssinado(client) {
+  if (!client) return false;
+  if (client.contratoAssinado === false) return false;
+  return Boolean(client.contratoAssinado === true || client.status === 'Contrato Assinado');
+}
+window.isClientContratoAssinado = isClientContratoAssinado;
+
+// Helper unificado para verificar se o cliente está Pronto para Fechar
+function isClientProntoParaFechar(client) {
+  if (!client) return false;
+  if (isClientContratoAssinado(client)) return false;
+  if (client.prontoParaFechar === false) return false;
+  if (client.prontoParaFechar === true) return true;
+  const s = String(client.status || client.tipoAtendimento || '').toLowerCase();
+  return s.includes('pronto') || s.includes('fechar');
+}
+window.isClientProntoParaFechar = isClientProntoParaFechar;
+
 // Função auxiliar para higienizar dados de clientes e garantir histórico de tarefas
 function sanitizeCommercialClient(c) {
   if (!c) return c;
@@ -1877,8 +1900,17 @@ function sanitizeCommercialClient(c) {
       c.status = matchCustomType.name || matchCustomType;
       c.tipoAtendimento = c.status;
     } else if (sLower.includes('fechar') || sLower.includes('pronto')) {
-      c.status = 'Pronto para Fechar';
-      c.tipoAtendimento = 'Pronto para Fechar';
+      if (c.prontoParaFechar === false) {
+        const fallback = (c.originalStatus && !c.originalStatus.toLowerCase().includes('fechar') && !c.originalStatus.toLowerCase().includes('assinado'))
+          ? c.originalStatus
+          : 'Follow-up';
+        c.status = fallback;
+        c.tipoAtendimento = fallback;
+      } else {
+        c.status = 'Pronto para Fechar';
+        c.tipoAtendimento = 'Pronto para Fechar';
+        c.prontoParaFechar = true;
+      }
     } else if (sLower.includes('novo') || sLower.includes('lead')) {
       c.status = 'Lead Novo';
       c.tipoAtendimento = 'Lead Novo';
@@ -1974,10 +2006,11 @@ function _commercialClientToRow(c) {
     notes: finalNotes,
     date: c.date || today,
     responsible: String(c.responsible || 'Augusto'),
-    pronto_para_fechar: Boolean(c.prontoParaFechar || c.status === 'Pronto para Fechar'),
+    pronto_para_fechar: Boolean(isClientProntoParaFechar(c)),
+    contrato_assinado: Boolean(isClientContratoAssinado(c)),
     task: c.task ? c.task : null,
     task_history: Array.isArray(c.taskHistory) ? c.taskHistory : [],
-    updated_at: new Date().toISOString()
+    updated_at: c.updatedAt || new Date().toISOString()
   };
 }
 
@@ -2007,6 +2040,7 @@ function _rowToCommercialClient(row) {
     date: row.date ? String(row.date) : new Date().toISOString().split('T')[0],
     responsible: String(row.responsible || 'Augusto'),
     prontoParaFechar: Boolean(row.pronto_para_fechar),
+    contratoAssinado: Boolean(row.contrato_assinado || row.status === 'Contrato Assinado'),
     desqualificado: desqualificado,
     motivoDesqualificado: motivoDesqualificado,
     task: row.task || null,
@@ -2074,6 +2108,25 @@ function mergeCommercialClients(localClients, cloudClients) {
       if (c.desqualificado !== undefined && c.desqualificado !== null) {
         merged.desqualificado = c.desqualificado;
         merged.motivoDesqualificado = c.motivoDesqualificado || '';
+      }
+      // Preserva status de Pronto para Fechar e Contrato Assinado alterados localmente
+      if (c.prontoParaFechar !== undefined && c.prontoParaFechar !== null) {
+        merged.prontoParaFechar = c.prontoParaFechar;
+      }
+      if (c.contratoAssinado !== undefined && c.contratoAssinado !== null) {
+        merged.contratoAssinado = c.contratoAssinado;
+      }
+      if (c.status) {
+        merged.status = c.status;
+      }
+      if (c.tipoAtendimento) {
+        merged.tipoAtendimento = c.tipoAtendimento;
+      }
+      if (c.originalStatus) {
+        merged.originalStatus = c.originalStatus;
+      }
+      if (c.updatedAt) {
+        merged.updatedAt = c.updatedAt;
       }
     }
   });
@@ -3013,7 +3066,7 @@ function renderCommercialApp() {
 
   // 1. Atualizar KPIs no banner superior
   const totalCount = clients.length;
-  const fecharCount = clients.filter(c => c.prontoParaFechar || c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar').length;
+  const fecharCount = clients.filter(c => isClientProntoParaFechar(c)).length;
   const docsCount = clients.filter(c => c.status === 'Aguardando DOCS').length;
   const followupCount = clients.filter(c => c.status === 'Follow-up' || c.status === 'Aguardando Reunião' || c.status === 'Lead Novo').length;
   const fechadosCount = clients.filter(c => isClientContratoAssinado(c)).length;
@@ -3138,7 +3191,7 @@ function renderCommercialApp() {
 
   // Se sub-aba for "fechar", filtra apenas quem esta pronto para fechar
   if (COMMERCIAL_STATE.subtab === 'fechar') {
-    filtered = filtered.filter(c => c && (c.prontoParaFechar || c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar'));
+    filtered = filtered.filter(c => c && isClientProntoParaFechar(c));
   } else if (COMMERCIAL_STATE.subtab === 'assinado') {
     filtered = filtered.filter(c => c && isClientContratoAssinado(c));
   }
@@ -3311,7 +3364,11 @@ window.NEXT_STEP_OPTIONS = NEXT_STEP_OPTIONS;
 function getCommercialStatusSelect(client) {
   let status = client.tipoAtendimento || client.status || 'Follow-up';
   if (status === 'Pronto para Fechar' || status === 'Prontos para Fechar') {
-    status = client.originalStatus || client.tipoAtendimento || 'Lead Novo';
+    if (client.originalStatus && !client.originalStatus.toLowerCase().includes('fechar') && !client.originalStatus.toLowerCase().includes('assinado')) {
+      status = client.originalStatus;
+    } else {
+      status = 'Follow-up';
+    }
   }
 
   const defaultTypes = ['Lead Novo', 'Follow-up', 'Indicação'];
@@ -3381,6 +3438,18 @@ function changeCommercialStatus(clientId, newStatus, selectEl) {
     if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
       c.tipoAtendimento = newStatus;
       c.status = newStatus;
+      c.updatedAt = new Date().toISOString();
+      if (newStatus === 'Pronto para Fechar' || newStatus === 'Prontos para Fechar') {
+        c.prontoParaFechar = true;
+        c.contratoAssinado = false;
+      } else if (newStatus === 'Contrato Assinado') {
+        c.contratoAssinado = true;
+        c.prontoParaFechar = false;
+      } else {
+        c.originalStatus = newStatus;
+        c.prontoParaFechar = false;
+        c.contratoAssinado = false;
+      }
     }
   });
 
@@ -3799,45 +3868,19 @@ function getCommercialFecharCell(client) {
     `;
   }
 
-  // Na aba "Prontos para Fechar":
-  // Totalmente clean e despoluído: Estrela de Pronto para Fechar + Ícone discreto de Contrato (Cinza quando desmarcado, Verde quando clicado)
-  if (COMMERCIAL_STATE.subtab === 'fechar') {
-    return `
-      <div class="comm-fechar-cell-wrapper">
-        <button type="button" class="btn-table-fechar active" onclick="handleTableFecharClick('${client.id}')" title="Pronto para Fechar (Clique para remover)">
-          <svg class="fechar-star-icon" width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-          </svg>
-          <span class="fechar-btn-text">Pronto p/ Fechar</span>
-        </button>
-        <div class="comm-contract-slot">
-          <button type="button" class="btn-contract-icon ${isAssinado ? 'active' : ''}" onclick="handleTableAssinadoClick('${client.id}')" title="${isAssinado ? 'Contrato Assinado! Clique para desmarcar' : 'Clique para marcar Contrato Assinado'}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <polyline points="9 15 11 17 15 13"></polyline>
-            </svg>
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  // Na visão geral de clientes (leads):
-  // O slot do contrato na direita é fixo (25px) para NUNCA empurrar ou desalinhar o botão Pronto p/ Fechar
+  // Na aba "Prontos para Fechar" e na aba geral de clientes ("leads"):
+  // O botão de Contratos Assinados aparece em ambas: cinzinha clarinho quando não assinado, verdinho quando assinado (somente o ícone)
   return `
     <div class="comm-fechar-cell-wrapper">
       ${getCommercialFecharButton(client)}
       <div class="comm-contract-slot">
-        ${isAssinado ? `
-          <button type="button" class="btn-contract-icon active" onclick="handleTableAssinadoClick('${client.id}')" title="Contrato Assinado! Clique para desmarcar ou ver em Contratos Assinados">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <polyline points="9 15 11 17 15 13"></polyline>
-            </svg>
-          </button>
-        ` : ''}
+        <button type="button" class="btn-contract-icon ${isAssinado ? 'active' : ''}" onclick="handleTableAssinadoClick('${client.id}')" title="${isAssinado ? 'Contrato Assinado! Clique para desmarcar' : 'Clique para marcar Contrato Assinado'}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <polyline points="9 15 11 17 15 13"></polyline>
+          </svg>
+        </button>
       </div>
     </div>
   `;
@@ -3966,7 +4009,7 @@ window.confirmDisqualifyClient = confirmDisqualifyClient;
 
 // Botão de ação rápida na tabela: Pronto para Fechar (proporcional, clean e integrado)
 function getCommercialFecharButton(client) {
-  const isFechar = Boolean(client.prontoParaFechar || client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar');
+  const isFechar = isClientProntoParaFechar(client);
   if (isFechar) {
     return `
       <button type="button" class="btn-table-fechar active" onclick="handleTableFecharClick('${client.id}')" title="Marcado como Pronto para Fechar! Clique para desmarcar">
@@ -4001,13 +4044,19 @@ function handleTableAssinadoClick(clientId) {
     COMMERCIAL_STATE.clients.forEach(c => {
       if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
         c.contratoAssinado = false;
+        c.updatedAt = new Date().toISOString();
         if (c.prontoParaFechar) {
           c.status = 'Pronto para Fechar';
+          c.tipoAtendimento = 'Pronto para Fechar';
         } else {
-          const fallback = (c.originalStatus && c.originalStatus !== 'Contrato Assinado' && c.originalStatus !== 'Fechado')
-            ? c.originalStatus
-            : (c.tipoAtendimento || 'Follow-up');
+          let fallback = 'Follow-up';
+          if (c.originalStatus && !c.originalStatus.toLowerCase().includes('assinado') && !c.originalStatus.toLowerCase().includes('fechado')) {
+            fallback = c.originalStatus;
+          } else if (c.tipoAtendimento && !c.tipoAtendimento.toLowerCase().includes('assinado') && !c.tipoAtendimento.toLowerCase().includes('fechado')) {
+            fallback = c.tipoAtendimento;
+          }
           c.status = fallback;
+          c.tipoAtendimento = fallback;
         }
       }
     });
@@ -4023,6 +4072,7 @@ function handleTableAssinadoClick(clientId) {
     COMMERCIAL_STATE.clients.forEach(c => {
       if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
         c.contratoAssinado = true;
+        c.updatedAt = new Date().toISOString();
         if (c.status !== 'Contrato Assinado') {
           c.originalStatus = (c.status !== 'Fechado') ? (c.tipoAtendimento || c.status) : 'Follow-up';
         }
@@ -4047,7 +4097,7 @@ function handleTableFecharClick(clientId) {
   const client = COMMERCIAL_STATE.clients.find(c => String(c.id) === String(clientId));
   if (!client) return;
 
-  const isAlreadyFechar = Boolean(client.prontoParaFechar || client.status === 'Pronto para Fechar' || client.status === 'Prontos para Fechar');
+  const isAlreadyFechar = isClientProntoParaFechar(client);
   const cNameLower = (client.name || '').trim().toLowerCase();
 
   if (isAlreadyFechar) {
@@ -4056,10 +4106,17 @@ function handleTableFecharClick(clientId) {
     COMMERCIAL_STATE.clients.forEach(c => {
       if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
         c.prontoParaFechar = false;
+        c._fecharUnmarkedAt = Date.now();
+        c.updatedAt = new Date().toISOString();
         if (!isClientContratoAssinado(c)) {
-          if (c.status === 'Pronto para Fechar' || c.status === 'Prontos para Fechar') {
-            c.status = c.originalStatus || c.tipoAtendimento || 'Follow-up';
+          let fallback = 'Follow-up';
+          if (c.originalStatus && !c.originalStatus.toLowerCase().includes('fechar') && !c.originalStatus.toLowerCase().includes('assinado')) {
+            fallback = c.originalStatus;
+          } else if (c.tipoAtendimento && !c.tipoAtendimento.toLowerCase().includes('fechar') && !c.tipoAtendimento.toLowerCase().includes('assinado')) {
+            fallback = c.tipoAtendimento;
           }
+          c.status = fallback;
+          c.tipoAtendimento = fallback;
         }
       }
     });
@@ -4076,11 +4133,14 @@ function handleTableFecharClick(clientId) {
     COMMERCIAL_STATE.clients.forEach(c => {
       if (String(c.id) === String(clientId) || (cNameLower && c.name && c.name.trim().toLowerCase() === cNameLower)) {
         c.prontoParaFechar = true;
+        c._fecharMarkedAt = Date.now();
+        c.updatedAt = new Date().toISOString();
         if (!isClientContratoAssinado(c)) {
           if (c.status !== 'Pronto para Fechar' && c.status !== 'Prontos para Fechar') {
             c.originalStatus = c.tipoAtendimento || c.status;
           }
           c.status = 'Pronto para Fechar';
+          c.tipoAtendimento = 'Pronto para Fechar';
         }
       }
     });
@@ -4558,6 +4618,8 @@ function handleQuickAddCommercialClient(e) {
   const areaVal = inputArea?.value || 'Trabalhista';
   const statusVal = inputType?.value || 'Lead Novo';
   const nextStepVal = inputNextStep?.value || 'Fazer ligação';
+  const isFecharSelected = (statusVal === 'Pronto para Fechar' || statusVal === 'Prontos para Fechar');
+  const isAssinadoSelected = (statusVal === 'Contrato Assinado');
 
   const newClient = {
     id: `comm-user-${Date.now()}`,
@@ -4566,11 +4628,16 @@ function handleQuickAddCommercialClient(e) {
     phone: '',
     area: areaVal,
     status: statusVal,
+    tipoAtendimento: statusVal,
     nextStep: nextStepVal,
     notes: '',
     responsible: 'Augusto',
+    prontoParaFechar: isFecharSelected,
+    contratoAssinado: isAssinadoSelected,
+    originalStatus: isFecharSelected ? 'Lead Novo' : statusVal,
     task: null,
-    taskHistory: []
+    taskHistory: [],
+    updatedAt: new Date().toISOString()
   };
 
   if (!Array.isArray(COMMERCIAL_STATE.clients)) {
