@@ -1,0 +1,8 @@
+{
+  "name": "sistema-interno-mvt",
+  "version": "1.0.0",
+  "description": "Sistema Interno MVT Advogados",
+  "scripts": {
+    "build": "echo Build OK"
+  }
+}
