@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
   <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
-  <link rel="stylesheet" href="styles.css?v=2.3">
+  <link rel="stylesheet" href="styles.css?v=2.4">
 </head>
 <body>
   <div class="app-container">
@@ -953,18 +953,9 @@
           <div class="comm-table-header-row">
             <div class="comm-col-date">DATA</div>
             <div class="comm-col-client">CLIENTE</div>
-            <div class="comm-col-area" style="display: flex; align-items: center; justify-content: space-between;">
-              <span>ÁREA</span>
-              <button type="button" class="btn-header-add-option" onclick="openCreateCustomOptionModal('area')" title="Criar ou personalizar Área de Atuação (com cor)">+</button>
-            </div>
-            <div class="comm-col-type" style="display: flex; align-items: center; justify-content: space-between;">
-              <span>TIPO DE ATENDIMENTO</span>
-              <button type="button" class="btn-header-add-option" onclick="openCreateCustomOptionModal('type')" title="Criar ou personalizar Tipo de Atendimento (com cor)">+</button>
-            </div>
-            <div class="comm-col-nextstep" style="display: flex; align-items: center; justify-content: space-between;">
-              <span>PRÓXIMO PASSO</span>
-              <button type="button" class="btn-header-add-option" onclick="openCreateCustomOptionModal('nextstep')" title="Criar ou personalizar Próximo Passo (com cor)">+</button>
-            </div>
+            <div class="comm-col-area">ÁREA</div>
+            <div class="comm-col-type">TIPO DE ATENDIMENTO</div>
+            <div class="comm-col-nextstep">PRÓXIMO PASSO</div>
             <div class="comm-col-schedule">AGENDAMENTO</div>
             <div class="comm-col-actions">AÇÕES</div>
             <div class="comm-col-fechar">PRONTOS P/ FECHAR</div>
@@ -1813,11 +1804,11 @@
               </div>
             </div>
 
-            <!-- Botão na Parte Inferior: + Nova Tarefa -->
+            <!-- Botão na Parte Inferior: Nova Tarefa -->
             <div class="task-active-bottom-bar">
               <button type="button" class="btn-action-schedule-new" onclick="prepareScheduleNewTask(true)" title="Agendar uma nova tarefa para este cliente">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                <span>+ Nova Tarefa</span>
+                <span>Nova Tarefa</span>
               </button>
             </div>
           </div>
@@ -2189,7 +2180,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
-  <script src="commercial.js?v=2.3"></script>
-  <script src="app.js?v=2.3"></script>
+  <script src="commercial.js?v=2.4"></script>
+  <script src="app.js?v=2.4"></script>
 </body>
 </html>

@@ -3580,10 +3580,17 @@ function renderCommercialTable(clients) {
           ${getCommercialNextStepSelect(client)}
         </div>
 
-        <!-- Coluna 6: Agendamento de Tarefa (Caixas de mesmo tamanho com ícone '+' minimalista ao lado) -->
+        <!-- Coluna 6: Agendamento de Tarefa (agendamento - + - numero - divisoria) -->
         <div class="comm-col-schedule">
           ${(() => {
             const latestApt = getClientLatestAppointment(client);
+            const aptCount = getClientAppointmentsCount(client);
+            const countBadgeHtml = aptCount > 0 ? `
+              <span class="comm-task-count-num" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Ver histórico de ${aptCount} reunião(ões)/tarefa(s) agendada(s) deste cliente">
+                ${aptCount}
+              </span>
+            ` : '';
+
             if (latestApt) {
               const pillClass = latestApt.isOverdue ? 'overdue' : 'active-deadline';
               const shortDt = formatDateTimeShort(latestApt.date, latestApt.time);
@@ -3595,6 +3602,7 @@ function renderCommercialTable(clients) {
                 <button type="button" class="btn-schedule-add-plus" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Agendar nova tarefa ou próximo passo">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
+                ${countBadgeHtml}
               `;
             }
             return `
@@ -3605,6 +3613,7 @@ function renderCommercialTable(clients) {
               <button type="button" class="btn-schedule-add-plus" onclick="openCommercialTaskModal('${client.id}', 'form', true)" title="Agendar nova tarefa ou próximo passo">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
+              ${countBadgeHtml}
             `;
           })()}
         </div>
@@ -3612,17 +3621,6 @@ function renderCommercialTable(clients) {
         <!-- Coluna 7: Ações Rápidas (Editar Dados, Desqualificar e Excluir) -->
         <div class="comm-col-actions">
           <div class="comm-actions-right">
-            ${(() => {
-              const aptCount = getClientAppointmentsCount(client);
-              if (aptCount > 0) {
-                return `
-                  <span class="comm-task-count-num" onclick="openCommercialTaskModal('${client.id}', 'history')" title="Ver histórico de ${aptCount} reunião(ões)/tarefa(s) agendada(s) deste cliente">
-                    ${aptCount}
-                  </span>
-                `;
-              }
-              return '';
-            })()}
             <button class="btn-icon-clean" onclick="openCommercialModal('${client.id}')" title="Editar dados do cliente">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

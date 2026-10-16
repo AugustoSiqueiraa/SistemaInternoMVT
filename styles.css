@@ -4614,7 +4614,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-table-header-row {
   display: grid;
-  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 185px 110px 145px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 205px 90px 145px;
   gap: 0.45rem;
   padding: 0.7rem 0.85rem;
   background: rgba(0, 0, 0, 0.35);
@@ -4662,7 +4662,7 @@ body.light-theme .comm-quick-add-title {
 
 .comm-lead-row {
   display: grid;
-  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 185px 110px 145px;
+  grid-template-columns: 76px minmax(115px, 1.15fr) 98px 125px minmax(135px, 1.25fr) 205px 90px 145px;
   gap: 0.45rem;
   padding: 0.8rem 0.85rem;
   border-bottom: 1px solid var(--border-subtle);
@@ -5202,7 +5202,8 @@ body.light-theme .comm-status-pill-select option {
   background: rgba(56, 189, 248, 0.14);
   border: 1px solid rgba(56, 189, 248, 0.35);
   padding: 0 4px;
-  margin-right: 2px;
+  margin-left: 2px;
+  margin-right: 0;
   cursor: pointer;
   line-height: 1;
   box-sizing: border-box;
@@ -6267,7 +6268,7 @@ body.light-theme .btn-contract-icon.active:hover {
 
 /* Disposição Tabela Ampla / Planilha Executiva (Alta Densidade) */
 .commercial-table-view.density-compact .comm-table-header-row {
-  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 185px 110px 145px;
+  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 205px 90px 145px;
   gap: 0.45rem;
   padding: 0.42rem 0.75rem;
   font-size: 0.68rem;
@@ -6276,7 +6277,7 @@ body.light-theme .btn-contract-icon.active:hover {
 }
 
 .commercial-table-view.density-compact .comm-lead-row {
-  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 185px 110px 145px;
+  grid-template-columns: 76px minmax(115px, 1fr) 98px 125px minmax(135px, 1.3fr) 205px 90px 145px;
   gap: 0.45rem;
   padding: 0.38rem 0.75rem;
   min-height: 40px;
