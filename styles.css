@@ -4175,15 +4175,57 @@ body.light-theme .modal-confirm-desc {
   color: #38bdf8;
 }
 
-body.light-theme .comm-search-box input {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.15);
-  color: #0b1426;
-}
-
 body.light-theme .comm-search-box input:focus {
   border-color: #0284c7;
   box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1);
+}
+
+/* Botão Limpar Busca (X) */
+.btn-clear-search {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+  line-height: 1;
+  z-index: 3;
+}
+
+.btn-clear-search:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Agrupamento da Barra de Ferramentas (No Desktop, comporta-se inline perfeitamente) */
+.comm-tools-actions-row {
+  display: contents;
+}
+
+.comm-tools-left,
+.comm-tools-right {
+  display: contents;
+}
+
+/* Puxador da Gaveta Bottom Sheet (Mobile) */
+.sheet-drag-handle {
+  display: none;
+}
+
+/* Backdrop para Popovers e Bottom Sheets no Celular */
+.comm-popover-backdrop {
+  display: none;
 }
 
 body.light-theme .comm-search-icon {
@@ -9001,11 +9043,13 @@ body.light-theme .task-alarm-setting-box {
     font-size: 0.85rem !important;
   }
 
-  /* 8. Barra de Controles, Busca e Ferramentas */
+  /* 8. Barra de Controles, Busca e Ferramentas (Organizada em 2 Linhas Limpas) */
   .commercial-controls-bar {
-    padding: 0.5rem 0.65rem !important;
-    border-radius: 8px !important;
+    padding: 0.55rem 0.65rem !important;
+    border-radius: 10px !important;
     margin-bottom: 0.45rem !important;
+    background: var(--bg-row) !important;
+    border: 1px solid var(--border-subtle) !important;
   }
 
   .commercial-filter-tools {
@@ -9015,7 +9059,9 @@ body.light-theme .task-alarm-setting-box {
     width: 100% !important;
   }
 
+  /* Linha 1: Campo de Busca com Ícone e Botão Limpar */
   .comm-search-box {
+    position: relative !important;
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
@@ -9025,9 +9071,119 @@ body.light-theme .task-alarm-setting-box {
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
-    height: 38px !important;
-    font-size: 0.82rem !important;
-    padding-left: 2.3rem !important;
+    height: 40px !important;
+    font-size: 0.86rem !important;
+    padding: 0.45rem 2.2rem 0.45rem 2.4rem !important;
+    border-radius: 8px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-sizing: border-box !important;
+  }
+
+  .comm-search-box input:focus {
+    border-color: #38bdf8 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .comm-search-icon {
+    left: 0.85rem !important;
+  }
+
+  .btn-clear-search {
+    right: 0.65rem !important;
+  }
+
+  /* Linha 2: Ações Agrupadas em Linha Horizontal */
+  .comm-tools-actions-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 0.4rem !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .comm-tools-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .comm-tools-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .comm-history-nav {
+    padding: 2px !important;
+    border-radius: 6px !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .btn-comm-nav-arrow {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .btn-filter-trigger {
+    height: 34px !important;
+    padding: 0 0.65rem !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    gap: 0.35rem !important;
+  }
+
+  .btn-filter-trigger.active {
+    background: rgba(56, 189, 248, 0.18) !important;
+    border-color: rgba(56, 189, 248, 0.45) !important;
+    color: #38bdf8 !important;
+  }
+
+  .btn-table-settings-trigger {
+    height: 34px !important;
+    padding: 0 0.65rem !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    gap: 0.35rem !important;
+  }
+
+  .btn-table-settings-trigger.active {
+    background: rgba(56, 189, 248, 0.18) !important;
+    border-color: rgba(56, 189, 248, 0.45) !important;
+    color: #38bdf8 !important;
+  }
+
+  .btn-comm-alarm-trigger {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Linha 3: Chips de Filtros Ativos */
+  .active-filter-chips {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+
+  .active-filter-tag {
+    font-size: 0.70rem !important;
+    padding: 0.2rem 0.5rem !important;
   }
 
   /* 9. Tabela de Clientes Comercial (Rolagem Lateral Suave e Otimizada) */
@@ -9211,8 +9367,136 @@ body.light-theme .task-alarm-setting-box {
     height: 38px !important;
   }
 
+  /* Popovers transformados em Bottom Sheets Deslizantes no Celular */
+  .comm-popover-backdrop {
+    display: none;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.72) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 100001 !important;
+  }
+
+  .sheet-drag-handle {
+    display: block !important;
+    width: 38px !important;
+    height: 4px !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-radius: 3px !important;
+    margin: 0 auto 0.75rem auto !important;
+  }
+
   .comm-filter-popover,
-  .comm-view-settings-popover,
+  .comm-view-settings-popover {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    background: #16181d !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.9) !important;
+    padding: 0.85rem 1.15rem calc(1.15rem + env(safe-area-inset-bottom, 14px)) !important;
+    z-index: 100002 !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    animation: slideUpSheet 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-sizing: border-box !important;
+  }
+
+  @keyframes slideUpSheet {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .comm-filter-popover-header,
+  .comm-settings-popover-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-bottom: 0.65rem !important;
+    margin-bottom: 0.75rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .comm-filter-title,
+  .comm-settings-title {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+  }
+
+  .btn-close-popover {
+    font-size: 1.2rem !important;
+    padding: 0.3rem 0.5rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1 !important;
+  }
+
+  .comm-filter-section {
+    gap: 0.45rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .comm-filter-label {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #e2e8f0 !important;
+  }
+
+  .comm-filter-section select {
+    height: 42px !important;
+    font-size: 0.86rem !important;
+    padding: 0 0.75rem !important;
+    border-radius: 8px !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    width: 100% !important;
+  }
+
+  .comm-filter-footer {
+    display: flex !important;
+    gap: 0.65rem !important;
+    margin-top: 1rem !important;
+    padding-top: 0.75rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .btn-clear-comm-filters {
+    flex: 1 !important;
+    height: 44px !important;
+    font-size: 0.85rem !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .btn-apply-comm-filters {
+    flex: 1.5 !important;
+    height: 44px !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    background: #38bdf8 !important;
+    color: #0b1120 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
   .comm-duration-popover,
   .popover-disqualify {
     max-width: 90vw !important;

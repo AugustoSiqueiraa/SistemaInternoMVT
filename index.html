@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
   <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
-  <link rel="stylesheet" href="styles.css?v=4.0">
+  <link rel="stylesheet" href="styles.css?v=4.1">
 </head>
 <body>
   <div class="app-container">
@@ -787,177 +787,191 @@
         <!-- Barra de Ferramentas Superior: Busca, Filtros, Indicadores e Exibição -->
         <div class="commercial-controls-bar">
           <div class="commercial-filter-tools">
-            <!-- Navegação: Apenas Ícones de Seta Minimalistas (Voltar e Avançar) -->
-            <div class="comm-history-nav" title="Navegação rápida (Voltar / Avançar)">
-              <button type="button" class="btn-comm-nav-arrow" id="btn-comm-nav-back" onclick="commercialGoBack()" title="Voltar (←)">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-              </button>
-              <button type="button" class="btn-comm-nav-arrow" id="btn-comm-nav-forward" onclick="commercialGoForward()" title="Avançar (→)">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </button>
-            </div>
-
+            <!-- Linha 1: Caixa de Busca com Ícone e Botão Limpar -->
             <div class="comm-search-box">
               <svg class="comm-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
               <input type="text" id="comm-search-input" class="clean-input" placeholder="Buscar cliente, telefone ou observação...">
+              <button type="button" class="btn-clear-search" id="btn-comm-clear-search" onclick="clearCommercialSearch()" title="Limpar busca" style="display: none;">✕</button>
             </div>
-            <!-- Botão de Filtros e Popover (Exatamente no mesmo padrão elegante da Pauta) -->
-            <div class="comm-filter-dropdown-wrapper">
-              <button class="btn-filter-trigger" id="btn-open-comm-filter" type="button" onclick="toggleCommercialFilterDropdown(event)" title="Filtrar clientes comerciais">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                </svg>
-                <span>Filtros</span>
-                <span class="filter-counter-badge" id="comm-filter-counter-badge" style="display: none;">0</span>
-              </button>
 
-              <!-- Popover Flutuante de Filtros do Comercial -->
-              <div class="comm-filter-popover" id="comm-filter-menu" style="display: none;">
-                <div class="comm-filter-popover-header">
-                  <span class="comm-filter-title">Filtros de Clientes</span>
-                  <button type="button" class="btn-close-popover" onclick="closeCommercialFilterDropdown()" title="Fechar">✕</button>
+            <!-- Linha 2: Barra de Ações (Navegação, Filtros, Alarmes, Recarregar, Tags e Exibição) -->
+            <div class="comm-tools-actions-row">
+              <div class="comm-tools-left">
+                <!-- Navegação: Apenas Ícones de Seta Minimalistas (Voltar e Avançar) -->
+                <div class="comm-history-nav" title="Navegação rápida (Voltar / Avançar)">
+                  <button type="button" class="btn-comm-nav-arrow" id="btn-comm-nav-back" onclick="commercialGoBack()" title="Voltar (←)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                  </button>
+                  <button type="button" class="btn-comm-nav-arrow" id="btn-comm-nav-forward" onclick="commercialGoForward()" title="Avançar (→)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
                 </div>
 
-                <!-- Filtro de Área -->
-                <div class="comm-filter-section">
-                  <label class="comm-filter-label" for="comm-area-filter">Área de Atuação / Tarefa</label>
-                  <select id="comm-area-filter" class="clean-input" onchange="onCommercialAreaFilterChange(this.value)">
-                    <option value="all">Todas as Áreas</option>
-                    <option value="Trabalhista">Trabalhista</option>
-                    <option value="Cível">Cível</option>
-                    <option value="Previdenciário">Previdenciário</option>
-                  </select>
-                </div>
+                <!-- Botão de Filtros e Popover / Bottom Sheet -->
+                <div class="comm-filter-dropdown-wrapper">
+                  <button class="btn-filter-trigger" id="btn-open-comm-filter" type="button" onclick="toggleCommercialFilterDropdown(event)" title="Filtrar clientes comerciais">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span>Filtros</span>
+                    <span class="filter-counter-badge" id="comm-filter-counter-badge" style="display: none;">0</span>
+                  </button>
 
-                <!-- Filtro de Tipo de Atendimento / Status -->
-                <div class="comm-filter-section">
-                  <label class="comm-filter-label" for="comm-status-filter">Tipo de Atendimento</label>
-                  <select id="comm-status-filter" class="clean-input" onchange="onCommercialStatusFilterChange(this.value)">
-                    <option value="all">Todos os Tipos</option>
-                    <option value="Lead Novo">Lead Novo</option>
-                    <option value="Follow-up">Follow-up</option>
-                    <option value="Indicação">Indicação</option>
-                    <option value="Pronto para Fechar">Pronto para Fechar</option>
-                  </select>
-                </div>
+                  <!-- Popover Flutuante de Filtros do Comercial (Desktop) / Bottom Sheet (Mobile) -->
+                  <div class="comm-filter-popover" id="comm-filter-menu" style="display: none;">
+                    <div class="sheet-drag-handle"></div>
+                    <div class="comm-filter-popover-header">
+                      <span class="comm-filter-title">Filtros de Clientes</span>
+                      <button type="button" class="btn-close-popover" onclick="closeCommercialFilterDropdown()" title="Fechar">✕</button>
+                    </div>
 
-                <!-- Filtro de Tarefas de 30m -->
-                <div class="comm-filter-section">
-                  <label class="comm-filter-label" for="comm-task-filter">Tarefas de 30 Minutos</label>
-                  <select id="comm-task-filter" class="clean-input" onchange="onCommercialTaskFilterChange(this.value)">
-                    <option value="all">Todas as Tarefas</option>
-                    <option value="pending">⏳ Apenas com Tarefa em Aberto</option>
-                    <option value="done">✓ Apenas com Tarefa Concluída</option>
-                    <option value="has_task">Com Qualquer Tarefa Agendada</option>
-                    <option value="overdue">Tarefas Vencidas</option>
-                    <option value="no_task">Sem Tarefa Agendada</option>
-                  </select>
-                </div>
+                    <!-- Filtro de Área -->
+                    <div class="comm-filter-section">
+                      <label class="comm-filter-label" for="comm-area-filter">Área de Atuação / Tarefa</label>
+                      <select id="comm-area-filter" class="clean-input" onchange="onCommercialAreaFilterChange(this.value)">
+                        <option value="all">Todas as Áreas</option>
+                        <option value="Trabalhista">Trabalhista</option>
+                        <option value="Cível">Cível</option>
+                        <option value="Previdenciário">Previdenciário</option>
+                      </select>
+                    </div>
 
-                <!-- Rodapé de Ações -->
-                <div class="comm-filter-footer">
-                  <button type="button" class="btn-clear-comm-filters" onclick="clearCommercialFilters()">Limpar Filtros</button>
-                  <button type="button" class="btn-apply-comm-filters" onclick="closeCommercialFilterDropdown()">Aplicar</button>
+                    <!-- Filtro de Tipo de Atendimento / Status -->
+                    <div class="comm-filter-section">
+                      <label class="comm-filter-label" for="comm-status-filter">Tipo de Atendimento</label>
+                      <select id="comm-status-filter" class="clean-input" onchange="onCommercialStatusFilterChange(this.value)">
+                        <option value="all">Todos os Tipos</option>
+                        <option value="Lead Novo">Lead Novo</option>
+                        <option value="Follow-up">Follow-up</option>
+                        <option value="Indicação">Indicação</option>
+                        <option value="Pronto para Fechar">Pronto para Fechar</option>
+                      </select>
+                    </div>
+
+                    <!-- Filtro de Tarefas de 30m -->
+                    <div class="comm-filter-section">
+                      <label class="comm-filter-label" for="comm-task-filter">Tarefas de 30 Minutos</label>
+                      <select id="comm-task-filter" class="clean-input" onchange="onCommercialTaskFilterChange(this.value)">
+                        <option value="all">Todas as Tarefas</option>
+                        <option value="pending">⏳ Apenas com Tarefa em Aberto</option>
+                        <option value="done">✓ Apenas com Tarefa Concluída</option>
+                        <option value="has_task">Com Qualquer Tarefa Agendada</option>
+                        <option value="overdue">Tarefas Vencidas</option>
+                        <option value="no_task">Sem Tarefa Agendada</option>
+                      </select>
+                    </div>
+
+                    <!-- Rodapé de Ações -->
+                    <div class="comm-filter-footer">
+                      <button type="button" class="btn-clear-comm-filters" onclick="clearCommercialFilters()">Limpar Filtros</button>
+                      <button type="button" class="btn-apply-comm-filters" onclick="closeCommercialFilterDropdown()">Aplicar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="comm-tools-right">
+                <!-- Botão Minimalista do Sino de Alertas de Tarefas -->
+                <button type="button" class="btn-comm-alarm-trigger" id="btn-header-task-alarm" onclick="openTaskAlarmSettingsModal()" title="Configurações de Alertas e Sons de Tarefas">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                </button>
+
+                <!-- Botão Ícone de Recarregar a Página -->
+                <button type="button" class="btn-comm-alarm-trigger" id="btn-header-reload-page" onclick="reloadCommercialPage()" title="Recarregar a página e sincronizar dados">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                </button>
+
+                <!-- Botão Ícone de Editar Etiquetas e Cores (Lápis) -->
+                <button type="button" class="btn-comm-alarm-trigger" id="btn-header-edit-tags" onclick="openCreateCustomOptionModal('area')" title="Editar cores e nomes das etiquetas (Áreas, Tipos e Próximos Passos)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                </button>
+
+                <!-- Botão Ícone de Configuração de Visualização da Tabela (Limpo e Minimalista) -->
+                <div class="comm-view-settings-dropdown-wrapper">
+                  <button type="button" class="btn-table-settings-trigger" id="btn-table-view-config" onclick="toggleTableViewConfigDropdown(event)" title="Configurações de visualização da tabela (Proporção, Zoom e Panorâmica)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="4" y1="21" x2="4" y2="14"></line>
+                      <line x1="4" y1="10" x2="4" y2="3"></line>
+                      <line x1="12" y1="21" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12" y2="3"></line>
+                      <line x1="20" y1="21" x2="20" y2="16"></line>
+                      <line x1="20" y1="12" x2="20" y2="3"></line>
+                      <line x1="1" y1="14" x2="7" y2="14"></line>
+                      <line x1="9" y1="8" x2="15" y2="8"></line>
+                      <line x1="17" y1="16" x2="23" y2="16"></line>
+                    </svg>
+                    <span>Exibição</span>
+                    <svg class="comm-settings-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+
+                  <!-- Popover Flutuante com as Opções da Tabela (Desktop) / Bottom Sheet (Mobile) -->
+                  <div class="comm-view-settings-popover" id="comm-table-view-menu" style="display: none;">
+                    <div class="sheet-drag-handle"></div>
+                    <div class="comm-settings-popover-header">
+                      <span class="comm-settings-title">Visualização da Tabela</span>
+                      <button type="button" class="btn-close-popover" onclick="closeTableViewConfigDropdown()" title="Fechar">✕</button>
+                    </div>
+
+                    <div class="comm-settings-section">
+                      <span class="comm-settings-label">Proporção / Densidade</span>
+                      <div class="comm-density-switch" title="Alternar densidade da tabela">
+                        <button type="button" class="btn-comm-density" id="btn-density-compact" onclick="setCommercialTableDensity('compact')" title="Disposição Tabela Ampla (alta densidade de linhas)">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                          <span>Tabela Ampla</span>
+                        </button>
+                        <button type="button" class="btn-comm-density active" id="btn-density-comfortable" onclick="setCommercialTableDensity('comfortable')" title="Disposição Confortável (espaçamento padrão)">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line></svg>
+                          <span>Confortável</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="comm-settings-section">
+                      <span class="comm-settings-label">Zoom / Escala</span>
+                      <div class="comm-zoom-box" title="Ajustar zoom da tabela de clientes">
+                        <button type="button" class="btn-comm-zoom-btn" onclick="changeCommercialTableZoom(-10)" title="Reduzir zoom">−</button>
+                        <span class="comm-zoom-indicator" id="comm-zoom-display" onclick="resetCommercialTableZoom()" title="Clique para redefinir zoom para 100%">100%</span>
+                        <button type="button" class="btn-comm-zoom-btn" onclick="changeCommercialTableZoom(10)" title="Aumentar zoom">+</button>
+                      </div>
+                    </div>
+
+                    <div class="comm-settings-section no-border">
+                      <span class="comm-settings-label">Modo de Tela</span>
+                      <button type="button" class="btn-comm-panoramic" id="btn-comm-panoramic-toggle" onclick="toggleCommercialPanoramicView()" title="Modo Panorâmico: Ganhe altura máxima na tela recolhendo as métricas superiores">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                        <span id="comm-panoramic-text">Visão Panorâmica</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Chips de Filtros Ativos -->
             <div class="active-filter-chips" id="comm-active-filter-chips"></div>
-
-            <!-- Botão Minimalista do Sino de Alertas de Tarefas -->
-            <button type="button" class="btn-comm-alarm-trigger" id="btn-header-task-alarm" onclick="openTaskAlarmSettingsModal()" title="Configurações de Alertas e Sons de Tarefas">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-            </button>
-
-            <!-- Botão Ícone de Recarregar a Página -->
-            <button type="button" class="btn-comm-alarm-trigger" id="btn-header-reload-page" onclick="reloadCommercialPage()" title="Recarregar a página e sincronizar dados">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 4v6h-6"></path>
-                <path d="M1 20v-6h6"></path>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-            </button>
-
-            <!-- Botão Ícone de Editar Etiquetas e Cores (Lápis) -->
-            <button type="button" class="btn-comm-alarm-trigger" id="btn-header-edit-tags" onclick="openCreateCustomOptionModal('area')" title="Editar cores e nomes das etiquetas (Áreas, Tipos e Próximos Passos)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-            </button>
-
-            <!-- Botão Ícone de Configuração de Visualização da Tabela (Limpo e Minimalista) -->
-            <div class="comm-view-settings-dropdown-wrapper">
-              <button type="button" class="btn-table-settings-trigger" id="btn-table-view-config" onclick="toggleTableViewConfigDropdown(event)" title="Configurações de visualização da tabela (Proporção, Zoom e Panorâmica)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="4" y1="21" x2="4" y2="14"></line>
-                  <line x1="4" y1="10" x2="4" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="12"></line>
-                  <line x1="12" y1="8" x2="12" y2="3"></line>
-                  <line x1="20" y1="21" x2="20" y2="16"></line>
-                  <line x1="20" y1="12" x2="20" y2="3"></line>
-                  <line x1="1" y1="14" x2="7" y2="14"></line>
-                  <line x1="9" y1="8" x2="15" y2="8"></line>
-                  <line x1="17" y1="16" x2="23" y2="16"></line>
-                </svg>
-                <span>Exibição</span>
-                <svg class="comm-settings-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-
-              <!-- Popover Flutuante com as Opções da Tabela -->
-              <div class="comm-view-settings-popover" id="comm-table-view-menu" style="display: none;">
-                <div class="comm-settings-popover-header">
-                  <span class="comm-settings-title">Visualização da Tabela</span>
-                  <button type="button" class="btn-close-popover" onclick="closeTableViewConfigDropdown()" title="Fechar">✕</button>
-                </div>
-
-                <div class="comm-settings-section">
-                  <span class="comm-settings-label">Proporção / Densidade</span>
-                  <div class="comm-density-switch" title="Alternar densidade da tabela">
-                    <button type="button" class="btn-comm-density" id="btn-density-compact" onclick="setCommercialTableDensity('compact')" title="Disposição Tabela Ampla (alta densidade de linhas)">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                      <span>Tabela Ampla</span>
-                    </button>
-                    <button type="button" class="btn-comm-density active" id="btn-density-comfortable" onclick="setCommercialTableDensity('comfortable')" title="Disposição Confortável (espaçamento padrão)">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line></svg>
-                      <span>Confortável</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="comm-settings-section">
-                  <span class="comm-settings-label">Zoom / Escala</span>
-                  <div class="comm-zoom-box" title="Ajustar zoom da tabela de clientes">
-                    <button type="button" class="btn-comm-zoom-btn" onclick="changeCommercialTableZoom(-10)" title="Reduzir zoom">−</button>
-                    <span class="comm-zoom-indicator" id="comm-zoom-display" onclick="resetCommercialTableZoom()" title="Clique para redefinir zoom para 100%">100%</span>
-                    <button type="button" class="btn-comm-zoom-btn" onclick="changeCommercialTableZoom(10)" title="Aumentar zoom">+</button>
-                  </div>
-                </div>
-
-                <div class="comm-settings-section no-border">
-                  <span class="comm-settings-label">Modo de Tela</span>
-                  <button type="button" class="btn-comm-panoramic" id="btn-comm-panoramic-toggle" onclick="toggleCommercialPanoramicView()" title="Modo Panorâmico: Ganhe altura máxima na tela recolhendo as métricas superiores">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-                    <span id="comm-panoramic-text">Visão Panorâmica</span>
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
+        <!-- Backdrop para Popovers e Bottom Sheets no Mobile -->
+        <div class="comm-popover-backdrop" id="comm-popover-backdrop" onclick="closeAllCommercialPopovers()"></div>
       </div>
       <!-- Fim do comm-sticky-top-bar -->
 
@@ -2179,7 +2193,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
-  <script src="commercial.js?v=4.0"></script>
+  <script src="commercial.js?v=4.1"></script>
   <script src="app.js?v=4.0"></script>
 </body>
 </html>

@@ -2592,12 +2592,34 @@ function updateCommercialDisplayControlsUi() {
 window.updateCommercialDisplayControlsUi = updateCommercialDisplayControlsUi;
 
 // Alternar e fechar o menu popover de configuracoes da tabela
+function closeAllCommercialPopovers() {
+  closeCommercialFilterDropdown();
+  closeTableViewConfigDropdown();
+  const bd = document.getElementById('comm-popover-backdrop');
+  if (bd) bd.style.display = 'none';
+}
+window.closeAllCommercialPopovers = closeAllCommercialPopovers;
+
+function clearCommercialSearch() {
+  const input = document.getElementById('comm-search-input');
+  const clearBtn = document.getElementById('btn-comm-clear-search');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  if (clearBtn) clearBtn.style.display = 'none';
+  COMMERCIAL_STATE.search = '';
+  renderCommercialApp();
+}
+window.clearCommercialSearch = clearCommercialSearch;
+
 function toggleTableViewConfigDropdown(event) {
   if (event) {
     event.stopPropagation();
   }
   const menu = document.getElementById('comm-table-view-menu');
   const btn = document.getElementById('btn-table-view-config');
+  const bd = document.getElementById('comm-popover-backdrop');
   if (!menu) return;
   const isHidden = menu.style.display === 'none' || !menu.style.display;
   if (isHidden) {
@@ -2605,9 +2627,11 @@ function toggleTableViewConfigDropdown(event) {
     menu.style.display = 'flex';
     if (btn) btn.classList.add('active');
     closeCommercialFilterDropdown();
+    if (bd && window.innerWidth <= 768) bd.style.display = 'block';
   } else {
     menu.style.display = 'none';
     if (btn) btn.classList.remove('active');
+    if (bd) bd.style.display = 'none';
   }
 }
 window.toggleTableViewConfigDropdown = toggleTableViewConfigDropdown;
@@ -2615,8 +2639,12 @@ window.toggleTableViewConfigDropdown = toggleTableViewConfigDropdown;
 function closeTableViewConfigDropdown() {
   const menu = document.getElementById('comm-table-view-menu');
   const btn = document.getElementById('btn-table-view-config');
+  const bd = document.getElementById('comm-popover-backdrop');
   if (menu) menu.style.display = 'none';
   if (btn) btn.classList.remove('active');
+  const menuFilter = document.getElementById('comm-filter-menu');
+  const isFilterHidden = !menuFilter || menuFilter.style.display === 'none' || !menuFilter.style.display;
+  if (bd && isFilterHidden) bd.style.display = 'none';
 }
 window.closeTableViewConfigDropdown = closeTableViewConfigDropdown;
 
@@ -2627,15 +2655,18 @@ function toggleCommercialFilterDropdown(event) {
   }
   const menu = document.getElementById('comm-filter-menu');
   const btn = document.getElementById('btn-open-comm-filter');
+  const bd = document.getElementById('comm-popover-backdrop');
   if (!menu) return;
   const isHidden = menu.style.display === 'none' || !menu.style.display;
   if (isHidden) {
     menu.style.display = 'flex';
     if (btn) btn.classList.add('active');
     closeTableViewConfigDropdown();
+    if (bd && window.innerWidth <= 768) bd.style.display = 'block';
   } else {
     menu.style.display = 'none';
     if (btn) btn.classList.remove('active');
+    if (bd) bd.style.display = 'none';
   }
 }
 window.toggleCommercialFilterDropdown = toggleCommercialFilterDropdown;
@@ -2643,8 +2674,12 @@ window.toggleCommercialFilterDropdown = toggleCommercialFilterDropdown;
 function closeCommercialFilterDropdown() {
   const menu = document.getElementById('comm-filter-menu');
   const btn = document.getElementById('btn-open-comm-filter');
+  const bd = document.getElementById('comm-popover-backdrop');
   if (menu) menu.style.display = 'none';
   if (btn) btn.classList.remove('active');
+  const menuView = document.getElementById('comm-table-view-menu');
+  const isViewHidden = !menuView || menuView.style.display === 'none' || !menuView.style.display;
+  if (bd && isViewHidden) bd.style.display = 'none';
 }
 window.closeCommercialFilterDropdown = closeCommercialFilterDropdown;
 
@@ -6250,6 +6285,10 @@ function setupCommercialEvents() {
   const searchInput = document.getElementById('comm-search-input');
   let searchTimeout = null;
   searchInput?.addEventListener('input', (e) => {
+    const clearBtn = document.getElementById('btn-comm-clear-search');
+    if (clearBtn) {
+      clearBtn.style.display = e.target.value.trim().length > 0 ? 'inline-flex' : 'none';
+    }
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       COMMERCIAL_STATE.search = e.target.value;
