@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MVT Advogados | Sistema Interno — Reuniões & Anti No-Show</title>
   <meta name="description" content="Sistema interno MVT Advogados — Pauta de reunioes, regua anti no-show e integracao MindChat.">
-  <link rel="stylesheet" href="styles.css?v=3.6">
+  <link rel="stylesheet" href="styles.css?v=4.0">
 </head>
 <body>
   <div class="app-container">
@@ -82,9 +82,19 @@
         </div>
       </div>
     </aside>
+    <!-- Overlay Escuro para Fechar Menu Lateral no Celular -->
+    <div class="sidebar-mobile-backdrop" id="sidebar-mobile-backdrop" onclick="closeMobileSidebar()"></div>
 
     <div class="app-main-wrapper">
       <header class="navbar">
+        <!-- Botão Menu Hambúrguer (Mobile) -->
+        <button type="button" class="btn-mobile-sidebar-toggle" id="btn-mobile-sidebar-toggle" onclick="toggleMobileSidebar()" aria-label="Abrir Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
         <div class="brand-wrapper">
           <div class="mvt-official-logo">
             <div class="mvt-letters">MVT</div>
@@ -952,6 +962,13 @@
       <!-- Fim do comm-sticky-top-bar -->
 
 
+
+        <!-- Dica de Rolagem Lateral no Celular -->
+        <div class="comm-mobile-scroll-hint">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Deslize a tabela para os lados para ver todas as informações</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
 
         <!-- Visão Tabela / Lista Executiva -->
         <div id="comm-table-view-container" class="commercial-table-view">
@@ -2162,7 +2179,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script src="config.js"></script>
-  <script src="commercial.js?v=3.8"></script>
-  <script src="app.js?v=3.6"></script>
+  <script src="commercial.js?v=4.0"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>

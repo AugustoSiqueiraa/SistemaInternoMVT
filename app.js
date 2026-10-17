@@ -2073,9 +2073,20 @@ function setupFilterModal() {
   });
 }
 
+// Controle do Menu Lateral Mobile (Gaveta Deslizante)
+window.toggleMobileSidebar = function() {
+  document.body.classList.toggle('sidebar-mobile-open');
+};
+window.closeMobileSidebar = function() {
+  document.body.classList.remove('sidebar-mobile-open');
+};
+
 // Navegação Unificada de Abas (Menu Lateral Esquerdo)
 function switchTab(tabId, subtab) {
   if (!tabId) return;
+  if (typeof window.closeMobileSidebar === 'function') {
+    window.closeMobileSidebar();
+  }
 
   try {
     sessionStorage.setItem('mvt_active_tab', tabId);
